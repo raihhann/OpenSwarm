@@ -13,35 +13,50 @@
 namespace SwarmHAL {
 
     // Hardware Interrupt Quadrature Encoder State (Up to 4 encoders)
-    static volatile int32_t _encTicks[SWARM_MAX_ENCODERS] = {0, 0, 0, 0};
-    static uint8_t _encPinA[SWARM_MAX_ENCODERS] = {0, 0, 0, 0};
-    static uint8_t _encPinB[SWARM_MAX_ENCODERS] = {0, 0, 0, 0};
-    static bool _wireInitialized = false;
-    static bool _spiInitialized = false;
+    inline volatile int32_t& encTicks(uint8_t i) {
+        static volatile int32_t ticks[SWARM_MAX_ENCODERS] = {0, 0, 0, 0};
+        return ticks[i];
+    }
+    inline uint8_t& encPinA(uint8_t i) {
+        static uint8_t pinA[SWARM_MAX_ENCODERS] = {0, 0, 0, 0};
+        return pinA[i];
+    }
+    inline uint8_t& encPinB(uint8_t i) {
+        static uint8_t pinB[SWARM_MAX_ENCODERS] = {0, 0, 0, 0};
+        return pinB[i];
+    }
+    inline bool& wireInitialized() {
+        static bool init = false;
+        return init;
+    }
+    inline bool& spiInitialized() {
+        static bool init = false;
+        return init;
+    }
 
-    inline void IRAM_ATTR _isrEnc0() {
-        int a = digitalRead(_encPinA[0]);
-        int b = (_encPinB[0] != 255) ? digitalRead(_encPinB[0]) : LOW;
-        if (_encPinB[0] == 255) { _encTicks[0]++; }
-        else { _encTicks[0] += (a == b) ? 1 : -1; }
+    inline void _isrEnc0() {
+        int a = digitalRead(encPinA(0));
+        int b = (encPinB(0) != 255) ? digitalRead(encPinB(0)) : LOW;
+        if (encPinB(0) == 255) { encTicks(0)++; }
+        else { encTicks(0) += (a == b) ? 1 : -1; }
     }
-    inline void IRAM_ATTR _isrEnc1() {
-        int a = digitalRead(_encPinA[1]);
-        int b = (_encPinB[1] != 255) ? digitalRead(_encPinB[1]) : LOW;
-        if (_encPinB[1] == 255) { _encTicks[1]++; }
-        else { _encTicks[1] += (a == b) ? 1 : -1; }
+    inline void _isrEnc1() {
+        int a = digitalRead(encPinA(1));
+        int b = (encPinB(1) != 255) ? digitalRead(encPinB(1)) : LOW;
+        if (encPinB(1) == 255) { encTicks(1)++; }
+        else { encTicks(1) += (a == b) ? 1 : -1; }
     }
-    inline void IRAM_ATTR _isrEnc2() {
-        int a = digitalRead(_encPinA[2]);
-        int b = (_encPinB[2] != 255) ? digitalRead(_encPinB[2]) : LOW;
-        if (_encPinB[2] == 255) { _encTicks[2]++; }
-        else { _encTicks[2] += (a == b) ? 1 : -1; }
+    inline void _isrEnc2() {
+        int a = digitalRead(encPinA(2));
+        int b = (encPinB(2) != 255) ? digitalRead(encPinB(2)) : LOW;
+        if (encPinB(2) == 255) { encTicks(2)++; }
+        else { encTicks(2) += (a == b) ? 1 : -1; }
     }
-    inline void IRAM_ATTR _isrEnc3() {
-        int a = digitalRead(_encPinA[3]);
-        int b = (_encPinB[3] != 255) ? digitalRead(_encPinB[3]) : LOW;
-        if (_encPinB[3] == 255) { _encTicks[3]++; }
-        else { _encTicks[3] += (a == b) ? 1 : -1; }
+    inline void _isrEnc3() {
+        int a = digitalRead(encPinA(3));
+        int b = (encPinB(3) != 255) ? digitalRead(encPinB(3)) : LOW;
+        if (encPinB(3) == 255) { encTicks(3)++; }
+        else { encTicks(3) += (a == b) ? 1 : -1; }
     }
 
     inline const char* boardName() {
@@ -49,25 +64,25 @@ namespace SwarmHAL {
     }
 
     inline void initI2C(int sda = -1, int scl = -1) {
-        if (!_wireInitialized) {
+        if (!wireInitialized()) {
             if (sda >= 0 && scl >= 0 && sda != 255 && scl != 255) {
                 Wire.begin(sda, scl, 400000UL);
             } else {
                 Wire.begin();
                 Wire.setClock(400000UL);
             }
-            _wireInitialized = true;
+            wireInitialized() = true;
         }
     }
 
     inline void initSPI(int sck = -1, int miso = -1, int mosi = -1) {
-        if (!_spiInitialized) {
+        if (!spiInitialized()) {
             if (sck >= 0 && miso >= 0 && mosi >= 0 && sck != 255 && miso != 255 && mosi != 255) {
                 SPI.begin(sck, miso, mosi);
             } else {
                 SPI.begin();
             }
-            _spiInitialized = true;
+            spiInitialized() = true;
         }
     }
 
@@ -261,12 +276,12 @@ namespace SwarmHAL {
             case SENS_TACHOMETER: {
                 uint8_t idx = sens.sub_index;
                 if (idx < SWARM_MAX_ENCODERS) {
-                    _encPinA[idx] = sens.pins[0];
-                    _encPinB[idx] = (sens.type == SENS_ENCODER_QUAD) ? sens.pins[1] : 255;
-                    _encTicks[idx] = 0;
-                    pinMode(_encPinA[idx], INPUT_PULLUP);
-                    if (_encPinB[idx] != 255) {
-                        pinMode(_encPinB[idx], INPUT_PULLUP);
+                    encPinA(idx) = sens.pins[0];
+                    encPinB(idx) = (sens.type == SENS_ENCODER_QUAD) ? sens.pins[1] : 255;
+                    encTicks(idx) = 0;
+                    pinMode(encPinA(idx), INPUT_PULLUP);
+                    if (encPinB(idx) != 255) {
+                        pinMode(encPinB(idx), INPUT_PULLUP);
                     }
                     void (*isr)() = nullptr;
                     if (idx == 0) isr = _isrEnc0;
@@ -274,7 +289,7 @@ namespace SwarmHAL {
                     else if (idx == 2) isr = _isrEnc2;
                     else if (idx == 3) isr = _isrEnc3;
                     if (isr) {
-                        attachInterrupt(digitalPinToInterrupt(_encPinA[idx]), isr, CHANGE);
+                        attachInterrupt(digitalPinToInterrupt(encPinA(idx)), isr, CHANGE);
                     }
                 }
                 break;
@@ -530,7 +545,7 @@ namespace SwarmHAL {
             case SENS_ENCODER_QUAD:
             case SENS_TACHOMETER: {
                 uint8_t idx = sens.sub_index;
-                sens.values[0] = (idx < SWARM_MAX_ENCODERS) ? (float)_encTicks[idx] : 0.0f;
+                sens.values[0] = (idx < SWARM_MAX_ENCODERS) ? (float)encTicks(idx) : 0.0f;
                 sens.value_count = 1;
                 break;
             }

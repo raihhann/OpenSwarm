@@ -1,6 +1,7 @@
 # OpenSwarm — Zero-Control-Logic Distributed Robotics Framework (Remote HAL)
 
 <p align="center">
+  <a href="https://pypi.org/project/openswarm-master/"><img src="https://img.shields.io/pypi/v/openswarm-master?style=for-the-badge&label=PyPI%20openswarm-master&color=3775A9" alt="PyPI" /></a>
   <img src="https://img.shields.io/badge/Architecture-Klipper--Style%20Remote%20HAL-0A66C2?style=for-the-badge" alt="Architecture" />
   <img src="https://img.shields.io/badge/Slave%20Loop-100%25%20Empty-2EA043?style=for-the-badge" alt="Zero Slave Logic" />
   <img src="https://img.shields.io/badge/Transport-UDP%20%3C2ms%20%2B%20500ms%20Watchdog-F97316?style=for-the-badge" alt="Transport" />
@@ -181,8 +182,8 @@ The standalone Arduino library is published on the dedicated [**`SwarmNode` bran
 ### Part 2: Install the `openswarm-master` Package (On Your Linux Master)
 
 ```bash
-# Install directly from GitHub:
-pip install "git+https://github.com/raihhann/OpenSwarm.git#subdirectory=master"
+# Install directly from official PyPI:
+pip install openswarm-master
 
 # Or clone for development:
 git clone https://github.com/raihhann/OpenSwarm.git

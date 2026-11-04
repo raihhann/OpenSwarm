@@ -11,9 +11,9 @@ The Central Linux Master SDK & CLI for the [**OpenSwarm**](https://github.com/ra
 
 ## 1. Installation
 
-### Option A: Install Directly from GitHub
+### Option A: Install from PyPI (Recommended)
 ```bash
-pip install "git+https://github.com/raihhann/OpenSwarm.git#subdirectory=master"
+pip install openswarm-master
 ```
 
 ### Option B: Clone & Install in Editable Mode (Recommended for Development)

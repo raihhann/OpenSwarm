@@ -37,3 +37,29 @@ jobs:
           # Create/update tag v<VERSION> pointing to the Arduino library tree for Arduino Library Manager
           git tag -f "v${VERSION}" "$COMMIT"
           git push origin "refs/tags/v${VERSION}" --force
+
+  publish-pypi:
+    name: Publish Master SDK to PyPI
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Build and publish to PyPI (if PYPI_API_TOKEN secret is set)
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+        run: |
+          if [ -z "$TWINE_PASSWORD" ]; then
+            echo "PYPI_API_TOKEN secret not set yet; skipping PyPI upload."
+            exit 0
+          fi
+          pip install build twine
+          cd master
+          python -m build
+          twine upload --skip-existing dist/*

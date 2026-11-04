@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "openswarm-master"
+version = "0.1.0"
+description = "Central Linux Master SDK & Runtime for the OpenSwarm Distributed Robotics Framework"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+authors = [
+    {name = "Mohammed Raihan Soniwala", email = "raihann.eu@gmail.com"}
+]
+keywords = ["robotics", "swarm-robotics", "esp32", "arduino", "hal", "distributed-systems"]
+dependencies = []
+
+[project.scripts]
+openswarm = "openswarm.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["openswarm*"]

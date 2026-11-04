@@ -1,5 +1,61 @@
-# OpenSwarm — Central Linux Master (`master`)
+# OpenSwarm Master (`openswarm-master`)
 
-Centralized discovery, 20Hz telemetry receiver, hardware watchdog keepalive, and multi-robot control engine for `SwarmNode` microcontroller and Linux slaves.
+The Central Linux Master SDK & CLI for the **OpenSwarm** Distributed Hardware-Agnostic Robotics Framework.
 
-*(Step 6 in the build roadmap).*
+* **Zero Slave Control Logic:** All sensor processing, state machines, kinematics, and actuator commands run here on the Master.
+* **Zero External Dependencies:** Pure Python 3 standard library (`socket`, `threading`, `json`) for instant installation on any Linux laptop, Ubuntu PC, Raspberry Pi, or Windows machine.
+* **Auto-Discovery + Direct IP:** Automatically discovers Slaves via UDP port `4211` (`HELLO` broadcast) or connects directly by IP (`192.168.x.x:4210`).
+
+---
+
+## 1. Install on Your Linux Laptop (or Windows PC)
+
+### Option A: Install Directly from GitHub (On Your Linux Laptop)
+```bash
+pip install "git+https://github.com/raihhann/OpenSwarm.git#subdirectory=master"
+```
+
+### Option B: Clone the Repo & Install in Editable Mode (Recommended for Development)
+```bash
+git clone https://github.com/raihhann/OpenSwarm.git
+cd OpenSwarm/master
+pip install -e .
+```
+
+---
+
+## 2. Quick Test from Terminal (`openswarm` CLI)
+
+Once installed, you can scan for your ESP32 (`192.168.0.118`) and blink its GPIO 2 LED with one terminal command:
+
+```bash
+# Scan the Wi-Fi network for all active Slave nodes:
+openswarm scan
+
+# Blink the built-in LED ("led" on GPIO 2) on esp32_node:
+openswarm blink esp32_node --ip 192.168.0.118
+```
+
+---
+
+## 3. Python Control API Example
+
+```python
+import time
+from openswarm import SwarmMaster
+
+master = SwarmMaster()
+
+# Auto-discovers 'esp32_node' on Wi-Fi (or pass ip='192.168.0.118')
+bot = master.connect("esp32_node", ip="192.168.0.118")
+
+while True:
+    # Read live sensor streamed at 20Hz from the ESP32
+    print("Wi-Fi Signal:", bot.read("rssi"), "dBm")
+
+    # Control registered Pin 2 ("led")
+    bot.digital_write("led", 1)
+    time.sleep(0.5)
+    bot.digital_write("led", 0)
+    time.sleep(0.5)
+```

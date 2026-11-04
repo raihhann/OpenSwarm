@@ -1,0 +1,21 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+
+# Arduino / PlatformIO build artifacts
+.pio/
+*.bin
+*.elf
+*.hex
+
+# OS / IDE files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

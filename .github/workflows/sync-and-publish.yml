@@ -1,0 +1,39 @@
+name: Sync SwarmNode Branch & Auto-Release
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  sync-arduino-branch:
+    name: Sync slaves/arduino/SwarmNode -> SwarmNode branch
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Split and push SwarmNode branch + version tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Extract version from library.properties
+          VERSION=$(grep '^version=' slaves/arduino/SwarmNode/library.properties | cut -d'=' -f2 | tr -d '\r\n')
+          echo "Detected SwarmNode version: v${VERSION}"
+
+          # Create commit from slaves/arduino/SwarmNode tree (root has library.properties)
+          TREE=$(git rev-parse HEAD:slaves/arduino/SwarmNode)
+          COMMIT=$(git commit-tree "$TREE" -m "release(arduino): SwarmNode v${VERSION}")
+
+          # Update SwarmNode branch
+          git push origin "$COMMIT:refs/heads/SwarmNode" --force
+
+          # Create/update tag v<VERSION> pointing to the Arduino library tree for Arduino Library Manager
+          git tag -f "v${VERSION}" "$COMMIT"
+          git push origin "refs/tags/v${VERSION}" --force

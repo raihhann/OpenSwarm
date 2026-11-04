@@ -1,87 +1,82 @@
-# SwarmNode — Zero-Touch Hardware Declaration Slave Library
+# SwarmNode — Zero-Control-Logic Arduino Slave Library (`OpenSwarm`)
 
-**SwarmNode** turns microcontrollers (`ESP32`, `Arduino UNO`, `Arduino Nano`, `RP2040`) into network-transparent Slave nodes for distributed multi-robot systems.
+**SwarmNode** is the microcontroller Slave library for the [**OpenSwarm**](https://github.com/raihhann/OpenSwarm) Distributed Robotics Framework.
 
 ### Core Rule
 * **Slaves ONLY declare Wi-Fi/Network, Node ID, and attached sensor/actuator pins inside `setup()`.**
 * **`void loop()` is 100% empty.**
-* **100% of robot control logic runs remotely on the Linux Master.**
+* **100% of robot control logic runs remotely on the Linux Master (`openswarm-master`).**
 
 ---
 
-## 1. Quick Start (ESP32 Slave)
+## 1. Installation in Arduino IDE
+
+1. Switch to the [**`SwarmNode` branch**](https://github.com/raihhann/OpenSwarm/tree/SwarmNode) on GitHub and click **`<> Code` -> `Download ZIP`**.
+2. In Arduino IDE, click **Sketch -> Include Library -> Add .ZIP Library...** and select the downloaded `.zip` file.
+3. Include the library in your sketch with either:
+   ```cpp
+   #include <SwarmNode.h>
+   // OR
+   #include <OpenSwarm.h>
+   ```
+
+---
+
+## 2. Quick Start (`ESP32_LED_Test.ino`)
 
 ```cpp
 #include <SwarmNode.h>
 
-SwarmNode node("tug_esp32");
+SwarmNode node("esp32_node");
 
 void setup() {
     node.connectWiFi("YOUR_WIFI_SSID", "YOUR_WIFI_PASSWORD");
 
-    // Declare attached hardware pins ONLY — zero control logic!
-    node.registerL298N("drive", 14, 27, 26, 32, 25, 33);
-    node.registerUltrasonic("front_sonar", 5, 18);
-    node.registerBumper("front_bumper", 4);
+    // Declare Pin 2 (Built-in LED) and Wi-Fi RSSI sensor — Zero Control Logic!
+    node.registerDigitalOutput("led", 2);
     node.registerWiFiRSSI("rssi");
 
     node.start();
 }
 
 void loop() {
-    // Intentionally 100% empty!
+    // 100% EMPTY! Controlled remotely from the Linux Master.
 }
 ```
 
 ---
 
-## 2. Supported ESP32 Actuators & Sensors
+## 3. Complete API Reference
 
 ### Actuators
-| Method | Description |
-| :--- | :--- |
-| `registerL298N(name, ena, in1, in2, enb, in3, in4)` | 6-pin Dual H-Bridge DC Motor Driver (`-255..255` left/right) |
-| `registerDRV8833(name, in1, in2, in3, in4)` | 4-pin Dual H-Bridge DC Motor Driver (`-255..255` left/right) |
-| `registerMotor2Pin(name, pinA, pinB)` | Single 2-pin Reversible DC Motor (`-255..255`) |
-| `registerServo(name, pin)` | Standard 50Hz Hobby Servo (`0..180` degrees) |
-| `registerStepper(name, stepPin, dirPin, enPin)` | Step/Dir Stepper Driver (`A4988`, `DRV8825`, `TMC2209`) |
-| `registerDigitalOutput(name, pin)` | GPIO Output (LED, Relay, Electromagnet, Buzzer) |
-| `registerPWMOutput(name, pin)` | Single PWM Output (`0..255` duty) |
-| `registerDACOutput(name, pin)` | ESP32 True Analog DAC Output (`GPIO25` / `GPIO26`) |
+* `node.registerL298N(name, ena, in1, in2, enb, in3, in4)` — 6-pin Dual H-Bridge (`-255..255`)
+* `node.registerDRV8833(name, in1, in2, in3, in4)` — 4-pin Dual H-Bridge (`-255..255`)
+* `node.registerMotor2Pin(name, pinA, pinB)` — Single 2-pin DC motor (`-255..255`)
+* `node.registerServo(name, pin)` — 50 Hz Hobby Servo (`0..180°`)
+* `node.registerStepper(name, stepPin, dirPin, enPin)` — Step/Dir Stepper (`A4988`, `DRV8825`, `TMC2209`)
+* `node.registerDigitalOutput(name, pin)` / `node.registerPin(name, pin, OUTPUT)` — GPIO Output
+* `node.registerPWMOutput(name, pin)` — Variable PWM Output (`0..255`)
+* `node.registerDACOutput(name, pin)` — True Analog DAC Output (`GPIO25`/`26`)
 
 ### Sensors
-| Method | Description |
-| :--- | :--- |
-| `registerUltrasonic(name, trigPin, echoPin)` | `HC-SR04` / `JSN-SR04T` Ultrasonic Distance (`cm`) |
-| `registerVL53L0X(name, i2cAddr, sdaPin, sclPin)` | I2C Time-of-Flight Laser Rangefinder |
-| `registerQuadratureEncoder(name, pinA, pinB)` | Hardware Interrupt Quadrature Wheel Encoder (`ticks`) |
-| `registerTachometer(name, pin)` | Single-pin Optical/Hall Speed Sensor (`pulses`) |
-| `registerMPU6050(name, i2cAddr, sdaPin, sclPin)` | 6-Axis I2C IMU (`[ax, ay, az, gx, gy, gz]`) |
-| `registerINA219(name, i2cAddr, sdaPin, sclPin)` | I2C Bus Voltage & Current Monitor (`[V, mA]`) |
-| `registerGenericI2C(name, i2cAddr, reg, bytes, sda, scl)` | Universal I2C Register Reader (works with any I2C sensor) |
-| `registerBumper(name, pin, pullup)` | Contact Switch / Microswitch |
-| `registerIRSensor(name, pin, pullup)` | IR Obstacle / Line Tracking Sensor |
-| `registerDigitalInput(name, pin, pullup)` | Generic Digital Input (Limit, PIR, Hall, Tilt) |
-| `registerAnalogInput(name, pin)` | Analog ADC Input (FSR Force, Flex, LDR, Potentiometer, Gas) |
-| `registerBatteryVoltage(name, adcPin)` | Battery Voltage Divider ADC |
-| `registerTouchPin(name, touchPin)` | ESP32 Capacitive Touch Sensor |
-| `registerDHT(name, pin, model)` | `DHT11` / `DHT22` Temperature & Humidity (`[temp_C, hum_%]`) |
-| `registerWiFiRSSI(name)` | Onboard Wi-Fi Signal Strength (`dBm`) |
+* `node.registerUltrasonic(name, trigPin, echoPin)` — `HC-SR04` Ultrasonic distance (`cm`)
+* `node.registerVL53L0X(name, i2cAddr, sdaPin, sclPin)` — I2C Laser ToF rangefinder
+* `node.registerQuadratureEncoder(name, pinA, pinB)` — Hardware interrupt quadrature wheel encoder
+* `node.registerTachometer(name, pin)` — Optical/Hall pulse counter
+* `node.registerMPU6050(name, i2cAddr, sdaPin, sclPin)` — 6-DOF I2C IMU (`[ax, ay, az, gx, gy, gz]`)
+* `node.registerINA219(name, i2cAddr, sdaPin, sclPin)` — I2C Voltage & Current (`[V, mA]`)
+* `node.registerDHT(name, pin, model)` — `DHT11` / `DHT22` (`[temp_C, hum_%]`)
+* `node.registerBumper(name, pin, pullup)` — Contact limit switch
+* `node.registerIRSensor(name, pin, pullup)` — IR obstacle / line sensor
+* `node.registerDigitalInput(name, pin, pullup)` — Generic digital input
+* `node.registerAnalogInput(name, pin)` / `node.registerBatteryVoltage(name, adcPin)` — ADC input
+* `node.registerTouchPin(name, touchPin)` — ESP32 capacitive touch sensor
+* `node.registerWiFiRSSI(name)` — Wi-Fi signal strength (`dBm`)
 
----
-
-## 3. Installing in Arduino IDE & Uploading to GitHub
-
-### Option A: Local Development Symlink / Copy (Fastest)
-Copy or symlink the `SwarmNode` folder into your Arduino libraries directory:
-```powershell
-Copy-Item -Path "d:\Projects\ConnectedSystems\SwarmNode" -Destination "$HOME\Documents\Arduino\libraries\SwarmNode" -Recurse -Force
-```
-
-### Option B: Install as `.ZIP` Library in Arduino IDE
-1. Compress the `SwarmNode` folder into `SwarmNode.zip`.
-2. In Arduino IDE, click **Sketch -> Include Library -> Add .ZIP Library...** and select `SwarmNode.zip`.
-
-### Option C: Upload to GitHub as an Official Arduino Library
-1. Push the repository to GitHub (`https://github.com/raihhann/OpenSwarm`) and switch to the `arduino-library` branch.
-2. Create a GitHub Release tagged `v0.1.0` — GitHub will automatically generate a `.zip` package that anyone can install directly in Arduino IDE or PlatformIO!
+### Universal Bus Protocols & Custom Drivers (`LoRa`, `SPI`, `I2C`, `UART`, Callbacks)
+* `node.registerLoRaSPI(name, cs, rst, irq, freqHz, sck, miso, mosi)` — `SX1276`/`SX1278`/`RFM95` SPI LoRa
+* `node.registerLoRaUART(name, rx, tx, baud, m0, m1, uartNum)` — `Ebyte E32`/`RYLR998` UART LoRa
+* `node.registerSPISensor(...)` & `node.registerSPIActuator(...)` — Raw SPI register read/write
+* `node.registerGenericI2C(...)` & `node.registerI2CActuator(...)` — Raw I2C register read/write
+* `node.registerUARTSensor(...)` & `node.registerUARTActuator(...)` — Raw UART serial stream RX/TX
+* `node.registerCustomSensor(name, fn)` & `node.registerCustomActuator(name, fn)` — Custom C++ callbacks

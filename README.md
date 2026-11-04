@@ -1,15 +1,19 @@
 # OpenSwarm — Zero-Control-Logic Distributed Robotics Framework (Remote HAL)
 
 <p align="center">
-  <a href="https://pypi.org/project/openswarm-master/"><img src="https://img.shields.io/pypi/v/openswarm-master?style=for-the-badge&label=PyPI%20openswarm-master&color=3775A9" alt="PyPI" /></a>
+  <a href="https://pypi.org/project/openswarm-master/"><img src="https://img.shields.io/pypi/v/openswarm-master?style=for-the-badge&label=PyPI%20openswarm-master&color=3775A9" alt="PyPI openswarm-master" /></a>
+  <a href="https://github.com/raihhann/OpenSwarm/tree/SwarmNode"><img src="https://img.shields.io/badge/Arduino%20Library-SwarmNode%20v0.1.0-00878F?style=for-the-badge&logo=arduino" alt="Arduino Library" /></a>
   <img src="https://img.shields.io/badge/Architecture-Klipper--Style%20Remote%20HAL-0A66C2?style=for-the-badge" alt="Architecture" />
   <img src="https://img.shields.io/badge/Slave%20Loop-100%25%20Empty-2EA043?style=for-the-badge" alt="Zero Slave Logic" />
   <img src="https://img.shields.io/badge/Transport-UDP%20%3C2ms%20%2B%20500ms%20Watchdog-F97316?style=for-the-badge" alt="Transport" />
-  <img src="https://img.shields.io/badge/Platforms-ESP32%20%7C%20UNO%20%7C%20Nano%20%7C%20RP2040%20%7C%20Linux-7C3AED?style=for-the-badge" alt="Platforms" />
 </p>
 
 > **Flash Once. Declare Pins. Never Reprogram the Robot Again.**  
 > **OpenSwarm** is a lightweight, hardware-agnostic **Distributed Hardware Abstraction Layer (Remote HAL)** for multi-robot swarms. Inspired by [Klipper](https://www.klipper3d.org/), OpenSwarm strips **100% of control logic out of the slave microcontrollers** (`void loop()` is completely empty) and moves all sensor processing, state machines, kinematics, and multi-robot coordination to a central **Linux Master** over low-latency Wi-Fi UDP.
+
+### Official Packages
+* **Linux / Python Master SDK (PyPI):** [`openswarm-master`](https://pypi.org/project/openswarm-master/) — install via `pip install openswarm-master`
+* **Arduino / PlatformIO Slave Library:** [`SwarmNode`](https://github.com/raihhann/OpenSwarm/tree/SwarmNode) — install in Arduino IDE or PlatformIO (`raihann/SwarmNode`)
 
 ---
 
@@ -168,27 +172,28 @@ OpenSwarm supports both dedicated 1-line robotics drivers and **universal bus pa
 
 ## Installation & Quick Start
 
-### Part 1: Install the `SwarmNode` Arduino Library (For Microcontrollers)
+### Part 1: Install the `SwarmNode` Slave Library (Arduino IDE & PlatformIO)
 
-The standalone Arduino library is published on the dedicated [**`SwarmNode` branch**](https://github.com/raihhann/OpenSwarm/tree/SwarmNode) so it installs directly into Arduino IDE as a `.ZIP` library:
+#### Option A: Arduino IDE (`.ZIP` / Library Manager)
+1. Switch to the [**`SwarmNode` branch**](https://github.com/raihhann/OpenSwarm/tree/SwarmNode) on GitHub and click **`<> Code` -> `Download ZIP`** (or search **`SwarmNode`** in the Arduino IDE Library Manager).
+2. Open **Arduino IDE** -> **Sketch** -> **Include Library** -> **Add .ZIP Library...** and select the downloaded ZIP.
+3. Open **File -> Examples -> SwarmNode -> ESP32_LED_Test**, enter your Wi-Fi credentials, and click **Upload**.
 
-1. Switch to the [**`SwarmNode` branch**](https://github.com/raihhann/OpenSwarm/tree/SwarmNode) on GitHub.
-2. Click **`<> Code` -> `Download ZIP`**.
-3. Open **Arduino IDE** -> **Sketch** -> **Include Library** -> **Add .ZIP Library...** and select the downloaded ZIP.
-4. Open **File -> Examples -> SwarmNode -> ESP32_LED_Test**, enter your Wi-Fi credentials, and click **Upload**.
+#### Option B: PlatformIO (`platformio.ini`)
+```ini
+lib_deps =
+    raihann/SwarmNode@^0.1.0
+```
 
 ---
 
-### Part 2: Install the `openswarm-master` Package (On Your Linux Master)
+### Part 2: Install the `openswarm-master` Package (PyPI — Linux / Windows / macOS)
+
+[**View `openswarm-master` on PyPI →**](https://pypi.org/project/openswarm-master/)
 
 ```bash
 # Install directly from official PyPI:
 pip install openswarm-master
-
-# Or clone for development:
-git clone https://github.com/raihhann/OpenSwarm.git
-cd OpenSwarm/master
-pip install -e .
 ```
 
 #### Test from Your Linux Terminal:

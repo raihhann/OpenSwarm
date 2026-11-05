@@ -64,18 +64,17 @@ void loop() {
 * `node.registerQuadratureEncoder(name, pinA, pinB)` — Hardware interrupt quadrature wheel encoder
 * `node.registerTachometer(name, pin)` — Optical/Hall pulse counter
 * `node.registerMPU6050(name, i2cAddr, sdaPin, sclPin)` — 6-DOF I2C IMU (`[ax, ay, az, gx, gy, gz]`)
+* `node.registerLSM6DSOX(name, i2cAddr, sdaPin, sclPin)` / `node.registerOnboardIMU(name)` — 6-DOF I2C IMU (Onboard Arduino Nano RP2040 Connect `0x6A`)
 * `node.registerINA219(name, i2cAddr, sdaPin, sclPin)` — I2C Voltage & Current (`[V, mA]`)
 * `node.registerDHT(name, pin, model)` — `DHT11` / `DHT22` (`[temp_C, hum_%]`)
 * `node.registerBumper(name, pin, pullup)` — Contact limit switch
 * `node.registerIRSensor(name, pin, pullup)` — IR obstacle / line sensor
 * `node.registerDigitalInput(name, pin, pullup)` — Generic digital input
 * `node.registerAnalogInput(name, pin)` / `node.registerBatteryVoltage(name, adcPin)` — ADC input
-* `node.registerTouchPin(name, touchPin)` — ESP32 capacitive touch sensor
+* `node.registerTouchPin(name, touchPin)` — Capacitive touch sensor
 * `node.registerWiFiRSSI(name)` — Wi-Fi signal strength (`dBm`)
 
-### Universal Bus Protocols & Custom Drivers (`LoRa`, `SPI`, `I2C`, `UART`, Callbacks)
-* `node.registerLoRaSPI(name, cs, rst, irq, freqHz, sck, miso, mosi)` — `SX1276`/`SX1278`/`RFM95` SPI LoRa
-* `node.registerLoRaUART(name, rx, tx, baud, m0, m1, uartNum)` — `Ebyte E32`/`RYLR998` UART LoRa
+### Universal Bus Protocols & Custom Drivers (`SPI`, `I2C`, `UART`, Callbacks)
 * `node.registerSPISensor(...)` & `node.registerSPIActuator(...)` — Raw SPI register read/write
 * `node.registerGenericI2C(...)` & `node.registerI2CActuator(...)` — Raw I2C register read/write
 * `node.registerUARTSensor(...)` & `node.registerUARTActuator(...)` — Raw UART serial stream RX/TX

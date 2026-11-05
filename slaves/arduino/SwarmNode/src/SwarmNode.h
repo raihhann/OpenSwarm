@@ -6,8 +6,10 @@
 
 #if defined(ESP32)
   #include "hal/hal_esp32.h"
+#elif defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_MBED_RP2040) || defined(ARDUINO_NANO_RP2040_CONNECT) || defined(TARGET_RP2040)
+  #include "hal/hal_rp2040.h"
 #else
-  #error "Step 1 (ESP32) HAL is currently loaded. UNO, Nano, and RP2040 HALs are next!"
+  #error "Currently ESP32 and RP2040 HALs are loaded. Arduino UNO and Nano HALs are next!"
 #endif
 
 class SwarmNode {
@@ -17,7 +19,7 @@ public:
     // ------------------------------------------------------------------------
     // 1. Network Setup
     // ------------------------------------------------------------------------
-    bool connectWiFi(const char* ssid, const char* password, uint32_t timeout_ms = 15000);
+    bool connectWiFi(const char* ssid, const char* password, uint32_t timeout_ms = 20000);
 
     // ------------------------------------------------------------------------
     // 2. Standard Actuator Registration API (Motors, Servos, Steppers, GPIO)
@@ -41,15 +43,26 @@ public:
     // ------------------------------------------------------------------------
     // 3. Standard Sensor Registration API
     // ------------------------------------------------------------------------
+    // Distance / Range:
     bool registerUltrasonic(const char* name, uint8_t trigPin, uint8_t echoPin);
     bool registerVL53L0X(const char* name, uint8_t i2cAddr = 0x29, uint8_t sdaPin = 255, uint8_t sclPin = 255);
+
+    // Wheel Odometry / Encoders (Hardware Interrupts):
     bool registerQuadratureEncoder(const char* name, uint8_t pinA, uint8_t pinB);
     bool registerTachometer(const char* name, uint8_t pin);
+
+    // Inertial (6-DOF IMU) & Power Monitors (I2C):
     bool registerMPU6050(const char* name, uint8_t i2cAddr = 0x68, uint8_t sdaPin = 255, uint8_t sclPin = 255);
+    bool registerLSM6DSOX(const char* name, uint8_t i2cAddr = 0x6A, uint8_t sdaPin = 255, uint8_t sclPin = 255);
+    bool registerOnboardIMU(const char* name = "imu"); // Built-in 6-Axis IMU on Nano RP2040 Connect (0x6A)
     bool registerINA219(const char* name, uint8_t i2cAddr = 0x40, uint8_t sdaPin = 255, uint8_t sclPin = 255);
+
+    // Digital / Contact / IR / Line / Hall / PIR:
     bool registerBumper(const char* name, uint8_t pin, bool pullup = true);
     bool registerDigitalInput(const char* name, uint8_t pin, bool pullup = false);
     bool registerIRSensor(const char* name, uint8_t pin, bool pullup = false);
+
+    // Analog / Environmental / Touch / System:
     bool registerAnalogInput(const char* name, uint8_t pin);
     bool registerBatteryVoltage(const char* name, uint8_t adcPin);
     bool registerTouchPin(const char* name, uint8_t touchPin);
@@ -57,7 +70,7 @@ public:
     bool registerWiFiRSSI(const char* name = "rssi");
 
     // ------------------------------------------------------------------------
-    // 4. Universal Protocol & Custom Hardware API (UART, I2C, SPI, LoRa, Custom)
+    // 4. Universal Bus Protocols & Custom Hardware API (I2C, SPI, UART, Custom)
     // ------------------------------------------------------------------------
     // I2C Protocol (Read & Write any I2C Sensor/Actuator):
     bool registerGenericI2C(const char* name, uint8_t i2cAddr, uint8_t regAddr, uint8_t numBytes = 2,
@@ -72,18 +85,11 @@ public:
                              uint8_t sckPin = 255, uint8_t misoPin = 255, uint8_t mosiPin = 255,
                              uint32_t clockHz = 1000000UL);
 
-    // UART Protocol (GPS, UART LiDAR, RS485, Serial Transceivers):
-    bool registerUARTSensor(const char* name, uint8_t rxPin, uint8_t txPin,
-                            uint32_t baud = 9600, uint8_t uartNum = 2);
-    bool registerUARTActuator(const char* name, uint8_t rxPin, uint8_t txPin,
-                              uint32_t baud = 9600, uint8_t uartNum = 2);
-
-    // LoRa Transceivers (Both UART LoRa like E32/RYLR998 AND SPI LoRa like SX1276/SX1278/RFM95):
-    bool registerLoRaUART(const char* name, uint8_t rxPin, uint8_t txPin,
-                          uint32_t baud = 9600, uint8_t m0Pin = 255, uint8_t m1Pin = 255, uint8_t uartNum = 2);
-    bool registerLoRaSPI(const char* name, uint8_t csPin, uint8_t rstPin = 255, uint8_t irqPin = 255,
-                         uint32_t freqHz = 868000000UL,
-                         uint8_t sckPin = 255, uint8_t misoPin = 255, uint8_t mosiPin = 255);
+    // UART Protocol (UART LiDAR, GPS, RS485, Serial Transceivers):
+    bool registerUARTSensor(const char* name, uint8_t rxPin = 255, uint8_t txPin = 255,
+                            uint32_t baud = 9600, uint8_t uartNum = 1);
+    bool registerUARTActuator(const char* name, uint8_t rxPin = 255, uint8_t txPin = 255,
+                              uint32_t baud = 9600, uint8_t uartNum = 1);
 
     // User-Defined Custom Callbacks (For ANY 3rd-party library or custom protocol — loop() stays empty!):
     bool registerCustomSensor(const char* name, SwarmCustomSensorFn readCallback);
@@ -95,7 +101,7 @@ public:
     // ------------------------------------------------------------------------
     void start();
 
-    // Internal tick called by background FreeRTOS task
+    // Internal tick called by background RTOS / multicore daemon
     void _backgroundTick();
 
 private:

@@ -1,12 +1,11 @@
 /*
- * SwarmNode — Universal Bus Protocols (LoRa, SPI, I2C, UART) & Custom Driver Example
+ * SwarmNode — Universal Bus Protocols (SPI, I2C, UART) & Custom Driver Example
  *
- * Shows how a user can connect ANY sensor or actuator over:
- *  1. LoRa (both SPI SX1276/SX1278/RFM95 AND UART E32/RYLR998 LoRa modules)
- *  2. Raw SPI Bus (Thermocouples, Magnetic Encoders, SPI DACs)
- *  3. Raw I2C Bus (Any I2C sensor or I2C port expander/driver)
- *  4. Raw UART Bus (GPS, UART LiDAR, RS485, Barcode scanners)
- *  5. Custom User Callbacks (Bring any 3rd-party library while keeping loop() 100% EMPTY!)
+ * Shows how a user can connect ANY sensor, actuator, or external transceiver over:
+ *  1. Generic UART Bus (UART LiDAR, GPS, RS485, or UART LoRa transceivers like E32/RYLR998)
+ *  2. Generic I2C Bus (Any I2C sensor register or I2C actuator/port-expander like PCA9685)
+ *  3. Generic SPI Bus (Thermocouples, Magnetic Encoders, SPI DACs, or SPI transceivers)
+ *  4. Custom User Callbacks (Bring any 3rd-party C++ library while keeping loop() 100% EMPTY!)
  */
 
 #include <SwarmNode.h> // Or: #include <OpenSwarm.h>
@@ -17,40 +16,33 @@ void setup() {
     node.connectWiFi("YOUR_WIFI_SSID", "YOUR_WIFI_PASSWORD");
 
     // ------------------------------------------------------------------------
-    // 1. LoRa Support (SPI SX1276/SX1278 OR UART LoRa E32/RYLR998)
+    // 1. Generic UART Sensor & Actuator (e.g. UART LiDAR, GPS, RS485, UART LoRa)
     // ------------------------------------------------------------------------
-    // Option A: SPI LoRa (CS=5, RST=14, IRQ=2, 868MHz, SCK=18, MISO=19, MOSI=23)
-    node.registerLoRaSPI("lora_radio", 5, 14, 2, 868000000UL, 18, 19, 23);
-
-    // Option B: UART LoRa (RX=16, TX=17, Baud=9600, M0=4, M1=15, UART2)
-    // node.registerLoRaUART("lora_uart", 16, 17, 9600, 4, 15, 2);
-
-    // ------------------------------------------------------------------------
-    // 2. Generic SPI Sensor & Actuator
-    // ------------------------------------------------------------------------
-    // Read 2 bytes from register 0x00 on SPI device with CS=15
-    // node.registerSPISensor("spi_temp", 15, 0x00, 2);
-    // Write [reg, val] commands from Linux Master to SPI device on CS=15
-    // node.registerSPIActuator("spi_dac", 15);
+    // Streams incoming serial values on RX=16, TX=17 to the Linux Master:
+    node.registerUARTSensor("uart_rx", 16, 17, 9600, 2);
+    // Transmits any string/bytes sent by the Linux Master (`bot.send_bus("uart_tx", data="...")`):
+    node.registerUARTActuator("uart_tx", 16, 17, 9600, 2);
 
     // ------------------------------------------------------------------------
-    // 3. Generic I2C Sensor & Actuator
+    // 2. Generic I2C Sensor & Actuator (Works with ANY I2C device or transceiver)
     // ------------------------------------------------------------------------
-    // Read 2 bytes from register 0xFA on I2C device 0x76 (SDA=21, SCL=22)
-    // node.registerGenericI2C("bme_raw", 0x76, 0xFA, 2, 21, 22);
-    // Write [reg, val] commands from Linux Master to I2C chip 0x40 (e.g. PCA9685)
-    // node.registerI2CActuator("i2c_pwm_chip", 0x40, 21, 22);
+    // Read 2 bytes from register 0xFA on I2C address 0x76 (SDA=21, SCL=22) at 20Hz:
+    node.registerGenericI2C("i2c_sensor", 0x76, 0xFA, 2, 21, 22);
+    // Write [reg, val] commands from Linux Master (`bot.write_reg("i2c_chip", reg, val)`):
+    node.registerI2CActuator("i2c_chip", 0x40, 21, 22);
 
     // ------------------------------------------------------------------------
-    // 4. Generic UART Sensor & Actuator (e.g. UART LiDAR, GPS, RS485)
+    // 3. Generic SPI Sensor & Actuator
     // ------------------------------------------------------------------------
-    // node.registerUARTSensor("uart_lidar", 16, 17, 115200, 2);
-    // node.registerUARTActuator("rs485_tx", 16, 17, 115200, 2);
+    // Read 2 bytes from register 0x00 on SPI device with CS=5 (SCK=18, MISO=19, MOSI=23):
+    // node.registerSPISensor("spi_sensor", 5, 0x00, 2, 18, 19, 23);
+    // Write [reg, val] commands from Linux Master to SPI device on CS=5:
+    // node.registerSPIActuator("spi_act", 5, 18, 19, 23);
 
     // ------------------------------------------------------------------------
-    // 5. Custom User Callbacks (For ANY custom protocol / 3rd-party library)
+    // 4. Custom User Callbacks (For ANY custom protocol / 3rd-party library)
     // ------------------------------------------------------------------------
-    // Runs automatically at 20Hz in the background FreeRTOS task:
+    // Runs automatically at 20Hz in the background daemon:
     node.registerCustomSensor("custom_sensor", []() -> float {
         return (float)millis() * 0.001f; // Replace with any custom hardware read!
     });

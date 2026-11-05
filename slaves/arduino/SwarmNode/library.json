@@ -1,6 +1,6 @@
 {
   "name": "SwarmNode",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Zero-Control-Logic Hardware Declaration Slave Library for the OpenSwarm Distributed Robotics Framework. Declare Wi-Fi and hardware pins in setup(), leave loop() 100% empty, and run all control logic on a Linux Master.",
   "keywords": [
     "robotics",

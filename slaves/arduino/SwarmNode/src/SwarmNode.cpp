@@ -14,7 +14,9 @@ bool SwarmNode::connectWiFi(const char* ssid, const char* password, uint32_t tim
     Serial.println();
     Serial.print("[SwarmNode] Connecting node '");
     Serial.print(_nodeId);
-    Serial.print("' to Wi-Fi: ");
+    Serial.print("' (");
+    Serial.print(SwarmHAL::boardName());
+    Serial.print(") to Wi-Fi: ");
     Serial.println(ssid);
 
     bool ok = SwarmHAL::connectNetwork(ssid, password, timeout_ms);
@@ -188,6 +190,24 @@ bool SwarmNode::registerMPU6050(const char* name, uint8_t i2cAddr, uint8_t sdaPi
     return true;
 }
 
+bool SwarmNode::registerLSM6DSOX(const char* name, uint8_t i2cAddr, uint8_t sdaPin, uint8_t sclPin) {
+    if (_sensorCount >= SWARM_MAX_SENSORS) return false;
+    SensorDescriptor& sens = _sensors[_sensorCount++];
+    sens.type = SENS_LSM6DSOX;
+    strncpy(sens.name, name, sizeof(sens.name) - 1);
+    sens.i2c_addr = i2cAddr;
+    sens.pins[0] = sdaPin;
+    sens.pins[1] = sclPin;
+    sens.value_count = 6;
+    SwarmHAL::setupSensor(sens);
+    return true;
+}
+
+bool SwarmNode::registerOnboardIMU(const char* name) {
+    // Default I2C address 0x6A for Arduino Nano RP2040 Connect onboard LSM6DSOX
+    return registerLSM6DSOX(name, 0x6A, 255, 255);
+}
+
 bool SwarmNode::registerINA219(const char* name, uint8_t i2cAddr, uint8_t sdaPin, uint8_t sclPin) {
     if (_sensorCount >= SWARM_MAX_SENSORS) return false;
     SensorDescriptor& sens = _sensors[_sensorCount++];
@@ -266,7 +286,7 @@ bool SwarmNode::registerWiFiRSSI(const char* name) {
 }
 
 // ============================================================================
-// UNIVERSAL BUS PROTOCOLS & CUSTOM HARDWARE (I2C, SPI, UART, LoRa, Custom)
+// UNIVERSAL BUS PROTOCOLS & CUSTOM HARDWARE (I2C, SPI, UART, Custom)
 // ============================================================================
 
 bool SwarmNode::registerGenericI2C(const char* name, uint8_t i2cAddr, uint8_t regAddr, uint8_t numBytes,
@@ -350,65 +370,10 @@ bool SwarmNode::registerUARTActuator(const char* name, uint8_t rxPin, uint8_t tx
     strncpy(act.name, name, sizeof(act.name) - 1);
     act.pins[0] = rxPin;
     act.pins[1] = txPin;
-    act.pins[2] = 255;
-    act.pins[3] = 255;
     act.bus_addr = uartNum;
     act.bus_freq = baud;
     SwarmHAL::setupActuator(act);
     return true;
-}
-
-bool SwarmNode::registerLoRaUART(const char* name, uint8_t rxPin, uint8_t txPin,
-                                 uint32_t baud, uint8_t m0Pin, uint8_t m1Pin, uint8_t uartNum) {
-    // Registers BOTH a UART TX Actuator and UART RX Sensor under the given name
-    if (_actuatorCount < SWARM_MAX_ACTUATORS) {
-        ActuatorDescriptor& act = _actuators[_actuatorCount++];
-        act.type = ACT_UART_BUS;
-        strncpy(act.name, name, sizeof(act.name) - 1);
-        act.pins[0] = rxPin;
-        act.pins[1] = txPin;
-        act.pins[2] = m0Pin;
-        act.pins[3] = m1Pin;
-        act.bus_addr = uartNum;
-        act.bus_freq = baud;
-        SwarmHAL::setupActuator(act);
-    }
-    if (_sensorCount < SWARM_MAX_SENSORS) {
-        SensorDescriptor& sens = _sensors[_sensorCount++];
-        sens.type = SENS_UART_BUS;
-        strncpy(sens.name, name, sizeof(sens.name) - 1);
-        sens.pins[0] = rxPin;
-        sens.pins[1] = txPin;
-        sens.i2c_addr = uartNum;
-        sens.bus_freq = baud;
-        return true;
-    }
-    return false;
-}
-
-bool SwarmNode::registerLoRaSPI(const char* name, uint8_t csPin, uint8_t rstPin, uint8_t irqPin,
-                                uint32_t freqHz, uint8_t sckPin, uint8_t misoPin, uint8_t mosiPin) {
-    // Registers SX1276/SX1278/RFM95 SPI LoRa as both TX Actuator and RX Sensor [val, rssi_dBm]
-    if (_actuatorCount < SWARM_MAX_ACTUATORS) {
-        ActuatorDescriptor& act = _actuators[_actuatorCount++];
-        act.type = ACT_LORA_SPI;
-        strncpy(act.name, name, sizeof(act.name) - 1);
-        act.pins[0] = csPin; act.pins[1] = rstPin; act.pins[2] = irqPin;
-        act.pins[3] = sckPin; act.pins[4] = misoPin; act.pins[5] = mosiPin;
-        act.bus_freq = freqHz;
-        SwarmHAL::setupActuator(act);
-    }
-    if (_sensorCount < SWARM_MAX_SENSORS) {
-        SensorDescriptor& sens = _sensors[_sensorCount++];
-        sens.type = SENS_LORA_SPI;
-        strncpy(sens.name, name, sizeof(sens.name) - 1);
-        sens.pins[0] = csPin; sens.pins[1] = rstPin; sens.pins[2] = irqPin;
-        sens.pins[3] = sckPin; sens.pins[4] = misoPin; sens.pins[5] = mosiPin;
-        sens.bus_freq = freqHz;
-        sens.value_count = 2;
-        return true;
-    }
-    return false;
 }
 
 bool SwarmNode::registerCustomSensor(const char* name, SwarmCustomSensorFn readCallback) {
@@ -441,8 +406,10 @@ bool SwarmNode::registerCustomActuator(const char* name, SwarmCustomActuatorFn w
 }
 
 // ============================================================================
-// BACKGROUND DAEMON STARTUP
+// BACKGROUND DAEMON STARTUP (ESP32 FreeRTOS & RP2040 Mbed RTOS / Core 1)
 // ============================================================================
+
+static SwarmNode* _activeSwarmNode = nullptr;
 
 #if defined(ESP32)
 static void swarmEsp32Task(void* param) {
@@ -452,11 +419,31 @@ static void swarmEsp32Task(void* param) {
         vTaskDelay(pdMS_TO_TICKS(2));
     }
 }
+#elif defined(ARDUINO_NANO_RP2040_CONNECT) || defined(ARDUINO_ARCH_MBED)
+static rtos::Thread* _rp2040Thread = nullptr;
+static void swarmRp2040MbedTask() {
+    for (;;) {
+        if (_activeSwarmNode) {
+            _activeSwarmNode->_backgroundTick();
+        }
+        rtos::ThisThread::sleep_for(std::chrono::milliseconds(2));
+    }
+}
+#elif defined(ARDUINO_ARCH_RP2040) || defined(TARGET_RP2040)
+static void swarmRp2040Core1Task() {
+    for (;;) {
+        if (_activeSwarmNode) {
+            _activeSwarmNode->_backgroundTick();
+        }
+        delay(2);
+    }
+}
 #endif
 
 void SwarmNode::start() {
     _udp.begin(_udpPort);
     _lastMasterPacketMs = millis();
+    _activeSwarmNode = this;
 
     Serial.print("[SwarmNode] Registered ");
     Serial.print(_actuatorCount);
@@ -474,6 +461,11 @@ void SwarmNode::start() {
         NULL,
         0
     );
+#elif defined(ARDUINO_NANO_RP2040_CONNECT) || defined(ARDUINO_ARCH_MBED)
+    _rp2040Thread = new rtos::Thread(osPriorityNormal, 4096);
+    _rp2040Thread->start(mbed::callback(swarmRp2040MbedTask));
+#elif defined(ARDUINO_ARCH_RP2040) || defined(TARGET_RP2040)
+    multicore_launch_core1(swarmRp2040Core1Task);
 #endif
 }
 
@@ -679,7 +671,7 @@ bool SwarmNode::_extractInt(const char* json, const char* key, int16_t& outVal) 
     p = strchr(p + strlen(pattern), ':');
     if (!p) return false;
     p++;
-    while (*p == ' ' || *p == '\\t') p++;
+    while (*p == ' ' || *p == '\t') p++;
     outVal = (int16_t)atoi(p);
     return true;
 }

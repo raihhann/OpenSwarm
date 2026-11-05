@@ -153,18 +153,17 @@ OpenSwarm supports both dedicated 1-line robotics drivers and **universal bus pa
 | `registerVL53L0X(name, i2cAddr, sda, scl)` | `VL53L0X` I2C Laser ToF Rangefinder | Distance in `mm` (`float`) |
 | `registerQuadratureEncoder(name, pinA, pinB)` | Hardware Interrupt Wheel Encoder | Cumulative ticks (`float`) |
 | `registerTachometer(name, pin)` | Optical / Hall Speed Sensor | Pulse count (`float`) |
-| `registerMPU6050(name, i2cAddr, sda, scl)` | 6-Axis I2C IMU (Accel + Gyro) | `[ax, ay, az, gx, gy, gz]` (`g`, `deg/s`) |
+| `registerMPU6050(name, i2cAddr, sda, scl)` | 6-Axis I2C IMU (`MPU6050` Accel + Gyro) | `[ax, ay, az, gx, gy, gz]` (`g`, `deg/s`) |
+| `registerLSM6DSOX(name, i2cAddr, sda, scl)` / `registerOnboardIMU(name)` | 6-Axis I2C IMU (Onboard Nano RP2040 Connect / `LSM6DS`) | `[ax, ay, az, gx, gy, gz]` (`g`, `deg/s`) |
 | `registerINA219(name, i2cAddr, sda, scl)` | I2C Bus Voltage & Current Monitor | `[voltage_V, current_mA]` |
 | `registerDHT(name, pin, model)` | `DHT11` / `DHT22` Temp & Humidity | `[temp_C, humidity_%]` |
 | `registerBumper(name, pin, pullup)` | Contact Limit Switch / Microswitch | `1.0` (pressed) or `0.0` |
 | `registerIRSensor(name, pin)` / `registerDigitalInput()` | IR Obstacle, Line, PIR, Hall Sensor | `1.0` or `0.0` |
 | `registerAnalogInput(name, pin)` / `registerBatteryVoltage()` | 12-bit ADC (Battery, FSR, LDR, Pot) | Raw ADC `0–4095` |
-| `registerTouchPin(name, touchPin)` | ESP32 Capacitive Touch Pin | Touch reading |
+| `registerTouchPin(name, touchPin)` | Capacitive Touch Pin | Touch reading |
 | `registerGenericI2C(name, addr, reg, len, sda, scl)` | **Any I2C Sensor** (`BME280`, `BH1750`, etc.) | Register value (`1–4` bytes) |
 | `registerSPISensor(name, cs, reg, len, sck, miso, mosi)` | **Any SPI Sensor** (`MAX6675`, `AS5048A`, etc.) | Register value (`1–4` bytes) |
-| `registerUARTSensor(name, rx, tx, baud, uartNum)` | **Any UART Sensor** (`TFMini LiDAR`, `GPS`) | Parsed float stream |
-| `registerLoRaSPI(name, cs, rst, irq, freqHz, ...)` | `SX1276` / `SX1278` / `RFM95` SPI LoRa | RX `[val, rssi_dBm]` + TX packets |
-| `registerLoRaUART(name, rx, tx, baud, m0, m1)` | `Ebyte E32` / `RYLR998` UART LoRa | RX stream + TX packets |
+| `registerUARTSensor(name, rx, tx, baud, uartNum)` | **Any UART Sensor / Transceiver** (`LiDAR`, `GPS`, `RS485`) | Parsed float stream |
 | `registerCustomSensor(name, callback)` | **Any 3rd-Party Arduino Library** | 20 Hz callback value(s) |
 | `registerWiFiRSSI(name)` | Onboard Wi-Fi Signal Strength | Signal in `dBm` |
 
@@ -246,9 +245,9 @@ OpenSwarm/
 
 - [x] **Step 1:** ESP32 Slave Library (`hal_esp32.h` — Full Sensor, Actuator, Bus & Custom Driver Suite)
 - [x] **Master Core:** Linux Master Python SDK & CLI (`openswarm-master`) + Live Hardware Verification
-- [ ] **Step 2:** Arduino UNO Slave Support (`hal_uno.h`)
-- [ ] **Step 3:** Arduino Nano Slave Support (`hal_nano.h`)
-- [ ] **Step 4:** RP2040 Slave Support (`hal_rp2040.h` — Arduino Nano RP2040 Connect / Pico W)
+- [x] **Step 2 (RP2040):** RP2040 Slave Support (`hal_rp2040.h` — Arduino Nano RP2040 Connect / Pico W + Onboard 6-Axis IMU)
+- [ ] **Step 3:** Arduino UNO Slave Support (`hal_uno.h`)
+- [ ] **Step 4:** Arduino Nano Slave Support (`hal_nano.h`)
 - [ ] **Step 5:** Linux Slave Agent (`slaves/linux/` for Arduino UNO Q, Portenta X8, and Raspberry Pi)
 - [ ] **Step 6:** Flagship Application — **Ant-Colony Micro-Tugs** (Cooperative Multi-Robot Heavy Payload Manipulation)
 

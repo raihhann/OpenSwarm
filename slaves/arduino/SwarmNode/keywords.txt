@@ -30,6 +30,8 @@ registerVL53L0X	KEYWORD2
 registerQuadratureEncoder	KEYWORD2
 registerTachometer	KEYWORD2
 registerMPU6050	KEYWORD2
+registerLSM6DSOX	KEYWORD2
+registerOnboardIMU	KEYWORD2
 registerINA219	KEYWORD2
 registerGenericI2C	KEYWORD2
 registerI2CActuator	KEYWORD2
@@ -37,8 +39,6 @@ registerSPISensor	KEYWORD2
 registerSPIActuator	KEYWORD2
 registerUARTSensor	KEYWORD2
 registerUARTActuator	KEYWORD2
-registerLoRaUART	KEYWORD2
-registerLoRaSPI	KEYWORD2
 registerCustomSensor	KEYWORD2
 registerCustomSensorMulti	KEYWORD2
 registerCustomActuator	KEYWORD2

@@ -1,6 +1,22 @@
+#define SWARM_NODE_CPP_INTERNAL 1
 #include "SwarmNode.h"
 #include <string.h>
 #include <stdlib.h>
+
+static SwarmNode* _activeSwarmNode = nullptr;
+
+// On single-core boards (Arduino UNO & Nano families), provide the real `loop()`
+// entry point that runs the background network/telemetry tick and then calls the
+// user's (empty) `_swarmUserLoop()`.
+#if !SWARM_HAS_RTOS_DAEMON
+extern void _swarmUserLoop();
+void loop() {
+    if (_activeSwarmNode) {
+        _activeSwarmNode->_backgroundTick();
+    }
+    _swarmUserLoop();
+}
+#endif
 
 SwarmNode::SwarmNode(const char* node_id, uint16_t udp_port)
     : _udpPort(udp_port) {
@@ -16,19 +32,25 @@ bool SwarmNode::connectWiFi(const char* ssid, const char* password, uint32_t tim
     Serial.print(_nodeId);
     Serial.print("' (");
     Serial.print(SwarmHAL::boardName());
-    Serial.print(") to Wi-Fi: ");
+    Serial.print(") to network: ");
     Serial.println(ssid);
 
     bool ok = SwarmHAL::connectNetwork(ssid, password, timeout_ms);
     if (ok) {
-        Serial.print("[SwarmNode] Connected! IP: ");
+        Serial.print("[SwarmNode] Ready! Transport: ");
         Serial.print(SwarmHAL::localIP());
-        Serial.print(" | UDP Port: ");
+        Serial.print(" | Port: ");
         Serial.println(_udpPort);
     } else {
-        Serial.println("[SwarmNode] ERROR: Wi-Fi connection timed out!");
+        Serial.println("[SwarmNode] ERROR: Network connection timed out!");
     }
     return ok;
+}
+
+bool SwarmNode::connectSerial(uint32_t baud) {
+    Serial.begin(baud);
+    delay(100);
+    return true;
 }
 
 // ============================================================================
@@ -204,7 +226,6 @@ bool SwarmNode::registerLSM6DSOX(const char* name, uint8_t i2cAddr, uint8_t sdaP
 }
 
 bool SwarmNode::registerOnboardIMU(const char* name) {
-    // Default I2C address 0x6A for Arduino Nano RP2040 Connect onboard LSM6DSOX
     return registerLSM6DSOX(name, 0x6A, 255, 255);
 }
 
@@ -406,10 +427,8 @@ bool SwarmNode::registerCustomActuator(const char* name, SwarmCustomActuatorFn w
 }
 
 // ============================================================================
-// BACKGROUND DAEMON STARTUP (ESP32 FreeRTOS & RP2040 Mbed RTOS / Core 1)
+// BACKGROUND DAEMON STARTUP
 // ============================================================================
-
-static SwarmNode* _activeSwarmNode = nullptr;
 
 #if defined(ESP32)
 static void swarmEsp32Task(void* param) {
@@ -419,7 +438,7 @@ static void swarmEsp32Task(void* param) {
         vTaskDelay(pdMS_TO_TICKS(2));
     }
 }
-#elif defined(ARDUINO_NANO_RP2040_CONNECT) || defined(ARDUINO_ARCH_MBED)
+#elif defined(ARDUINO_NANO_RP2040_CONNECT) || defined(ARDUINO_ARCH_MBED_RP2040)
 static rtos::Thread* _rp2040Thread = nullptr;
 static void swarmRp2040MbedTask() {
     for (;;) {
@@ -461,7 +480,7 @@ void SwarmNode::start() {
         NULL,
         0
     );
-#elif defined(ARDUINO_NANO_RP2040_CONNECT) || defined(ARDUINO_ARCH_MBED)
+#elif defined(ARDUINO_NANO_RP2040_CONNECT) || defined(ARDUINO_ARCH_MBED_RP2040)
     _rp2040Thread = new rtos::Thread(osPriorityNormal, 4096);
     _rp2040Thread->start(mbed::callback(swarmRp2040MbedTask));
 #elif defined(ARDUINO_ARCH_RP2040) || defined(TARGET_RP2040)
@@ -501,7 +520,7 @@ void SwarmNode::_handleIncomingPacket() {
     int packetSize = _udp.parsePacket();
     if (packetSize <= 0) return;
 
-    char buf[256];
+    char buf[160];
     int len = _udp.read(buf, sizeof(buf) - 1);
     if (len <= 0) return;
     buf[len] = '\0';
@@ -530,7 +549,7 @@ void SwarmNode::_processCommand(const char* json, IPAddress senderIP, uint16_t s
     }
 
     if (strcmp(cmd, "ACT") == 0) {
-        char targetName[20] = {0};
+        char targetName[16] = {0};
         if (!_extractString(json, "name", targetName, sizeof(targetName))) return;
 
         int16_t v1 = 0, v2 = 0;
@@ -553,7 +572,7 @@ void SwarmNode::_processCommand(const char* json, IPAddress senderIP, uint16_t s
             }
         }
 
-        char dataPayload[64] = {0};
+        char dataPayload[32] = {0};
         _extractString(json, "data", dataPayload, sizeof(dataPayload));
 
         for (uint8_t i = 0; i < _actuatorCount; i++) {
@@ -581,7 +600,7 @@ void SwarmNode::_processCommand(const char* json, IPAddress senderIP, uint16_t s
 }
 
 void SwarmNode::_sendHelloBroadcast() {
-    char msg[512];
+    char msg[256];
     int offset = snprintf(msg, sizeof(msg),
         "{\"type\":\"HELLO\",\"node\":\"%s\",\"board\":\"%s\",\"ip\":\"%s\",\"port\":%u,\"actuators\":[",
         _nodeId, SwarmHAL::boardName(), SwarmHAL::localIP().c_str(), _udpPort);
@@ -606,7 +625,7 @@ void SwarmNode::_sendHelloBroadcast() {
 void SwarmNode::_sendTelemetry() {
     if (!_masterConnected || _masterPort == 0) return;
 
-    char msg[640];
+    char msg[320];
     int offset = snprintf(msg, sizeof(msg),
         "{\"type\":\"STATE\",\"node\":\"%s\",\"uptime_ms\":%lu,\"sensors\":{",
         _nodeId, (unsigned long)millis());
@@ -614,14 +633,18 @@ void SwarmNode::_sendTelemetry() {
     for (uint8_t i = 0; i < _sensorCount; i++) {
         SwarmHAL::readSensor(_sensors[i]);
         if (_sensors[i].value_count <= 1) {
+            int32_t scaled = (int32_t)(_sensors[i].values[0] * 100.0f);
             offset += snprintf(msg + offset, sizeof(msg) - offset,
-                "%s\"%s\":%.2f", (i > 0 ? "," : ""), _sensors[i].name, _sensors[i].values[0]);
+                "%s\"%s\":%ld.%02ld", (i > 0 ? "," : ""), _sensors[i].name,
+                (long)(scaled / 100), (long)abs(scaled % 100));
         } else {
             offset += snprintf(msg + offset, sizeof(msg) - offset,
                 "%s\"%s\":[", (i > 0 ? "," : ""), _sensors[i].name);
             for (uint8_t k = 0; k < _sensors[i].value_count; k++) {
+                int32_t scaled = (int32_t)(_sensors[i].values[k] * 100.0f);
                 offset += snprintf(msg + offset, sizeof(msg) - offset,
-                    "%s%.2f", (k > 0 ? "," : ""), _sensors[i].values[k]);
+                    "%s%ld.%02ld", (k > 0 ? "," : ""),
+                    (long)(scaled / 100), (long)abs(scaled % 100));
             }
             offset += snprintf(msg + offset, sizeof(msg) - offset, "]");
         }

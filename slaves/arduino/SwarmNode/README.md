@@ -3,9 +3,15 @@
 **SwarmNode** is the microcontroller Slave library for the [**OpenSwarm**](https://github.com/raihhann/OpenSwarm) Distributed Robotics Framework.
 
 ### Core Rule
-* **Slaves ONLY declare Wi-Fi/Network, Node ID, and attached sensor/actuator pins inside `setup()`.**
+* **Slaves ONLY declare Wi-Fi/Serial, Node ID, and attached sensor/actuator pins inside `setup()`.**
 * **`void loop()` is 100% empty.**
 * **100% of robot control logic runs remotely on the Linux Master (`openswarm-master`).**
+
+### Supported Microcontroller Families (`v0.3.0`)
+* **ESP32 Family (`hal_esp32.h`):** `ESP32`, `ESP32-S2`, `ESP32-S3`, `ESP32-C3` (FreeRTOS Core 0 daemon)
+* **RP2040 Family (`hal_rp2040.h`):** `Arduino Nano RP2040 Connect` (`WiFiNINA` + Mbed RTOS thread + onboard `LSM6DSOX` 6-axis IMU) & `Raspberry Pi Pico W` (`WiFi.h` + Core 1 daemon)
+* **Arduino UNO Family (`hal_uno.h`):** `Arduino UNO R4 WiFi` (`WiFiS3`), `Arduino UNO WiFi Rev2` (`WiFiNINA` + onboard `LSM6DS3` IMU), `Arduino UNO R3` / `R4 Minima` (`connectSerial(115200)`)
+* **Arduino Nano Family (`hal_nano.h`):** `Arduino Nano 33 IoT` (`WiFiNINA` + onboard `LSM6DS3` IMU), `Arduino Nano Every`, `Classic Arduino Nano ATmega328P` (`connectSerial(115200)`)
 
 ---
 

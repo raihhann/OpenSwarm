@@ -3,7 +3,7 @@
 <p align="center">
   <a href="https://pypi.org/project/openswarm-master/"><img src="https://img.shields.io/pypi/v/openswarm-master?style=for-the-badge&label=PyPI%20openswarm-master&color=3775A9" alt="PyPI openswarm-master" /></a>
   <a href="https://pypi.org/project/openswarm-slave/"><img src="https://img.shields.io/pypi/v/openswarm-slave?style=for-the-badge&label=PyPI%20openswarm-slave&color=0F766E" alt="PyPI openswarm-slave" /></a>
-  <a href="https://github.com/raihhann/OpenSwarm/tree/SwarmNode"><img src="https://img.shields.io/badge/Arduino%20Library-SwarmNode%20v0.2.0-00878F?style=for-the-badge&logo=arduino" alt="Arduino Library" /></a>
+  <a href="https://github.com/raihhann/OpenSwarm/tree/SwarmNode"><img src="https://img.shields.io/badge/Arduino%20Library-SwarmNode%20v0.3.0-00878F?style=for-the-badge&logo=arduino" alt="Arduino Library" /></a>
   <img src="https://img.shields.io/badge/Architecture-Klipper--Style%20Remote%20HAL-0A66C2?style=for-the-badge" alt="Architecture" />
   <img src="https://img.shields.io/badge/Slave%20Loop-100%25%20Empty-2EA043?style=for-the-badge" alt="Zero Slave Logic" />
 </p>
@@ -199,7 +199,7 @@ OpenSwarm supports both dedicated 1-line robotics drivers and **universal bus pa
 #### Option B: PlatformIO (`platformio.ini`)
 ```ini
 lib_deps =
-    raihann/SwarmNode@^0.2.0
+    raihann/SwarmNode@^0.3.0
 ```
 
 ---
@@ -256,11 +256,18 @@ OpenSwarm/
 │   │       │   ├── SwarmNode.cpp
 │   │       │   ├── SwarmTypes.h
 │   │       │   └── hal/
-│   │       │       └── hal_esp32.h
+│   │       │       ├── hal_esp32.h     # ESP32 / S2 / S3 / C3 HAL
+│   │       │       ├── hal_rp2040.h    # Arduino Nano RP2040 Connect / Pico W HAL
+│   │       │       ├── hal_uno.h       # Arduino UNO R4 WiFi / WiFi Rev2 / R3 HAL
+│   │       │       └── hal_nano.h      # Arduino Nano 33 IoT / Every / Classic HAL
 │   │       └── examples/
 │   │           ├── ESP32_LED_Test/
 │   │           ├── ESP32_SlaveNode/
-│   │           └── ESP32_CustomProtocols/
+│   │           ├── ESP32_CustomProtocols/
+│   │           ├── RP2040_LED_Test/
+│   │           ├── RP2040_SlaveNode/
+│   │           ├── UNO_SlaveNode/
+│   │           └── Nano_SlaveNode/
 │   └── linux/                      # Linux SBC Slave Agent (UNO Q, Portenta X8, Raspberry Pi)
 ├── master/                         # Central Linux Master Python SDK & CLI (`openswarm-master`)
 │   ├── pyproject.toml
@@ -275,12 +282,12 @@ OpenSwarm/
 
 ## Project Roadmap
 
-- [x] **Step 1:** ESP32 Slave Library (`hal_esp32.h` — Full Sensor, Actuator, Bus & Custom Driver Suite)
+- [x] **Step 1 (ESP32):** ESP32 Slave Library (`hal_esp32.h` — Full Sensor, Actuator, Bus & Custom Driver Suite)
 - [x] **Master Core:** Linux Master Python SDK & CLI (`openswarm-master`) + Live Hardware Verification
 - [x] **Step 2 (RP2040):** RP2040 Slave Support (`hal_rp2040.h` — Arduino Nano RP2040 Connect / Pico W + Onboard 6-Axis IMU)
 - [x] **Step 3 (Linux Slave):** Linux Slave Agent (`slaves/linux/` — `openswarm-slave` for Arduino UNO Q, Portenta X8, Raspberry Pi, Jetson, and Linux PC)
-- [ ] **Step 4:** Arduino UNO Slave Support (`hal_uno.h`)
-- [ ] **Step 5:** Arduino Nano Slave Support (`hal_nano.h`)
+- [x] **Step 4 (Arduino UNO):** Arduino UNO Slave Support (`hal_uno.h` — UNO R4 WiFi, UNO WiFi Rev2, UNO R3, UNO R4 Minima)
+- [x] **Step 5 (Arduino Nano):** Arduino Nano Slave Support (`hal_nano.h` — Nano 33 IoT, Nano Every, Classic Nano ATmega328P)
 - [ ] **Step 6:** Flagship Application — **Ant-Colony Micro-Tugs** (Cooperative Multi-Robot Heavy Payload Manipulation)
 
 ---

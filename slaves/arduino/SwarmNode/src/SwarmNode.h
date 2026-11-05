@@ -6,10 +6,25 @@
 
 #if defined(ESP32)
   #include "hal/hal_esp32.h"
+  #define SWARM_HAS_RTOS_DAEMON 1
 #elif defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_MBED_RP2040) || defined(ARDUINO_NANO_RP2040_CONNECT) || defined(TARGET_RP2040)
   #include "hal/hal_rp2040.h"
+  #define SWARM_HAS_RTOS_DAEMON 1
+#elif defined(ARDUINO_AVR_UNO) || defined(ARDUINO_UNOR4_WIFI) || defined(ARDUINO_UNOR4_MINIMA) || defined(ARDUINO_AVR_UNO_WIFI_REV2)
+  #include "hal/hal_uno.h"
+  #define SWARM_HAS_RTOS_DAEMON 0
+#elif defined(ARDUINO_AVR_NANO) || defined(ARDUINO_AVR_NANO_EVERY) || defined(ARDUINO_SAMD_NANO_33_IOT)
+  #include "hal/hal_nano.h"
+  #define SWARM_HAS_RTOS_DAEMON 0
 #else
-  #error "Currently ESP32 and RP2040 HALs are loaded. Arduino UNO and Nano HALs are next!"
+  #error "Unsupported board architecture. SwarmNode supports ESP32, RP2040, Arduino UNO, and Arduino Nano families."
+#endif
+
+// On single-core non-RTOS boards (Arduino UNO & Nano families), automatically hook
+// the Arduino main loop so the user's `void loop() {}` in their sketch stays 100% empty!
+#if !SWARM_HAS_RTOS_DAEMON && !defined(SWARM_NODE_CPP_INTERNAL)
+  void _swarmUserLoop();
+  #define loop _swarmUserLoop
 #endif
 
 class SwarmNode {
@@ -17,9 +32,10 @@ public:
     explicit SwarmNode(const char* node_id, uint16_t udp_port = SWARM_DEFAULT_PORT);
 
     // ------------------------------------------------------------------------
-    // 1. Network Setup
+    // 1. Network / Transport Setup
     // ------------------------------------------------------------------------
     bool connectWiFi(const char* ssid, const char* password, uint32_t timeout_ms = 20000);
+    bool connectSerial(uint32_t baud = 115200);
 
     // ------------------------------------------------------------------------
     // 2. Standard Actuator Registration API (Motors, Servos, Steppers, GPIO)
@@ -54,7 +70,7 @@ public:
     // Inertial (6-DOF IMU) & Power Monitors (I2C):
     bool registerMPU6050(const char* name, uint8_t i2cAddr = 0x68, uint8_t sdaPin = 255, uint8_t sclPin = 255);
     bool registerLSM6DSOX(const char* name, uint8_t i2cAddr = 0x6A, uint8_t sdaPin = 255, uint8_t sclPin = 255);
-    bool registerOnboardIMU(const char* name = "imu"); // Built-in 6-Axis IMU on Nano RP2040 Connect (0x6A)
+    bool registerOnboardIMU(const char* name = "imu"); // Built-in 6-Axis IMU on Nano RP2040 / Nano 33 IoT (0x6A)
     bool registerINA219(const char* name, uint8_t i2cAddr = 0x40, uint8_t sdaPin = 255, uint8_t sclPin = 255);
 
     // Digital / Contact / IR / Line / Hall / PIR:
@@ -72,12 +88,10 @@ public:
     // ------------------------------------------------------------------------
     // 4. Universal Bus Protocols & Custom Hardware API (I2C, SPI, UART, Custom)
     // ------------------------------------------------------------------------
-    // I2C Protocol (Read & Write any I2C Sensor/Actuator):
     bool registerGenericI2C(const char* name, uint8_t i2cAddr, uint8_t regAddr, uint8_t numBytes = 2,
                             uint8_t sdaPin = 255, uint8_t sclPin = 255);
     bool registerI2CActuator(const char* name, uint8_t i2cAddr, uint8_t sdaPin = 255, uint8_t sclPin = 255);
 
-    // SPI Protocol (Read & Write any SPI Sensor/Actuator):
     bool registerSPISensor(const char* name, uint8_t csPin, uint8_t readReg, uint8_t numBytes = 2,
                            uint8_t sckPin = 255, uint8_t misoPin = 255, uint8_t mosiPin = 255,
                            uint32_t clockHz = 1000000UL);
@@ -85,13 +99,11 @@ public:
                              uint8_t sckPin = 255, uint8_t misoPin = 255, uint8_t mosiPin = 255,
                              uint32_t clockHz = 1000000UL);
 
-    // UART Protocol (UART LiDAR, GPS, RS485, Serial Transceivers):
     bool registerUARTSensor(const char* name, uint8_t rxPin = 255, uint8_t txPin = 255,
                             uint32_t baud = 9600, uint8_t uartNum = 1);
     bool registerUARTActuator(const char* name, uint8_t rxPin = 255, uint8_t txPin = 255,
                               uint32_t baud = 9600, uint8_t uartNum = 1);
 
-    // User-Defined Custom Callbacks (For ANY 3rd-party library or custom protocol — loop() stays empty!):
     bool registerCustomSensor(const char* name, SwarmCustomSensorFn readCallback);
     bool registerCustomSensorMulti(const char* name, SwarmCustomMultiSensorFn readMultiCallback);
     bool registerCustomActuator(const char* name, SwarmCustomActuatorFn writeCallback);
@@ -101,11 +113,11 @@ public:
     // ------------------------------------------------------------------------
     void start();
 
-    // Internal tick called by background RTOS / multicore daemon
+    // Internal tick called by background daemon / auto-loop hook
     void _backgroundTick();
 
 private:
-    char _nodeId[24];
+    char _nodeId[20];
     uint16_t _udpPort;
     WiFiUDP _udp;
 

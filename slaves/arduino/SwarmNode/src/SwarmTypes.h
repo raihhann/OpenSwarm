@@ -3,9 +3,17 @@
 
 #include <Arduino.h>
 
-#define SWARM_MAX_ACTUATORS   14
-#define SWARM_MAX_SENSORS     18
-#define SWARM_MAX_ENCODERS    4
+// Optimize table sizes for 2KB SRAM 8-bit AVR boards (UNO R3 / Classic Nano)
+#if defined(__AVR__)
+  #define SWARM_MAX_ACTUATORS   6
+  #define SWARM_MAX_SENSORS     8
+  #define SWARM_MAX_ENCODERS    2
+#else
+  #define SWARM_MAX_ACTUATORS   14
+  #define SWARM_MAX_SENSORS     18
+  #define SWARM_MAX_ENCODERS    4
+#endif
+
 #define SWARM_DEFAULT_PORT    4210
 #define SWARM_DISCOVERY_PORT  4211
 #define SWARM_WATCHDOG_MS     500   // Auto-stop motors if Master is silent > 500ms
@@ -49,12 +57,12 @@ enum SensorType : uint8_t {
     SENS_TACHOMETER,    // Single-pin Optical/Hall Speed Encoder (pin) -> pulse count
     SENS_DHT,           // DHT11 / DHT22 Temperature & Humidity (pin, model 11 or 22)
     SENS_MPU6050,       // I2C 6-Axis IMU (0x68 -> ax, ay, az, gx, gy, gz)
-    SENS_LSM6DSOX,      // I2C 6-Axis IMU (0x6A -> onboard Nano RP2040 Connect / ST LSM6DS family)
+    SENS_LSM6DSOX,      // I2C 6-Axis IMU (0x6A -> onboard Nano RP2040 / Nano 33 IoT / LSM6DS)
     SENS_INA219,        // I2C Current/Voltage/Power Monitor (0x40 -> bus voltage V, current mA)
     SENS_VL53L0X,       // I2C Time-of-Flight Laser Rangefinder (0x29)
     SENS_GENERIC_I2C,   // Universal I2C Register Reader (any I2C address & register)
     SENS_SPI_DEVICE,    // Universal SPI Register Reader (CS, SCK, MISO, MOSI, reg, len)
-    SENS_UART_BUS,      // Universal UART Stream Reader (UART1/UART2 -> parses numeric/byte stream)
+    SENS_UART_BUS,      // Universal UART Stream Reader (parses numeric/byte stream)
     SENS_CUSTOM,        // User-defined 1-value custom sensor callback
     SENS_CUSTOM_MULTI,  // User-defined multi-value custom sensor callback
     SENS_WIFI_RSSI      // Onboard Wi-Fi Signal Strength (dBm)
@@ -62,9 +70,9 @@ enum SensorType : uint8_t {
 
 struct ActuatorDescriptor {
     ActuatorType type = ACT_NONE;
-    char name[20] = {0};
+    char name[16] = {0};
     uint8_t pins[6] = {0};       // GPIO / Bus pins (e.g. ENA..IN4 or CS, SCK, MISO, MOSI)
-    uint8_t bus_addr = 0;        // I2C address or UART port number (1 or 2)
+    uint8_t bus_addr = 0;        // I2C address or UART port number
     uint32_t bus_freq = 0;       // Baudrate (UART) or SPI clock Hz
     int16_t val1 = 0;            // Primary command (Left PWM / Angle / Reg / Steps / Digital)
     int16_t val2 = 0;            // Secondary command (Right PWM / Val / Step Speed)
@@ -73,7 +81,7 @@ struct ActuatorDescriptor {
 
 struct SensorDescriptor {
     SensorType type = SENS_NONE;
-    char name[20] = {0};
+    char name[16] = {0};
     uint8_t pins[6] = {0};       // GPIO / Bus pins (e.g. TRIG/ECHO, SDA/SCL, or CS/SCK/MISO/MOSI)
     uint8_t i2c_addr = 0;        // I2C address or UART port number
     uint8_t i2c_reg = 0;         // Register address to read (I2C or SPI)
@@ -86,5 +94,60 @@ struct SensorDescriptor {
     SwarmCustomSensorFn custom_fn = nullptr;
     SwarmCustomMultiSensorFn custom_multi_fn = nullptr;
 };
+
+// ============================================================================
+// SERIAL-UDP SHIM (For USB-Serial / UART Bridge Boards without Native Wi-Fi)
+// ============================================================================
+#if !defined(ESP32) && !defined(ARDUINO_ARCH_RP2040) && !defined(ARDUINO_ARCH_MBED_RP2040) && \
+    !defined(ARDUINO_NANO_RP2040_CONNECT) && !defined(TARGET_RP2040) && \
+    !defined(ARDUINO_UNOR4_WIFI) && !defined(ARDUINO_AVR_UNO_WIFI_REV2) && !defined(ARDUINO_SAMD_NANO_33_IOT)
+
+#include <IPAddress.h>
+
+class SwarmSerialUDP {
+public:
+    uint8_t begin(uint16_t) { return 1; }
+    int parsePacket() {
+        while (Serial.available() > 0) {
+            char c = (char)Serial.read();
+            if (c == '\r') continue;
+            if (c == '\n') {
+                if (_rxLen > 0) {
+                    _rxBuf[_rxLen] = '\0';
+                    int ready = _rxLen;
+                    _rxReadyLen = ready;
+                    _rxLen = 0;
+                    return ready;
+                }
+            } else if (_rxLen < (int)sizeof(_rxBuf) - 1) {
+                _rxBuf[_rxLen++] = c;
+            }
+        }
+        return 0;
+    }
+    int read(char* buffer, size_t maxLen) {
+        size_t n = (_rxReadyLen < (int)maxLen) ? (size_t)_rxReadyLen : (maxLen - 1);
+        memcpy(buffer, _rxBuf, n);
+        _rxReadyLen = 0;
+        return (int)n;
+    }
+    IPAddress remoteIP() { return IPAddress(127, 0, 0, 1); }
+    uint16_t remotePort() { return SWARM_DEFAULT_PORT; }
+    int beginPacket(IPAddress, uint16_t) { return 1; }
+    size_t write(const uint8_t* buffer, size_t size) {
+        return Serial.write(buffer, size);
+    }
+    int endPacket() {
+        Serial.println();
+        return 1;
+    }
+private:
+    char _rxBuf[160] = {0};
+    int _rxLen = 0;
+    int _rxReadyLen = 0;
+};
+
+typedef SwarmSerialUDP WiFiUDP;
+#endif
 
 #endif // SWARM_TYPES_H

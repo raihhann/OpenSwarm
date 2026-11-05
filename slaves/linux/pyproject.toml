@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "openswarm-slave"
+version = "0.1.0"
+description = "Zero-Control-Logic Linux Slave Agent for the OpenSwarm Robotics Framework (Arduino UNO Q, Portenta X8, Raspberry Pi, Jetson, Linux PC)"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+authors = [
+    {name = "Mohammed Raihan Soniwala", email = "raihann.eu@gmail.com"}
+]
+keywords = ["robotics", "swarm-robotics", "raspberry-pi", "portenta-x8", "arduino-uno-q", "jetson", "linux", "hal"]
+dependencies = []
+
+[project.optional-dependencies]
+hardware = [
+    "pyserial>=3.5",
+    "smbus2>=0.4.2",
+    "spidev>=3.6; platform_system=='Linux'",
+    "gpiod>=2.0; platform_system=='Linux'",
+]
+
+[project.scripts]
+openswarm-slave = "openswarm_slave.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["openswarm_slave*"]

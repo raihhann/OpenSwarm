@@ -50,7 +50,7 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Build and publish to PyPI (if PYPI_API_TOKEN secret is set)
+      - name: Build and publish Master & Linux Slave to PyPI (if PYPI_API_TOKEN secret is set)
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
@@ -60,6 +60,6 @@ jobs:
             exit 0
           fi
           pip install build twine
-          cd master
-          python -m build
-          twine upload --skip-existing dist/*
+          python -m build master
+          python -m build slaves/linux
+          twine upload --skip-existing master/dist/* slaves/linux/dist/*

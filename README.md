@@ -2,18 +2,19 @@
 
 <p align="center">
   <a href="https://pypi.org/project/openswarm-master/"><img src="https://img.shields.io/pypi/v/openswarm-master?style=for-the-badge&label=PyPI%20openswarm-master&color=3775A9" alt="PyPI openswarm-master" /></a>
-  <a href="https://github.com/raihhann/OpenSwarm/tree/SwarmNode"><img src="https://img.shields.io/badge/Arduino%20Library-SwarmNode%20v0.1.0-00878F?style=for-the-badge&logo=arduino" alt="Arduino Library" /></a>
+  <a href="https://pypi.org/project/openswarm-slave/"><img src="https://img.shields.io/pypi/v/openswarm-slave?style=for-the-badge&label=PyPI%20openswarm-slave&color=0F766E" alt="PyPI openswarm-slave" /></a>
+  <a href="https://github.com/raihhann/OpenSwarm/tree/SwarmNode"><img src="https://img.shields.io/badge/Arduino%20Library-SwarmNode%20v0.2.0-00878F?style=for-the-badge&logo=arduino" alt="Arduino Library" /></a>
   <img src="https://img.shields.io/badge/Architecture-Klipper--Style%20Remote%20HAL-0A66C2?style=for-the-badge" alt="Architecture" />
   <img src="https://img.shields.io/badge/Slave%20Loop-100%25%20Empty-2EA043?style=for-the-badge" alt="Zero Slave Logic" />
-  <img src="https://img.shields.io/badge/Transport-UDP%20%3C2ms%20%2B%20500ms%20Watchdog-F97316?style=for-the-badge" alt="Transport" />
 </p>
 
 > **Flash Once. Declare Pins. Never Reprogram the Robot Again.**  
 > **OpenSwarm** is a lightweight, hardware-agnostic **Distributed Hardware Abstraction Layer (Remote HAL)** for multi-robot swarms. Inspired by [Klipper](https://www.klipper3d.org/), OpenSwarm strips **100% of control logic out of the slave microcontrollers** (`void loop()` is completely empty) and moves all sensor processing, state machines, kinematics, and multi-robot coordination to a central **Linux Master** over low-latency Wi-Fi UDP.
 
 ### Official Packages
-* **Linux / Python Master SDK (PyPI):** [`openswarm-master`](https://pypi.org/project/openswarm-master/) — install via `pip install openswarm-master`
-* **Arduino / PlatformIO Slave Library:** [`SwarmNode`](https://github.com/raihhann/OpenSwarm/tree/SwarmNode) — install in Arduino IDE or PlatformIO (`raihann/SwarmNode`)
+* **Central Master SDK (PyPI):** [`openswarm-master`](https://pypi.org/project/openswarm-master/) — install via `pip install openswarm-master`
+* **Linux SBC Slave Agent (PyPI):** [`openswarm-slave`](https://pypi.org/project/openswarm-slave/) — install via `pip install openswarm-slave` (for **Arduino UNO Q**, **Portenta X8**, **Raspberry Pi**, **Jetson**, and **Linux PCs**)
+* **Arduino / PlatformIO Slave Library:** [`SwarmNode`](https://github.com/raihhann/OpenSwarm/tree/SwarmNode) — install in Arduino IDE or PlatformIO (`raihann/SwarmNode`) for **ESP32**, **RP2040**, **Arduino UNO**, and **Arduino Nano**
 
 ---
 
@@ -72,7 +73,7 @@ flowchart TB
 
 ## How It Works: Side-by-Side Code
 
-### 1. On the Slave Microcontroller (`ESP32` — Flashed Once)
+### 1A. On a Microcontroller Slave (`ESP32` / `RP2040` — Flashed Once)
 ```cpp
 #include <SwarmNode.h> // Or: #include <OpenSwarm.h>
 
@@ -86,15 +87,32 @@ void setup() {
     node.registerDigitalOutput("led", 2);                 // Onboard LED on GPIO 2
     node.registerL298N("drive", 14, 27, 26, 32, 25, 33);  // Dual H-Bridge Motor Driver
     node.registerUltrasonic("front_sonar", 5, 18);        // HC-SR04 Ultrasonic Sensor
+    node.registerOnboardIMU("imu");                       // Built-in 6-Axis IMU (on Nano RP2040 Connect)
     node.registerWiFiRSSI("rssi");                        // Onboard Wi-Fi RSSI (dBm)
 
-    // 3. Start background FreeRTOS daemon on Core 0
+    // 3. Start background RTOS / Core 1 daemon
     node.start();
 }
 
 void loop() {
     // 100% EMPTY! All control happens remotely from the Linux Master.
 }
+```
+
+### 1B. On a Linux SBC Slave (`Arduino UNO Q` / `Portenta X8` / `Raspberry Pi` / `Jetson`)
+```python
+from openswarm_slave import SwarmNode
+
+node = SwarmNode("portenta_x8")
+
+# Declare attached hardware pins/sensors ONLY — Zero Control Logic!
+node.register_digital_output("led", 2)
+node.register_l298n("drive", 14, 27, 26, 32, 25, 33)
+node.register_cpu_temp("cpu_temp")
+node.register_system_load("sys_load")
+node.register_wifi_rssi("rssi")
+
+node.start()
 ```
 
 ### 2. On the Linux Master (`Python` — Where 100% of Control Lives)
@@ -181,12 +199,26 @@ OpenSwarm supports both dedicated 1-line robotics drivers and **universal bus pa
 #### Option B: PlatformIO (`platformio.ini`)
 ```ini
 lib_deps =
-    raihann/SwarmNode@^0.1.0
+    raihann/SwarmNode@^0.2.0
 ```
 
 ---
 
-### Part 2: Install the `openswarm-master` Package (PyPI — Linux / Windows / macOS)
+### Part 2: Install the `openswarm-slave` Package (PyPI — For Linux SBC Slaves)
+
+[**View `openswarm-slave` on PyPI →**](https://pypi.org/project/openswarm-slave/)
+
+```bash
+# Install on Arduino UNO Q, Portenta X8, Raspberry Pi, Jetson, or Linux PC:
+pip install openswarm-slave
+
+# Launch a Linux Slave node directly from terminal:
+openswarm-slave --id portenta_x8 --led-pin 2
+```
+
+---
+
+### Part 3: Install the `openswarm-master` Package (PyPI — Central Master)
 
 [**View `openswarm-master` on PyPI →**](https://pypi.org/project/openswarm-master/)
 
@@ -246,9 +278,9 @@ OpenSwarm/
 - [x] **Step 1:** ESP32 Slave Library (`hal_esp32.h` — Full Sensor, Actuator, Bus & Custom Driver Suite)
 - [x] **Master Core:** Linux Master Python SDK & CLI (`openswarm-master`) + Live Hardware Verification
 - [x] **Step 2 (RP2040):** RP2040 Slave Support (`hal_rp2040.h` — Arduino Nano RP2040 Connect / Pico W + Onboard 6-Axis IMU)
-- [ ] **Step 3:** Arduino UNO Slave Support (`hal_uno.h`)
-- [ ] **Step 4:** Arduino Nano Slave Support (`hal_nano.h`)
-- [ ] **Step 5:** Linux Slave Agent (`slaves/linux/` for Arduino UNO Q, Portenta X8, and Raspberry Pi)
+- [x] **Step 3 (Linux Slave):** Linux Slave Agent (`slaves/linux/` — `openswarm-slave` for Arduino UNO Q, Portenta X8, Raspberry Pi, Jetson, and Linux PC)
+- [ ] **Step 4:** Arduino UNO Slave Support (`hal_uno.h`)
+- [ ] **Step 5:** Arduino Nano Slave Support (`hal_nano.h`)
 - [ ] **Step 6:** Flagship Application — **Ant-Colony Micro-Tugs** (Cooperative Multi-Robot Heavy Payload Manipulation)
 
 ---

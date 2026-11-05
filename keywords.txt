@@ -1,0 +1,52 @@
+#######################################
+# Syntax Coloring Map For SwarmNode
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+SwarmNode	KEYWORD1
+ActuatorType	KEYWORD1
+SensorType	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+connectWiFi	KEYWORD2
+start	KEYWORD2
+registerL298N	KEYWORD2
+registerDRV8833	KEYWORD2
+registerMotor2Pin	KEYWORD2
+registerServo	KEYWORD2
+registerStepper	KEYWORD2
+registerDigitalOutput	KEYWORD2
+registerPWMOutput	KEYWORD2
+registerDACOutput	KEYWORD2
+registerPin	KEYWORD2
+registerUltrasonic	KEYWORD2
+registerVL53L0X	KEYWORD2
+registerQuadratureEncoder	KEYWORD2
+registerTachometer	KEYWORD2
+registerMPU6050	KEYWORD2
+registerLSM6DSOX	KEYWORD2
+registerOnboardIMU	KEYWORD2
+registerINA219	KEYWORD2
+registerGenericI2C	KEYWORD2
+registerI2CActuator	KEYWORD2
+registerSPISensor	KEYWORD2
+registerSPIActuator	KEYWORD2
+registerUARTSensor	KEYWORD2
+registerUARTActuator	KEYWORD2
+registerCustomSensor	KEYWORD2
+registerCustomSensorMulti	KEYWORD2
+registerCustomActuator	KEYWORD2
+registerBumper	KEYWORD2
+registerDigitalInput	KEYWORD2
+registerIRSensor	KEYWORD2
+registerAnalogInput	KEYWORD2
+registerBatteryVoltage	KEYWORD2
+registerTouchPin	KEYWORD2
+registerDHT	KEYWORD2
+registerWiFiRSSI	KEYWORD2

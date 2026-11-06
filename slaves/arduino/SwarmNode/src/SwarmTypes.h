@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 
-// Optimize table sizes for 2KB SRAM 8-bit AVR boards (UNO R3 / Classic Nano)
+// Smaller tables for 8-bit AVR boards with limited SRAM (UNO WiFi Rev2: 6 KB)
 #if defined(__AVR__)
   #define SWARM_MAX_ACTUATORS   6
   #define SWARM_MAX_SENSORS     8
@@ -94,60 +94,5 @@ struct SensorDescriptor {
     SwarmCustomSensorFn custom_fn = nullptr;
     SwarmCustomMultiSensorFn custom_multi_fn = nullptr;
 };
-
-// ============================================================================
-// SERIAL-UDP SHIM (For USB-Serial / UART Bridge Boards without Native Wi-Fi)
-// ============================================================================
-#if !defined(ESP32) && !defined(ARDUINO_ARCH_RP2040) && !defined(ARDUINO_ARCH_MBED_RP2040) && \
-    !defined(ARDUINO_NANO_RP2040_CONNECT) && !defined(TARGET_RP2040) && \
-    !defined(ARDUINO_UNOR4_WIFI) && !defined(ARDUINO_AVR_UNO_WIFI_REV2) && !defined(ARDUINO_SAMD_NANO_33_IOT)
-
-#include <IPAddress.h>
-
-class SwarmSerialUDP {
-public:
-    uint8_t begin(uint16_t) { return 1; }
-    int parsePacket() {
-        while (Serial.available() > 0) {
-            char c = (char)Serial.read();
-            if (c == '\r') continue;
-            if (c == '\n') {
-                if (_rxLen > 0) {
-                    _rxBuf[_rxLen] = '\0';
-                    int ready = _rxLen;
-                    _rxReadyLen = ready;
-                    _rxLen = 0;
-                    return ready;
-                }
-            } else if (_rxLen < (int)sizeof(_rxBuf) - 1) {
-                _rxBuf[_rxLen++] = c;
-            }
-        }
-        return 0;
-    }
-    int read(char* buffer, size_t maxLen) {
-        size_t n = (_rxReadyLen < (int)maxLen) ? (size_t)_rxReadyLen : (maxLen - 1);
-        memcpy(buffer, _rxBuf, n);
-        _rxReadyLen = 0;
-        return (int)n;
-    }
-    IPAddress remoteIP() { return IPAddress(127, 0, 0, 1); }
-    uint16_t remotePort() { return SWARM_DEFAULT_PORT; }
-    int beginPacket(IPAddress, uint16_t) { return 1; }
-    size_t write(const uint8_t* buffer, size_t size) {
-        return Serial.write(buffer, size);
-    }
-    int endPacket() {
-        Serial.println();
-        return 1;
-    }
-private:
-    char _rxBuf[160] = {0};
-    int _rxLen = 0;
-    int _rxReadyLen = 0;
-};
-
-typedef SwarmSerialUDP WiFiUDP;
-#endif
 
 #endif // SWARM_TYPES_H

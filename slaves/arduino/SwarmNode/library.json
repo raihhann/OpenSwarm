@@ -1,7 +1,7 @@
 {
   "name": "SwarmNode",
-  "version": "0.3.0",
-  "description": "Zero-Control-Logic Hardware Declaration Slave Library for the OpenSwarm Distributed Robotics Framework. Declare Wi-Fi or Serial and hardware pins in setup(), leave loop() 100% empty, and run all control logic on a Linux Master.",
+  "version": "0.4.0",
+  "description": "Zero-Control-Logic Hardware Declaration Slave Library for the OpenSwarm Distributed Robotics Framework. Declare Wi-Fi and hardware pins in setup(), leave loop() 100% empty, and run all control logic on a Linux Master.",
   "keywords": [
     "robotics",
     "swarm",
@@ -31,7 +31,6 @@
   "frameworks": "arduino",
   "platforms": [
     "espressif32",
-    "atmelavr",
     "atmelmegaavr",
     "atmelsam",
     "raspberrypi",

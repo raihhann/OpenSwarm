@@ -9,14 +9,15 @@ Simulates an ESP32 or RP2040 slave running the SwarmNode library.
 
 import argparse
 import json
+import math
 import socket
-import sys
 import threading
 import time
 
 SWARM_DEFAULT_PORT = 4210
 SWARM_DISCOVERY_PORT = 4211
 SWARM_WATCHDOG_SEC = 0.5
+SWARM_TELEMETRY_SEC = 0.05
 
 
 class VirtualSlaveNode:
@@ -34,8 +35,10 @@ class VirtualSlaveNode:
             "encoder_L": 0,
             "encoder_R": 0
         }
-        self.last_cmd_time = time.time()
+        self._start_time = time.monotonic()
+        self.last_cmd_time = self._start_time
         self.master_addr = None
+        self._lock = threading.Lock()
 
         # UDP Sockets
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -49,7 +52,7 @@ class VirtualSlaveNode:
 
     def start(self):
         print("=" * 65)
-        print(f" [SwarmNode v0.1.0] Target: {self.board_type} | Node ID: '{self.node_id}'")
+        print(f" [OpenSwarm Virtual Slave] Target: {self.board_type} | Node ID: '{self.node_id}'")
         print(f" Network: Online (127.0.0.1:{self.port}) | Watchdog: 500ms Active")
         print(f" Core Rule: void loop() is 100% EMPTY. Remote HAL listening...")
         print("=" * 65)
@@ -61,12 +64,17 @@ class VirtualSlaveNode:
 
         self._rx_loop()
 
+    def close(self):
+        self.running = False
+        self.sock.close()
+        self.bcast_sock.close()
+
     def _discovery_loop(self):
         """Broadcasts 1 Hz HELLO beacon until discovered."""
         while self.running:
             hello = {
-                "op": "HELLO",
-                "id": self.node_id,
+                "type": "HELLO",
+                "node": self.node_id,
                 "board": self.board_type,
                 "port": self.port,
                 "actuators": ["drive"],
@@ -76,64 +84,68 @@ class VirtualSlaveNode:
                 msg = json.dumps(hello).encode("utf-8")
                 self.bcast_sock.sendto(msg, ("255.255.255.255", SWARM_DISCOVERY_PORT))
                 self.bcast_sock.sendto(msg, ("127.0.0.1", SWARM_DISCOVERY_PORT))
-            except Exception:
-                pass
+            except OSError:
+                if self.running:
+                    raise
             time.sleep(1.0)
 
     def _telemetry_loop(self):
         """Streams 20 Hz telemetry back to master when connected."""
         while self.running:
-            if self.master_addr:
+            with self._lock:
+                master_addr = self.master_addr
+                sensors = dict(self.sensors)
+            if master_addr:
                 state = {
-                    "op": "STATE",
-                    "id": self.node_id,
-                    "t_ms": int(time.time() * 1000),
-                    "sensors": self.sensors,
-                    "actuators": self.motors
+                    "type": "STATE",
+                    "node": self.node_id,
+                    "uptime_ms": int((time.monotonic() - self._start_time) * 1000),
+                    "sensors": sensors,
                 }
                 try:
-                    self.sock.sendto(json.dumps(state).encode("utf-8"), self.master_addr)
-                except Exception:
-                    pass
-            time.sleep(0.05)
+                    self.sock.sendto(json.dumps(state).encode("utf-8"), master_addr)
+                except OSError:
+                    if self.running:
+                        raise
+            time.sleep(SWARM_TELEMETRY_SEC)
 
     def _physics_loop(self):
         """Updates simulated encoders and battery based on motor activity."""
         while self.running:
-            now = time.time()
+            now = time.monotonic()
             # Safety watchdog: Auto-stop motors if Master is silent > 500ms
-            if (now - self.last_cmd_time) > SWARM_WATCHDOG_SEC:
-                if self.motors["left"] != 0 or self.motors["right"] != 0:
-                    self.motors["left"] = 0.0
-                    self.motors["right"] = 0.0
-                    print(f"[{time.strftime('%H:%M:%S')}] \033[93m[WATCHDOG]\033[0m Master silent > 500ms -> Motors Emergency STOP")
+            with self._lock:
+                if (now - self.last_cmd_time) > SWARM_WATCHDOG_SEC:
+                    if self.motors["left"] != 0 or self.motors["right"] != 0:
+                        self.motors["left"] = 0.0
+                        self.motors["right"] = 0.0
+                        print(f"[{time.strftime('%H:%M:%S')}] \033[93m[WATCHDOG]\033[0m Master silent > 500ms -> Motors Emergency STOP")
 
-            # Update simulated encoders
-            self.sensors["encoder_L"] += int(self.motors["left"] * 0.2)
-            self.sensors["encoder_R"] += int(self.motors["right"] * 0.2)
+                # Update simulated encoders
+                self.sensors["encoder_L"] += int(self.motors["left"] * 0.2)
+                self.sensors["encoder_R"] += int(self.motors["right"] * 0.2)
             time.sleep(0.05)
 
     def _rx_loop(self):
         while self.running:
             try:
                 data, addr = self.sock.recvfrom(2048)
-                self.master_addr = addr
-                self.last_cmd_time = time.time()
                 packet = json.loads(data.decode("utf-8"))
-                op = packet.get("op")
+                if not isinstance(packet, dict):
+                    continue
+                cmd = packet.get("cmd")
+                with self._lock:
+                    self.master_addr = addr
+                    self.last_cmd_time = time.monotonic()
 
-                if op == "PING":
-                    # Keepalive heartbeat
-                    self.sock.sendto(json.dumps({"op": "PONG", "id": self.node_id}).encode("utf-8"), addr)
-                elif op == "CMD":
-                    act = packet.get("act", "")
-                    val = packet.get("val", {})
-                    # Drive command
-                    left = val.get("left", 0)
-                    right = val.get("right", 0)
-                    self.motors["left"] = left
-                    self.motors["right"] = right
-                    
+                if cmd == "PING":
+                    self._send_state(addr)
+                elif cmd == "ACT" and packet.get("name") == "drive":
+                    left = self._motor_value(packet.get("left", 0))
+                    right = self._motor_value(packet.get("right", 0))
+                    with self._lock:
+                        self.motors["left"] = left
+                        self.motors["right"] = right
                     # Pretty ANSI Terminal Output
                     status = "\033[92mFORWARD\033[0m" if (left > 0 and right > 0) else (
                         "\033[96mROTATE\033[0m" if (left * right < 0) else (
@@ -141,17 +153,41 @@ class VirtualSlaveNode:
                         )
                     )
                     ts = time.strftime('%H:%M:%S')
-                    print(f"[{ts}] \033[1m[CMD]\033[0m {act.upper():<5} -> L={left:+04d} | R={right:+04d} [{status}] | Enc: ({self.sensors['encoder_L']}, {self.sensors['encoder_R']})")
-                elif op == "STOP":
-                    self.motors = {"left": 0, "right": 0}
+                    print(f"[{ts}] \033[1m[CMD]\033[0m DRIVE -> L={left:+04d} | R={right:+04d} [{status}] | Enc: ({self.sensors['encoder_L']}, {self.sensors['encoder_R']})")
+                elif cmd == "STOP":
+                    with self._lock:
+                        self.motors = {"left": 0, "right": 0}
                     print(f"[{time.strftime('%H:%M:%S')}] \033[91m[CMD STOP]\033[0m All Actuators Disabled")
 
             except socket.timeout:
                 continue
             except json.JSONDecodeError:
-                pass
-            except Exception as e:
-                print("Error:", e)
+                continue
+            except OSError:
+                if self.running:
+                    raise
+                return
+
+    @staticmethod
+    def _motor_value(value):
+        if isinstance(value, bool):
+            return 0
+        if isinstance(value, int):
+            return max(-255, min(255, value))
+        if not isinstance(value, float) or not math.isfinite(value):
+            return 0
+        return max(-255, min(255, int(value)))
+
+    def _send_state(self, addr):
+        with self._lock:
+            sensors = dict(self.sensors)
+        state = {
+            "type": "STATE",
+            "node": self.node_id,
+            "uptime_ms": int((time.monotonic() - self._start_time) * 1000),
+            "sensors": sensors,
+        }
+        self.sock.sendto(json.dumps(state).encode("utf-8"), addr)
 
 
 if __name__ == "__main__":
@@ -166,3 +202,5 @@ if __name__ == "__main__":
         node.start()
     except KeyboardInterrupt:
         print("\n[SwarmNode] Shutting down node cleanly.")
+    finally:
+        node.close()

@@ -12,9 +12,11 @@
   #include <WiFiUdp.h>
   #include <mbed.h>
 #else
+  // Raspberry Pi Pico W (Earle Philhower arduino-pico core).
+  // The SwarmNode daemon runs on Core 0 (the same core that owns the CYW43 Wi-Fi chip)
+  // via the auto-loop hook in SwarmNode.h, so no multicore Wi-Fi access is needed.
   #include <WiFi.h>
   #include <WiFiUdp.h>
-  #include <pico/multicore.h>
 #endif
 
 #include "../SwarmTypes.h"

@@ -40,7 +40,7 @@ void setup() {
     node.registerOnboardIMU("imu");   // Streams 6-Axis [ax, ay, az, gx, gy, gz] on Nano RP2040 Connect!
     node.registerWiFiRSSI("rssi");    // Streams Wi-Fi signal strength (dBm)
 
-    // 3. Start background RTOS / Core 1 daemon
+    // 3. Start the Mbed RTOS daemon or Pico W loop hook
     node.start();
     Serial.println("[READY] Listening for Linux Master commands on UDP Port 4210...");
     Serial.println("==========================================");

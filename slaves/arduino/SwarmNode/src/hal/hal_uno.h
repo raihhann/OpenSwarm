@@ -1,7 +1,9 @@
 #ifndef HAL_UNO_H
 #define HAL_UNO_H
 
-#if defined(ARDUINO_AVR_UNO) || defined(ARDUINO_UNOR4_WIFI) || defined(ARDUINO_UNOR4_MINIMA) || defined(ARDUINO_AVR_UNO_WIFI_REV2)
+// Wi-Fi capable Arduino UNO boards only (UNO R4 WiFi, UNO WiFi Rev2).
+// Boards without native Wi-Fi (UNO R3, UNO R4 Minima) are intentionally not supported.
+#if defined(ARDUINO_UNOR4_WIFI) || defined(ARDUINO_AVR_UNO_WIFI_REV2)
 
 #include <Arduino.h>
 #include <Wire.h>
@@ -10,13 +12,9 @@
 #if defined(ARDUINO_UNOR4_WIFI)
   #include <WiFiS3.h>
   #include <WiFiUdp.h>
-  #define SWARM_UNO_HAS_WIFI 1
-#elif defined(ARDUINO_AVR_UNO_WIFI_REV2)
+#else
   #include <WiFiNINA.h>
   #include <WiFiUdp.h>
-  #define SWARM_UNO_HAS_WIFI 1
-#else
-  #define SWARM_UNO_HAS_WIFI 0
 #endif
 
 #include "../SwarmTypes.h"
@@ -60,12 +58,8 @@ namespace SwarmHAL {
     inline const char* boardName() {
         #if defined(ARDUINO_UNOR4_WIFI)
         return "UNO_R4_WIFI";
-        #elif defined(ARDUINO_UNOR4_MINIMA)
-        return "UNO_R4_MINIMA";
-        #elif defined(ARDUINO_AVR_UNO_WIFI_REV2)
-        return "UNO_WIFI_REV2";
         #else
-        return "ARDUINO_UNO";
+        return "UNO_WIFI_REV2";
         #endif
     }
 
@@ -90,7 +84,6 @@ namespace SwarmHAL {
     }
 
     inline bool connectNetwork(const char* ssid, const char* password, uint32_t timeout_ms = 20000) {
-        #if SWARM_UNO_HAS_WIFI
         WiFi.begin(ssid, password);
         uint32_t start = millis();
         while (WiFi.status() != WL_CONNECTED) {
@@ -105,27 +98,16 @@ namespace SwarmHAL {
             delay(100);
         }
         return true;
-        #else
-        (void)ssid;
-        (void)password;
-        (void)timeout_ms;
-        return true; // USB-Serial / UART Bridge mode
-        #endif
     }
 
     inline String localIP() {
-        #if SWARM_UNO_HAS_WIFI
         IPAddress ip = WiFi.localIP();
         char buf[20];
         snprintf(buf, sizeof(buf), "%u.%u.%u.%u", ip[0], ip[1], ip[2], ip[3]);
         return String(buf);
-        #else
-        return String("USB_SERIAL");
-        #endif
     }
 
     inline IPAddress broadcastIP() {
-        #if SWARM_UNO_HAS_WIFI
         IPAddress ip = WiFi.localIP();
         IPAddress subnet = WiFi.subnetMask();
         IPAddress bcast;
@@ -133,9 +115,6 @@ namespace SwarmHAL {
             bcast[i] = ip[i] | (~subnet[i]);
         }
         return bcast;
-        #else
-        return IPAddress(127, 0, 0, 1);
-        #endif
     }
 
     // ========================================================================
@@ -576,11 +555,7 @@ namespace SwarmHAL {
                 break;
 
             case SENS_WIFI_RSSI:
-                #if SWARM_UNO_HAS_WIFI
                 sens.values[0] = (float)WiFi.RSSI();
-                #else
-                sens.values[0] = 0.0f;
-                #endif
                 sens.value_count = 1;
                 break;
 

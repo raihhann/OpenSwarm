@@ -2,12 +2,13 @@
 #include "SwarmNode.h"
 #include <string.h>
 #include <stdlib.h>
+#include <stdarg.h>
 
 static SwarmNode* _activeSwarmNode = nullptr;
 
-// On single-core boards (Arduino UNO & Nano families), provide the real `loop()`
-// entry point that runs the background network/telemetry tick and then calls the
-// user's (empty) `_swarmUserLoop()`.
+// On boards without a background RTOS daemon (Pico W, UNO R4 WiFi, UNO WiFi Rev2,
+// Nano 33 IoT), provide the real `loop()` entry point that runs the background
+// network/telemetry tick and then calls the user's (empty) `_swarmUserLoop()`.
 #if !SWARM_HAS_RTOS_DAEMON
 extern void _swarmUserLoop();
 void loop() {
@@ -45,12 +46,6 @@ bool SwarmNode::connectWiFi(const char* ssid, const char* password, uint32_t tim
         Serial.println("[SwarmNode] ERROR: Network connection timed out!");
     }
     return ok;
-}
-
-bool SwarmNode::connectSerial(uint32_t baud) {
-    Serial.begin(baud);
-    delay(100);
-    return true;
 }
 
 // ============================================================================
@@ -448,15 +443,6 @@ static void swarmRp2040MbedTask() {
         rtos::ThisThread::sleep_for(std::chrono::milliseconds(2));
     }
 }
-#elif defined(ARDUINO_ARCH_RP2040) || defined(TARGET_RP2040)
-static void swarmRp2040Core1Task() {
-    for (;;) {
-        if (_activeSwarmNode) {
-            _activeSwarmNode->_backgroundTick();
-        }
-        delay(2);
-    }
-}
 #endif
 
 void SwarmNode::start() {
@@ -483,9 +469,8 @@ void SwarmNode::start() {
 #elif defined(ARDUINO_NANO_RP2040_CONNECT) || defined(ARDUINO_ARCH_MBED_RP2040)
     _rp2040Thread = new rtos::Thread(osPriorityNormal, 4096);
     _rp2040Thread->start(mbed::callback(swarmRp2040MbedTask));
-#elif defined(ARDUINO_ARCH_RP2040) || defined(TARGET_RP2040)
-    multicore_launch_core1(swarmRp2040Core1Task);
 #endif
+    // Pico W / UNO R4 WiFi / UNO WiFi Rev2 / Nano 33 IoT: driven by the auto-loop hook.
 }
 
 // ============================================================================
@@ -599,23 +584,63 @@ void SwarmNode::_processCommand(const char* json, IPAddress senderIP, uint16_t s
     }
 }
 
+// ----------------------------------------------------------------------------
+// Bounded JSON builders. Each append returns the new offset, or -1 if the text
+// would not fit in the buffer (leaving `reserve` bytes free for closing brackets).
+// ----------------------------------------------------------------------------
+static const int SWARM_JSON_RESERVE = 4;  // room for closing "]}" / "}}" + '\0'
+
+int SwarmNode::_appendf(char* buf, size_t cap, int offset, const char* fmt, ...) {
+    if (offset < 0) return -1;
+    int room = (int)cap - offset - SWARM_JSON_RESERVE;
+    if (room <= 0) return -1;
+    va_list ap;
+    va_start(ap, fmt);
+    int n = vsnprintf(buf + offset, (size_t)room, fmt, ap);
+    va_end(ap);
+    if (n < 0 || n >= room) {
+        buf[offset] = '\0';  // roll back the partial write
+        return -1;
+    }
+    return offset + n;
+}
+
+int SwarmNode::_appendFixed2(char* buf, size_t cap, int offset, const char* prefix, float v) {
+    // Integer fixed-point formatting (avr-libc has no %f). Preserves the sign of
+    // values in (-1, 0) and rejects NaN / Inf (not valid JSON).
+    if (!(v == v) || v > 20000000.0f || v < -20000000.0f) v = 0.0f;
+    long scaled = (long)(v * 100.0f + (v >= 0.0f ? 0.5f : -0.5f));
+    bool neg = scaled < 0;
+    unsigned long mag = (unsigned long)(neg ? -scaled : scaled);
+    return _appendf(buf, cap, offset, "%s%s%lu.%02lu",
+                    prefix, neg ? "-" : "", mag / 100UL, mag % 100UL);
+}
+
 void SwarmNode::_sendHelloBroadcast() {
     char msg[256];
-    int offset = snprintf(msg, sizeof(msg),
+    int offset = _appendf(msg, sizeof(msg), 0,
         "{\"type\":\"HELLO\",\"node\":\"%s\",\"board\":\"%s\",\"ip\":\"%s\",\"port\":%u,\"actuators\":[",
-        _nodeId, SwarmHAL::boardName(), SwarmHAL::localIP().c_str(), _udpPort);
+        _nodeId, SwarmHAL::boardName(), SwarmHAL::localIP().c_str(), (unsigned)_udpPort);
+    if (offset < 0) return;
 
     for (uint8_t i = 0; i < _actuatorCount; i++) {
-        offset += snprintf(msg + offset, sizeof(msg) - offset,
-            "%s\"%s\"", (i > 0 ? "," : ""), _actuators[i].name);
+        int next = _appendf(msg, sizeof(msg), offset, "%s\"%s\"", (i > 0 ? "," : ""), _actuators[i].name);
+        if (next < 0) break;
+        offset = next;
     }
-    offset += snprintf(msg + offset, sizeof(msg) - offset, "],\"sensors\":[");
-
-    for (uint8_t i = 0; i < _sensorCount; i++) {
-        offset += snprintf(msg + offset, sizeof(msg) - offset,
-            "%s\"%s\"", (i > 0 ? "," : ""), _sensors[i].name);
+    int next = _appendf(msg, sizeof(msg), offset, "],\"sensors\":[");
+    if (next < 0) {
+        // No room for the sensor list: close the actuator array and finish.
+        strcat(msg, "]}");
+    } else {
+        offset = next;
+        for (uint8_t i = 0; i < _sensorCount; i++) {
+            next = _appendf(msg, sizeof(msg), offset, "%s\"%s\"", (i > 0 ? "," : ""), _sensors[i].name);
+            if (next < 0) break;
+            offset = next;
+        }
+        strcat(msg, "]}");  // always fits thanks to SWARM_JSON_RESERVE
     }
-    snprintf(msg + offset, sizeof(msg) - offset, "]}");
 
     _udp.beginPacket(SwarmHAL::broadcastIP(), SWARM_DISCOVERY_PORT);
     _udp.write((const uint8_t*)msg, strlen(msg));
@@ -625,31 +650,42 @@ void SwarmNode::_sendHelloBroadcast() {
 void SwarmNode::_sendTelemetry() {
     if (!_masterConnected || _masterPort == 0) return;
 
-    char msg[320];
-    int offset = snprintf(msg, sizeof(msg),
+    char msg[384];
+    int offset = _appendf(msg, sizeof(msg), 0,
         "{\"type\":\"STATE\",\"node\":\"%s\",\"uptime_ms\":%lu,\"sensors\":{",
         _nodeId, (unsigned long)millis());
+    if (offset < 0) return;
 
+    bool first = true;
     for (uint8_t i = 0; i < _sensorCount; i++) {
         SwarmHAL::readSensor(_sensors[i]);
-        if (_sensors[i].value_count <= 1) {
-            int32_t scaled = (int32_t)(_sensors[i].values[0] * 100.0f);
-            offset += snprintf(msg + offset, sizeof(msg) - offset,
-                "%s\"%s\":%ld.%02ld", (i > 0 ? "," : ""), _sensors[i].name,
-                (long)(scaled / 100), (long)abs(scaled % 100));
+        uint8_t valueCount = _sensors[i].value_count;
+        if (valueCount == 0) continue;
+        if (valueCount > 6) valueCount = 6;
+
+        int mark = offset;
+        int o = _appendf(msg, sizeof(msg), offset, "%s\"%s\":", (first ? "" : ","), _sensors[i].name);
+
+        if (valueCount == 1) {
+            o = _appendFixed2(msg, sizeof(msg), o, "", _sensors[i].values[0]);
         } else {
-            offset += snprintf(msg + offset, sizeof(msg) - offset,
-                "%s\"%s\":[", (i > 0 ? "," : ""), _sensors[i].name);
-            for (uint8_t k = 0; k < _sensors[i].value_count; k++) {
-                int32_t scaled = (int32_t)(_sensors[i].values[k] * 100.0f);
-                offset += snprintf(msg + offset, sizeof(msg) - offset,
-                    "%s%ld.%02ld", (k > 0 ? "," : ""),
-                    (long)(scaled / 100), (long)abs(scaled % 100));
+            o = _appendf(msg, sizeof(msg), o, "[");
+            for (uint8_t k = 0; k < valueCount && o >= 0; k++) {
+                o = _appendFixed2(msg, sizeof(msg), o, (k > 0 ? "," : ""), _sensors[i].values[k]);
             }
-            offset += snprintf(msg + offset, sizeof(msg) - offset, "]");
+            o = _appendf(msg, sizeof(msg), o, "]");
         }
+
+        if (o < 0) {
+            // This sensor does not fit: drop it (and any remaining ones) but keep valid JSON.
+            msg[mark] = '\0';
+            offset = mark;
+            break;
+        }
+        offset = o;
+        first = false;
     }
-    snprintf(msg + offset, sizeof(msg) - offset, "}}");
+    strcat(msg, "}}");  // always fits thanks to SWARM_JSON_RESERVE
 
     _udp.beginPacket(_masterIP, _masterPort);
     _udp.write((const uint8_t*)msg, strlen(msg));

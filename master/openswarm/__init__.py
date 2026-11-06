@@ -8,5 +8,5 @@ All robot intelligence, sensor reading, and actuator control runs here on the Ma
 from .master import SwarmMaster
 from .node import RemoteSwarmNode
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 __all__ = ["SwarmMaster", "RemoteSwarmNode"]

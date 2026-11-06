@@ -1,11 +1,13 @@
 /*
  * SwarmNode — Arduino UNO Slave Node Example
- * (Supports Arduino UNO R4 WiFi, UNO WiFi Rev2, UNO R3, and UNO R4 Minima)
+ * (Supports Wi-Fi boards only: Arduino UNO R4 WiFi and UNO WiFi Rev2)
  *
  * Core Rule:
- *  - You ONLY declare Network/Serial, Node ID, and attached hardware pins in setup().
+ *  - You ONLY declare Wi-Fi, Node ID, and attached hardware pins in setup().
  *  - void loop() is 100% EMPTY.
  *  - All robot control logic runs on the Linux Master!
+ *
+ * Tip: keep `#include <SwarmNode.h>` as the LAST include in your sketch.
  */
 
 #include <SwarmNode.h>
@@ -13,7 +15,7 @@
 SwarmNode node("tug_uno");
 
 void setup() {
-    // 1. Connect to Wi-Fi (on UNO R4 WiFi / UNO WiFi Rev2) or USB-Serial (on UNO R3)
+    // 1. Connect to Wi-Fi
     node.connectWiFi("YOUR_WIFI_SSID", "YOUR_WIFI_PASSWORD");
 
     // 2. Declare Actuators (Pins ONLY — Zero Control Logic!)

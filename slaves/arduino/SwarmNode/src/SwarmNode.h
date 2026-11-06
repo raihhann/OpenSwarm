@@ -4,24 +4,37 @@
 #include <Arduino.h>
 #include "SwarmTypes.h"
 
+// Supported boards (Wi-Fi capable only):
+//   ESP32 family                : FreeRTOS task on Core 0
+//   Arduino Nano RP2040 Connect : Mbed RTOS thread
+//   Raspberry Pi Pico W         : auto-loop hook on Core 0 (same core as the CYW43 Wi-Fi driver)
+//   Arduino UNO R4 WiFi / UNO WiFi Rev2 / Nano 33 IoT : auto-loop hook
 #if defined(ESP32)
   #include "hal/hal_esp32.h"
   #define SWARM_HAS_RTOS_DAEMON 1
-#elif defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_MBED_RP2040) || defined(ARDUINO_NANO_RP2040_CONNECT) || defined(TARGET_RP2040)
+#elif defined(ARDUINO_NANO_RP2040_CONNECT) || defined(ARDUINO_ARCH_MBED_RP2040)
   #include "hal/hal_rp2040.h"
   #define SWARM_HAS_RTOS_DAEMON 1
-#elif defined(ARDUINO_AVR_UNO) || defined(ARDUINO_UNOR4_WIFI) || defined(ARDUINO_UNOR4_MINIMA) || defined(ARDUINO_AVR_UNO_WIFI_REV2)
+#elif defined(ARDUINO_ARCH_RP2040) || defined(TARGET_RP2040)
+  #include "hal/hal_rp2040.h"
+  #define SWARM_HAS_RTOS_DAEMON 0
+#elif defined(ARDUINO_UNOR4_WIFI) || defined(ARDUINO_AVR_UNO_WIFI_REV2)
   #include "hal/hal_uno.h"
   #define SWARM_HAS_RTOS_DAEMON 0
-#elif defined(ARDUINO_AVR_NANO) || defined(ARDUINO_AVR_NANO_EVERY) || defined(ARDUINO_SAMD_NANO_33_IOT)
+#elif defined(ARDUINO_SAMD_NANO_33_IOT)
   #include "hal/hal_nano.h"
   #define SWARM_HAS_RTOS_DAEMON 0
 #else
-  #error "Unsupported board architecture. SwarmNode supports ESP32, RP2040, Arduino UNO, and Arduino Nano families."
+  #error "Unsupported board. SwarmNode supports Wi-Fi boards only: ESP32, Nano RP2040 Connect, Pico W, UNO R4 WiFi, UNO WiFi Rev2, Nano 33 IoT."
 #endif
 
-// On single-core non-RTOS boards (Arduino UNO & Nano families), automatically hook
-// the Arduino main loop so the user's `void loop() {}` in their sketch stays 100% empty!
+// On boards without a background RTOS daemon, automatically hook the Arduino
+// main loop so the user's `void loop() {}` in their sketch stays 100% empty!
+//
+// NOTE: This works by renaming the token `loop` to `_swarmUserLoop` for all code
+// that comes AFTER this header. Always `#include <SwarmNode.h>` as the LAST
+// include in your sketch so other libraries' `loop()` methods (e.g. `mqtt.loop()`)
+// declared in their headers are not renamed.
 #if !SWARM_HAS_RTOS_DAEMON && !defined(SWARM_NODE_CPP_INTERNAL)
   void _swarmUserLoop();
   #define loop _swarmUserLoop
@@ -35,7 +48,6 @@ public:
     // 1. Network / Transport Setup
     // ------------------------------------------------------------------------
     bool connectWiFi(const char* ssid, const char* password, uint32_t timeout_ms = 20000);
-    bool connectSerial(uint32_t baud = 115200);
 
     // ------------------------------------------------------------------------
     // 2. Standard Actuator Registration API (Motors, Servos, Steppers, GPIO)
@@ -142,6 +154,9 @@ private:
     void _sendHelloBroadcast();
     void _sendTelemetry();
     void _emergencyStopAll();
+
+    static int _appendf(char* buf, size_t cap, int offset, const char* fmt, ...);
+    static int _appendFixed2(char* buf, size_t cap, int offset, const char* prefix, float v);
 
     static bool _extractString(const char* json, const char* key, char* outBuf, size_t maxLen);
     static bool _extractInt(const char* json, const char* key, int16_t& outVal);

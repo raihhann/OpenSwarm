@@ -1,19 +1,16 @@
 #ifndef HAL_NANO_H
 #define HAL_NANO_H
 
-#if defined(ARDUINO_AVR_NANO) || defined(ARDUINO_AVR_NANO_EVERY) || defined(ARDUINO_SAMD_NANO_33_IOT)
+// Wi-Fi capable Arduino Nano boards only (Nano 33 IoT).
+// (Nano RP2040 Connect is handled by hal_rp2040.h.)
+// Boards without native Wi-Fi (Classic Nano, Nano Every) are intentionally not supported.
+#if defined(ARDUINO_SAMD_NANO_33_IOT)
 
 #include <Arduino.h>
 #include <Wire.h>
 #include <SPI.h>
-
-#if defined(ARDUINO_SAMD_NANO_33_IOT)
-  #include <WiFiNINA.h>
-  #include <WiFiUdp.h>
-  #define SWARM_NANO_HAS_WIFI 1
-#else
-  #define SWARM_NANO_HAS_WIFI 0
-#endif
+#include <WiFiNINA.h>
+#include <WiFiUdp.h>
 
 #include "../SwarmTypes.h"
 
@@ -54,13 +51,7 @@ namespace SwarmHAL {
     }
 
     inline const char* boardName() {
-        #if defined(ARDUINO_SAMD_NANO_33_IOT)
         return "NANO_33_IOT";
-        #elif defined(ARDUINO_AVR_NANO_EVERY)
-        return "NANO_EVERY";
-        #else
-        return "ARDUINO_NANO";
-        #endif
     }
 
     inline void initI2C(int sda = -1, int scl = -1) {
@@ -84,7 +75,6 @@ namespace SwarmHAL {
     }
 
     inline bool connectNetwork(const char* ssid, const char* password, uint32_t timeout_ms = 20000) {
-        #if SWARM_NANO_HAS_WIFI
         WiFi.begin(ssid, password);
         uint32_t start = millis();
         while (WiFi.status() != WL_CONNECTED) {
@@ -94,27 +84,16 @@ namespace SwarmHAL {
             delay(250);
         }
         return true;
-        #else
-        (void)ssid;
-        (void)password;
-        (void)timeout_ms;
-        return true; // USB-Serial / UART Bridge mode
-        #endif
     }
 
     inline String localIP() {
-        #if SWARM_NANO_HAS_WIFI
         IPAddress ip = WiFi.localIP();
         char buf[20];
         snprintf(buf, sizeof(buf), "%u.%u.%u.%u", ip[0], ip[1], ip[2], ip[3]);
         return String(buf);
-        #else
-        return String("USB_SERIAL");
-        #endif
     }
 
     inline IPAddress broadcastIP() {
-        #if SWARM_NANO_HAS_WIFI
         IPAddress ip = WiFi.localIP();
         IPAddress subnet = WiFi.subnetMask();
         IPAddress bcast;
@@ -122,9 +101,6 @@ namespace SwarmHAL {
             bcast[i] = ip[i] | (~subnet[i]);
         }
         return bcast;
-        #else
-        return IPAddress(127, 0, 0, 1);
-        #endif
     }
 
     // ========================================================================
@@ -566,11 +542,7 @@ namespace SwarmHAL {
                 break;
 
             case SENS_WIFI_RSSI:
-                #if SWARM_NANO_HAS_WIFI
                 sens.values[0] = (float)WiFi.RSSI();
-                #else
-                sens.values[0] = 0.0f;
-                #endif
                 sens.value_count = 1;
                 break;
 

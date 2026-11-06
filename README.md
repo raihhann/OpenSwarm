@@ -3,7 +3,7 @@
 <p align="center">
   <a href="https://pypi.org/project/openswarm-master/"><img src="https://img.shields.io/pypi/v/openswarm-master?style=for-the-badge&label=PyPI%20openswarm-master&color=3775A9" alt="PyPI openswarm-master" /></a>
   <a href="https://pypi.org/project/openswarm-slave/"><img src="https://img.shields.io/pypi/v/openswarm-slave?style=for-the-badge&label=PyPI%20openswarm-slave&color=0F766E" alt="PyPI openswarm-slave" /></a>
-  <a href="https://github.com/raihhann/OpenSwarm/tree/SwarmNode"><img src="https://img.shields.io/badge/Arduino%20Library-SwarmNode%20v0.3.0-00878F?style=for-the-badge&logo=arduino" alt="Arduino Library" /></a>
+  <a href="https://github.com/raihhann/OpenSwarm/tree/SwarmNode"><img src="https://img.shields.io/badge/Arduino%20Library-SwarmNode%20v0.4.0-00878F?style=for-the-badge&logo=arduino" alt="Arduino Library" /></a>
   <img src="https://img.shields.io/badge/Architecture-Klipper--Style%20Remote%20HAL-0A66C2?style=for-the-badge" alt="Architecture" />
   <img src="https://img.shields.io/badge/Slave%20Loop-100%25%20Empty-2EA043?style=for-the-badge" alt="Zero Slave Logic" />
 </p>
@@ -14,7 +14,7 @@
 ### Official Packages
 * **Central Master SDK (PyPI):** [`openswarm-master`](https://pypi.org/project/openswarm-master/) — install via `pip install openswarm-master`
 * **Linux SBC Slave Agent (PyPI):** [`openswarm-slave`](https://pypi.org/project/openswarm-slave/) — install via `pip install openswarm-slave` (for **Arduino UNO Q**, **Portenta X8**, **Raspberry Pi**, **Jetson**, and **Linux PCs**)
-* **Arduino / PlatformIO Slave Library:** [`SwarmNode`](https://github.com/raihhann/OpenSwarm/tree/SwarmNode) — install in Arduino IDE or PlatformIO (`raihann/SwarmNode`) for **ESP32**, **RP2040**, **Arduino UNO**, and **Arduino Nano**
+* **Arduino / PlatformIO Slave Library:** [`SwarmNode`](https://github.com/raihhann/OpenSwarm/tree/SwarmNode) — install in Arduino IDE or PlatformIO (`raihann/SwarmNode`) for Wi-Fi boards: **ESP32**, **RP2040** (Nano RP2040 Connect / Pico W), **Arduino UNO R4 WiFi / UNO WiFi Rev2**, and **Arduino Nano 33 IoT**
 
 ---
 
@@ -33,17 +33,31 @@ In the demo above:
 2. A background FreeRTOS daemon on Core 0 automatically advertises the node on UDP Port `4211` and streams live 20 Hz Wi-Fi RSSI telemetry on UDP Port `4210`.
 3. The **Linux Master (`openswarm-master`)** connects over Wi-Fi (`192.168.0.118`), receives live 20 Hz sensor telemetry, and toggles GPIO `2` in real time.
 
+## Local 3D Demo (No Hardware)
+
+Install the master package with its optional demo dependency, then run
+[`launch_demo.bat`](./launch_demo.bat) on Windows or
+[`launch_demo.sh`](./launch_demo.sh) on Linux/macOS:
+
+```bash
+python -m pip install -e "master[demo]"
+```
+
+The demo serves on `http://localhost:8080` and starts virtual ESP32/RP2040 nodes.
+The UDP control protocol is unauthenticated and unencrypted; use real hardware
+only on a trusted, isolated network. The browser demo binds to localhost only.
+
 ---
 
 ## Why OpenSwarm? (How It Complements ROS 2)
 
-Building a heterogeneous micro-robot swarm (mixing 8-bit Arduinos, 32-bit ESP32/RP2040 boards, and Linux SBCs) with standard tools hits three major walls:
+Building a heterogeneous micro-robot swarm (mixing small Wi-Fi Arduinos, 32-bit ESP32/RP2040 boards, and Linux SBCs) with standard tools hits three major walls:
 
 | Challenge | Standard `micro-ROS` / `ros2_control` | **OpenSwarm (`SwarmNode` + `SwarmMaster`)** |
 | :--- | :--- | :--- |
-| **8-bit & Low-RAM Boards** | Fails on Arduino UNO / classic Nano (requires >64 KB RAM + RTOS + DDS XRCE agent) | **Runs on anything** — from 2 KB RAM 8-bit AVR to 32-bit ESP32/RP2040 and Linux SBCs |
+| **Small / Low-RAM Boards** | Struggles on small Arduinos (requires a micro-ROS agent, RTOS and plenty of RAM) | **Runs on small Wi-Fi boards** — from a 6 KB RAM UNO WiFi Rev2 to ESP32/RP2040 and Linux SBCs |
 | **Where Does Logic Live?** | Distributed across C/C++ firmware on every robot (requires recompiling & reflashing to change behavior) | **0% control logic on Slaves.** `void loop()` is empty; 100% of logic runs in Python on the Linux Master |
-| **Adding Sensors / Buses** | Requires custom C++ `hardware_interface` plugins, URDFs, and firmware rebuilds | **1-line pin/bus declaration** (`L298N`, `Ultrasonic`, `MPU6050`, `LoRa`, `SPI`, `I2C`, `UART`, or Custom Hook) |
+| **Adding Sensors / Buses** | Requires custom C++ `hardware_interface` plugins, URDFs, and firmware rebuilds | **1-line pin/bus declaration** (`L298N`, `Ultrasonic`, `MPU6050`, `SPI`, `I2C`, `UART`, or Custom Hook) |
 | **Safety** | Manual implementation per node | Built-in **500 ms hardware watchdog** on every Slave automatically stops motors if Master disconnects |
 
 ---
@@ -59,13 +73,13 @@ flowchart TB
     end
 
     subgraph Slaves["ZERO-TOUCH SLAVE NODES (void loop() is 100% Empty)"]
-        S1["ESP32 Slave\n(SwarmNode C++ Library)\nL298N, Sonar, IMU, LoRa"]
-        S2["Arduino UNO / Nano / RP2040\n(SwarmNode C++ Library)\nMotors, Encoders, Servos"]
+        S1["ESP32 Slave\n(SwarmNode C++ Library)\nL298N, Sonar, IMU, UART/SPI/I2C"]
+        S2["UNO R4 WiFi / Nano 33 IoT / RP2040\n(SwarmNode C++ Library)\nMotors, Encoders, Servos"]
         S3["Linux SBC Slave\n(UNO Q / Portenta X8 / RPi)\nCameras, GPIO, CAN"]
     end
 
     M1 <==>|"Wi-Fi UDP (<2ms)\n20Hz Telemetry + Commands"| S1
-    M1 <==>|"Wi-Fi / Serial UDP\n20Hz Telemetry + Commands"| S2
+    M1 <==>|"Wi-Fi UDP\n20Hz Telemetry + Commands"| S2
     M1 <==>|"Wi-Fi / Ethernet UDP\n20Hz Telemetry + Video"| S3
 ```
 
@@ -90,7 +104,7 @@ void setup() {
     node.registerOnboardIMU("imu");                       // Built-in 6-Axis IMU (on Nano RP2040 Connect)
     node.registerWiFiRSSI("rssi");                        // Onboard Wi-Fi RSSI (dBm)
 
-    // 3. Start background RTOS / Core 1 daemon
+    // 3. Start the background RTOS daemon or board-specific loop hook
     node.start();
 }
 
@@ -146,7 +160,7 @@ while True:
 
 ## Supported Hardware, Sensors, Actuators & Bus Protocols
 
-OpenSwarm supports both dedicated 1-line robotics drivers and **universal bus passthroughs (`LoRa`, `SPI`, `I2C`, `UART`, and Custom Callbacks)** so you are never limited by pre-baked sensors:
+OpenSwarm supports both dedicated 1-line robotics drivers and **universal bus passthroughs (`SPI`, `I2C`, `UART`, and Custom Callbacks)** so you are never limited by pre-baked sensors:
 
 ### Actuators
 | API Method | Hardware / Protocol | Master Python Call |
@@ -199,7 +213,7 @@ OpenSwarm supports both dedicated 1-line robotics drivers and **universal bus pa
 #### Option B: PlatformIO (`platformio.ini`)
 ```ini
 lib_deps =
-    raihann/SwarmNode@^0.3.0
+    raihann/SwarmNode@^0.4.0
 ```
 
 ---
@@ -258,8 +272,8 @@ OpenSwarm/
 │   │       │   └── hal/
 │   │       │       ├── hal_esp32.h     # ESP32 / S2 / S3 / C3 HAL
 │   │       │       ├── hal_rp2040.h    # Arduino Nano RP2040 Connect / Pico W HAL
-│   │       │       ├── hal_uno.h       # Arduino UNO R4 WiFi / WiFi Rev2 / R3 HAL
-│   │       │       └── hal_nano.h      # Arduino Nano 33 IoT / Every / Classic HAL
+│   │       │       ├── hal_uno.h       # Arduino UNO R4 WiFi / UNO WiFi Rev2 HAL
+│   │       │       └── hal_nano.h      # Arduino Nano 33 IoT HAL
 │   │       └── examples/
 │   │           ├── ESP32_LED_Test/
 │   │           ├── ESP32_SlaveNode/
@@ -272,10 +286,11 @@ OpenSwarm/
 ├── master/                         # Central Linux Master Python SDK & CLI (`openswarm-master`)
 │   ├── pyproject.toml
 │   ├── openswarm/
+│   │   ├── web_server.py           # Optional browser 3D fleet demo
+│   │   └── virtual_slave.py        # Protocol-compatible hardware emulator
 │   └── examples/
 │       └── blink_esp32_led.py
-└── examples/
-    └── ant_colony_tugs/            # Flagship Multi-Robot Cooperative Heavy-Object Manipulation
+└── 3Dmodels/                       # Printable robot chassis, wheels, camera stand & renders
 ```
 
 ---
@@ -286,9 +301,12 @@ OpenSwarm/
 - [x] **Master Core:** Linux Master Python SDK & CLI (`openswarm-master`) + Live Hardware Verification
 - [x] **Step 2 (RP2040):** RP2040 Slave Support (`hal_rp2040.h` — Arduino Nano RP2040 Connect / Pico W + Onboard 6-Axis IMU)
 - [x] **Step 3 (Linux Slave):** Linux Slave Agent (`slaves/linux/` — `openswarm-slave` for Arduino UNO Q, Portenta X8, Raspberry Pi, Jetson, and Linux PC)
-- [x] **Step 4 (Arduino UNO):** Arduino UNO Slave Support (`hal_uno.h` — UNO R4 WiFi, UNO WiFi Rev2, UNO R3, UNO R4 Minima)
-- [x] **Step 5 (Arduino Nano):** Arduino Nano Slave Support (`hal_nano.h` — Nano 33 IoT, Nano Every, Classic Nano ATmega328P)
-- [ ] **Step 6:** Flagship Application — **Ant-Colony Micro-Tugs** (Cooperative Multi-Robot Heavy Payload Manipulation)
+- [x] **Step 4 (Arduino UNO):** Arduino UNO Slave Support (`hal_uno.h` — UNO R4 WiFi, UNO WiFi Rev2)
+- [x] **Step 5 (Arduino Nano):** Arduino Nano Slave Support (`hal_nano.h` — Nano 33 IoT)
+- [ ] **Step 6:** Flagship Application — **AI Vision Sorter** (laptop camera + trained AI pushes 3D-printed objects Left / Right using zero-logic robots)
+
+> [!NOTE]
+> Boards **without native Wi-Fi** (UNO R3, UNO R4 Minima, Classic Nano, Nano Every) are intentionally not supported yet.
 
 ---
 

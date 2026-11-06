@@ -3,15 +3,19 @@
 **SwarmNode** is the microcontroller Slave library for the [**OpenSwarm**](https://github.com/raihhann/OpenSwarm) Distributed Robotics Framework.
 
 ### Core Rule
-* **Slaves ONLY declare Wi-Fi/Serial, Node ID, and attached sensor/actuator pins inside `setup()`.**
+* **Slaves ONLY declare Wi-Fi, Node ID, and attached sensor/actuator pins inside `setup()`.**
 * **`void loop()` is 100% empty.**
 * **100% of robot control logic runs remotely on the Linux Master (`openswarm-master`).**
 
-### Supported Microcontroller Families (`v0.3.0`)
-* **ESP32 Family (`hal_esp32.h`):** `ESP32`, `ESP32-S2`, `ESP32-S3`, `ESP32-C3` (FreeRTOS Core 0 daemon)
-* **RP2040 Family (`hal_rp2040.h`):** `Arduino Nano RP2040 Connect` (`WiFiNINA` + Mbed RTOS thread + onboard `LSM6DSOX` 6-axis IMU) & `Raspberry Pi Pico W` (`WiFi.h` + Core 1 daemon)
-* **Arduino UNO Family (`hal_uno.h`):** `Arduino UNO R4 WiFi` (`WiFiS3`), `Arduino UNO WiFi Rev2` (`WiFiNINA` + onboard `LSM6DS3` IMU), `Arduino UNO R3` / `R4 Minima` (`connectSerial(115200)`)
-* **Arduino Nano Family (`hal_nano.h`):** `Arduino Nano 33 IoT` (`WiFiNINA` + onboard `LSM6DS3` IMU), `Arduino Nano Every`, `Classic Arduino Nano ATmega328P` (`connectSerial(115200)`)
+### Supported Boards (`v0.4.0` — Wi-Fi boards only)
+* **ESP32 Family (`hal_esp32.h`):** `ESP32`, `ESP32-S2`, `ESP32-S3`, `ESP32-C3` (FreeRTOS task on Core 0)
+* **RP2040 Family (`hal_rp2040.h`):** `Arduino Nano RP2040 Connect` (`WiFiNINA` + Mbed RTOS thread + onboard `LSM6DSOX` 6-axis IMU) & `Raspberry Pi Pico W` (`WiFi.h`, daemon on Core 0 alongside the Wi-Fi driver)
+* **Arduino UNO (`hal_uno.h`):** `Arduino UNO R4 WiFi` (`WiFiS3`), `Arduino UNO WiFi Rev2` (`WiFiNINA` + onboard `LSM6DS3` IMU)
+* **Arduino Nano (`hal_nano.h`):** `Arduino Nano 33 IoT` (`WiFiNINA` + onboard `LSM6DS3` IMU)
+
+> Boards without native Wi-Fi (UNO R3, UNO R4 Minima, Classic Nano, Nano Every) are not supported.
+
+> **Tip (UNO R4 WiFi / UNO WiFi Rev2 / Nano 33 IoT / Pico W):** on these boards SwarmNode keeps your `loop()` empty by renaming it with a macro. Put `#include <SwarmNode.h>` **last** in your sketch so other libraries' `loop()` methods are not affected.
 
 ---
 

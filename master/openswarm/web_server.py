@@ -9,12 +9,14 @@ Serves a high-tech Three.js 3D Open-World Swarm Arena in the browser:
 
 import asyncio
 import json
+import logging
 import math
-import os
 import time
 from aiohttp import web
 
 from openswarm.master import SwarmMaster
+
+logger = logging.getLogger(__name__)
 
 # ============================================================================
 # 2D/3D RIGID BODY SIMULATION ARENA STATE (SI Units: meters, seconds)
@@ -689,9 +691,34 @@ class OpenSwarmServer:
         self.master = SwarmMaster()
         self.app = web.Application()
         self.websockets = set()
+        self._missing_nodes = set()
 
         self.app.router.add_get('/', self.handle_index)
         self.app.router.add_get('/ws', self.handle_ws)
+        self.app.on_cleanup.append(self._cleanup)
+
+    def _send_drive(self, bot_id: str, left: int, right: int) -> bool:
+        node = self.master.get(bot_id)
+        if node is None:
+            if bot_id not in self._missing_nodes:
+                logger.warning("Slave '%s' has not been discovered; drive command was not sent", bot_id)
+                self._missing_nodes.add(bot_id)
+            return False
+
+        self._missing_nodes.discard(bot_id)
+        node.drive("drive", left=left, right=right)
+        return True
+
+    def _stop_all(self):
+        self.world.ai_active = False
+        for bot in self.world.robots.values():
+            bot["motor_l"] = 0
+            bot["motor_r"] = 0
+        self.master.stop_all()
+
+    async def _cleanup(self, app):
+        self.world.ai_active = False
+        self.master.close()
 
     async def handle_index(self, request):
         return web.Response(text=HTML_PAGE, content_type='text/html')
@@ -704,32 +731,46 @@ class OpenSwarmServer:
         try:
             async for msg in ws:
                 if msg.type == web.WSMsgType.TEXT:
-                    data = json.loads(msg.data)
+                    try:
+                        data = json.loads(msg.data)
+                    except json.JSONDecodeError:
+                        await ws.close(code=1003, message=b"Expected a JSON object")
+                        break
+                    if not isinstance(data, dict):
+                        await ws.close(code=1003, message=b"Expected a JSON object")
+                        break
                     op = data.get("op")
                     
                     if op == "DRIVE":
                         bot_id = data.get("id")
-                        l = data.get("left", 0)
-                        r = data.get("right", 0)
-                        if bot_id in self.world.robots:
-                            self.world.robots[bot_id]["motor_l"] = l
-                            self.world.robots[bot_id]["motor_r"] = r
+                        left = data.get("left", 0)
+                        right = data.get("right", 0)
+                        if (
+                            isinstance(bot_id, str)
+                            and bot_id in self.world.robots
+                            and isinstance(left, int)
+                            and not isinstance(left, bool)
+                            and isinstance(right, int)
+                            and not isinstance(right, bool)
+                        ):
+                            left = max(-255, min(255, left))
+                            right = max(-255, min(255, right))
+                            self.world.robots[bot_id]["motor_l"] = left
+                            self.world.robots[bot_id]["motor_r"] = right
                             # Send real low-latency UDP command via SwarmMaster
-                            self.master.send_command(bot_id, "drive", {"left": l, "right": r})
-                            self.world.stats["packets_sent"] += 1
+                            if self._send_drive(bot_id, left, right):
+                                self.world.stats["packets_sent"] += 1
 
                     elif op == "TOGGLE_AI":
                         self.world.ai_active = not self.world.ai_active
                     
                     elif op == "STOP_ALL":
-                        self.world.ai_active = False
-                        for b in self.world.robots.values():
-                            b["motor_l"] = 0
-                            b["motor_r"] = 0
-                        self.master.emergency_stop()
+                        self._stop_all()
 
         finally:
-            self.websockets.remove(ws)
+            self.websockets.discard(ws)
+            if not self.websockets:
+                self._stop_all()
         return ws
 
     async def simulation_loop(self):
@@ -743,8 +784,8 @@ class OpenSwarmServer:
                 # Dispatch commands from AI to physical/virtual nodes
                 for bot_id in ["tug_esp32", "tug_rp2040"]:
                     bot = self.world.robots[bot_id]
-                    self.master.send_command(bot_id, "drive", {"left": bot["motor_l"], "right": bot["motor_r"]})
-                    self.world.stats["packets_sent"] += 1
+                    if self._send_drive(bot_id, bot["motor_l"], bot["motor_r"]):
+                        self.world.stats["packets_sent"] += 1
 
             self.world.update_physics(dt)
 
@@ -760,8 +801,9 @@ class OpenSwarmServer:
                 for ws in list(self.websockets):
                     try:
                         await ws.send_str(payload)
-                    except Exception:
-                        pass
+                    except (ConnectionResetError, RuntimeError) as exc:
+                        logger.warning("Removing disconnected web client: %s", exc)
+                        self.websockets.discard(ws)
 
             elapsed = time.time() - t0
             sleep_time = max(0.001, dt - elapsed)
@@ -772,7 +814,7 @@ class OpenSwarmServer:
         asyncio.set_event_loop(loop)
         loop.create_task(self.simulation_loop())
         print(f"\n[OpenSwarm Master] 3D Fleet Command Center running at: http://localhost:{self.port}")
-        web.run_app(self.app, host="0.0.0.0", port=self.port, loop=loop)
+        web.run_app(self.app, host="127.0.0.1", port=self.port, loop=loop)
 
 
 if __name__ == "__main__":

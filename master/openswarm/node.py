@@ -29,6 +29,7 @@ class RemoteSwarmNode:
         self._sensor_values: Dict[str, Union[float, List[float]]] = {}
         self.uptime_ms: int = 0
         self.last_seen: float = time.time()
+        self.last_telemetry: float = 0.0
 
     # -------------------------------------------------------------------------
     # Internal state updates (called by SwarmMaster background thread)
@@ -43,8 +44,11 @@ class RemoteSwarmNode:
 
     def _update_state(self, uptime_ms: int, sensors_dict: Dict[str, Any]) -> None:
         self.uptime_ms = uptime_ms
-        self._sensor_values.update(sensors_dict)
-        self.last_seen = time.time()
+        # A STATE packet contains the complete sample; don't retain values for omitted sensors.
+        self._sensor_values = dict(sensors_dict)
+        now = time.time()
+        self.last_seen = now
+        self.last_telemetry = now
 
     # -------------------------------------------------------------------------
     # Sensor Reading API
@@ -57,6 +61,13 @@ class RemoteSwarmNode:
     def read(self, sensor_name: str, default: Any = 0.0) -> Union[float, List[float]]:
         """Reads the latest value of a named sensor (e.g., node.read('rssi') or node.read('front_sonar'))."""
         return self._sensor_values.get(sensor_name, default)
+
+    @property
+    def telemetry_age(self) -> float:
+        """Seconds since the last STATE telemetry packet was received (inf if none yet)."""
+        if self.last_telemetry <= 0.0:
+            return float("inf")
+        return time.time() - self.last_telemetry
 
     @property
     def is_online(self) -> bool:
@@ -138,12 +149,12 @@ class RemoteSwarmNode:
         self._send_fn(self.ip, self.port, {"cmd": "STOP"})
 
     # -------------------------------------------------------------------------
-    # Universal Bus & Custom Actuator API (LoRa, SPI, I2C, UART, Custom)
+    # Universal Bus & Custom Actuator API (UART, SPI, I2C, Custom)
     # -------------------------------------------------------------------------
     def send_bus(self, name: str, data: str = "", v1: int = 0, v2: int = 0) -> None:
         """
-        Transmits a string payload or numeric values over a registered LoRa, UART, or Custom actuator.
-        Example: node.send_bus('lora_radio', data='HELLO_SWARM')
+        Transmits a string payload or numeric values over a registered UART or Custom actuator.
+        Example: node.send_bus('uart_link', data='HELLO_SWARM')
         """
         self._send_fn(
             self.ip,

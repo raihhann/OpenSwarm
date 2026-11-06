@@ -1,4 +1,4 @@
-# OpenSwarm — Zero-Control-Logic Distributed Robotics Framework (Remote HAL)
+# OpenSwarm — Software for Wireless Autonomous Robot Management
 
 <p align="center">
   <a href="https://pypi.org/project/openswarm-master/"><img src="https://img.shields.io/pypi/v/openswarm-master?style=for-the-badge&label=PyPI%20openswarm-master&color=3775A9" alt="PyPI openswarm-master" /></a>

@@ -161,7 +161,7 @@ class VirtualSlaveNode:
 
             except socket.timeout:
                 continue
-            except json.JSONDecodeError:
+            except (UnicodeDecodeError, json.JSONDecodeError):
                 continue
             except OSError:
                 if self.running:

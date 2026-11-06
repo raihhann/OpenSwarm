@@ -205,10 +205,12 @@ OpenSwarm supports both dedicated 1-line robotics drivers and **universal bus pa
 
 ### Part 1: Install the `SwarmNode` Slave Library (Arduino IDE & PlatformIO)
 
-#### Option A: Arduino IDE (`.ZIP` / Library Manager)
-1. Switch to the [**`SwarmNode` branch**](https://github.com/raihhann/OpenSwarm/tree/SwarmNode) on GitHub and click **`<> Code` -> `Download ZIP`** (or search **`SwarmNode`** in the Arduino IDE Library Manager).
-2. Open **Arduino IDE** -> **Sketch** -> **Include Library** -> **Add .ZIP Library...** and select the downloaded ZIP.
+#### Option A: Arduino IDE Library Manager
+1. In Arduino IDE, open **Tools -> Manage Libraries...** (or click the Library Manager icon).
+2. Search for **`SwarmNode`**, select the library by Mohammed Raihan Soniwala, and click **Install**. Choose the latest version when prompted.
 3. Open **File -> Examples -> SwarmNode -> ESP32_LED_Test**, enter your Wi-Fi credentials, and click **Upload**.
+
+You can also install it manually from the [**`SwarmNode` branch**](https://github.com/raihhann/OpenSwarm/tree/SwarmNode): download the branch ZIP, then choose **Sketch -> Include Library -> Add .ZIP Library...**.
 
 #### Option B: PlatformIO (`platformio.ini`)
 ```ini

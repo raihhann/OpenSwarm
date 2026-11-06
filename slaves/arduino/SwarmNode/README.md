@@ -21,14 +21,16 @@
 
 ## 1. Installation in Arduino IDE
 
-1. Switch to the [**`SwarmNode` branch**](https://github.com/raihhann/OpenSwarm/tree/SwarmNode) on GitHub and click **`<> Code` -> `Download ZIP`**.
-2. In Arduino IDE, click **Sketch -> Include Library -> Add .ZIP Library...** and select the downloaded `.zip` file.
+1. Open **Tools -> Manage Libraries...** (or click the Library Manager icon).
+2. Search for **`SwarmNode`**, select the library by Mohammed Raihan Soniwala, and click **Install**. Choose the latest version when prompted.
 3. Include the library in your sketch with either:
    ```cpp
    #include <SwarmNode.h>
    // OR
    #include <OpenSwarm.h>
    ```
+
+You can also install it manually from the [**`SwarmNode` branch**](https://github.com/raihhann/OpenSwarm/tree/SwarmNode): download the branch ZIP, then choose **Sketch -> Include Library -> Add .ZIP Library...**.
 
 ---
 

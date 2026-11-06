@@ -36,7 +36,7 @@ void setup() {
     }
 
     // 2. Register Built-in LED (Pin 13 / LED_BUILTIN) & Sensors
-    node.registerDigitalOutput("led", LED_BUILTIN);
+    node.registerDigitalOutput("led", 13);
     node.registerOnboardIMU("imu");   // Streams 6-Axis [ax, ay, az, gx, gy, gz] on Nano RP2040 Connect!
     node.registerWiFiRSSI("rssi");    // Streams Wi-Fi signal strength (dBm)
 

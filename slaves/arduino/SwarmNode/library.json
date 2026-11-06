@@ -36,6 +36,18 @@
     "raspberrypi",
     "renesas-ra"
   ],
+  "dependencies": [
+    {
+      "owner": "arduino-libraries",
+      "name": "WiFiNINA",
+      "version": "^2.1.1",
+      "platforms": [
+        "atmelmegaavr",
+        "atmelsam",
+        "raspberrypi"
+      ]
+    }
+  ],
   "headers": [
     "SwarmNode.h",
     "OpenSwarm.h"

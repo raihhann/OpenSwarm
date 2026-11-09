@@ -314,7 +314,10 @@ class SwarmNode:
             )
             v2 = int(msg.get("right", msg.get("val", msg.get("v2", 0))))
             data_str = str(msg.get("data", ""))
-            self._execute_actuator(act, v1, v2, data_str)
+            try:
+                self._execute_actuator(act, v1, v2, data_str)
+            except Exception as exc:
+                print(f"[SwarmLinuxSlave] Actuator error on '{target}': {exc}")
 
     def _execute_actuator(self, act: Dict[str, Any], v1: int, v2: int, data_str: str) -> None:
         t = act["type"]

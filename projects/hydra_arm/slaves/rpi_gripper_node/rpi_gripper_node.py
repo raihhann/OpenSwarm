@@ -118,8 +118,13 @@ class Ubuntu24DualServoHAL:
             except Exception:
                 pass
             self.lgpio.gpio_claim_output(self.handle, bcm_pin, 0)
-            # Send 15 pulses (300 ms) to move to default_angle, then auto-stop in C
-            self.lgpio.tx_servo(self.handle, bcm_pin, init_pulse, 50, 0, 15)
+            # Use cycles=0 so lgpio updates in-place without filling its 5-slot TX queue,
+            # then stop pulses after 0.35s via _idle_pin so the servo stays silent at rest
+            self.lgpio.tx_servo(self.handle, bcm_pin, init_pulse, 50, 0, 0)
+            init_timer = threading.Timer(0.35, self._idle_pin, args=(bcm_pin,))
+            init_timer.daemon = True
+            self.stop_timers[bcm_pin] = init_timer
+            init_timer.start()
         elif self.mode == "rpi_gpio" and self.gpio is not None:
             self.gpio.setup(bcm_pin, self.gpio.OUT)
             pwm = self.gpio.PWM(bcm_pin, 50)
@@ -147,12 +152,20 @@ class Ubuntu24DualServoHAL:
                     old_timer.cancel()
 
                 if self.mode == "lgpio" and self.lgpio is not None and self.handle is not None:
-                    # Send 12 clean pulses (240 ms) then automatically stop pulsing so it never shakes at idle
-                    self.lgpio.tx_servo(self.handle, bcm_pin, pulse_us, 50, 0, 12)
+                    try:
+                        # cycles=0 updates lgpio's active servo slot in-place (never fills TX queue!)
+                        self.lgpio.tx_servo(self.handle, bcm_pin, pulse_us, 50, 0, 0)
+                    except Exception:
+                        try:
+                            self.lgpio.tx_servo(self.handle, bcm_pin, 0, 50, 0, 0)
+                            self.lgpio.tx_servo(self.handle, bcm_pin, pulse_us, 50, 0, 0)
+                        except Exception:
+                            pass
                 elif self.mode == "rpi_gpio" and bcm_pin in self.pwms:
                     self.pwms[bcm_pin].ChangeDutyCycle(duty_pct)
 
-                timer = threading.Timer(0.26, self._idle_pin, args=(bcm_pin,))
+                # Stop pulses 280 ms after the last movement step completes -> zero idle shake!
+                timer = threading.Timer(0.28, self._idle_pin, args=(bcm_pin,))
                 timer.daemon = True
                 self.stop_timers[bcm_pin] = timer
                 timer.start()

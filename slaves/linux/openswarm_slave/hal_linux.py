@@ -245,7 +245,14 @@ class LinuxHAL:
                 self._lgpio.gpio_claim_output(self._lgpio_handle, pin, 0)
             except Exception:
                 pass
-            self._lgpio.tx_servo(self._lgpio_handle, pin, pulse_us, 50, 0, 12)
+            try:
+                self._lgpio.tx_servo(self._lgpio_handle, pin, pulse_us, 50, 0, 0)
+            except Exception:
+                try:
+                    self._lgpio.tx_servo(self._lgpio_handle, pin, 0, 50, 0, 0)
+                    self._lgpio.tx_servo(self._lgpio_handle, pin, pulse_us, 50, 0, 0)
+                except Exception:
+                    pass
         else:
             prev = self._sim_pins.get(pin)
             self._sim_pins[pin] = ang

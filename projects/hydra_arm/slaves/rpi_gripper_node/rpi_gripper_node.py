@@ -60,23 +60,7 @@ class Ubuntu24DualServoHAL:
         self.stop_timers = {}
         self._lock = threading.Lock()
 
-        # 1. Prefer native lgpio on Ubuntu 24.04 (uses kernel C hrtimer via tx_servo)
-        try:
-            import lgpio  # type: ignore
-
-            for chip in (4, 0):
-                try:
-                    self.handle = lgpio.gpiochip_open(chip)
-                    self.lgpio = lgpio
-                    self.mode = "lgpio"
-                    print(f"[RPi Servo HAL] Using native lgpio (gpiochip{chip}) @ 50Hz (auto-idle anti-jitter)")
-                    return
-                except Exception:
-                    continue
-        except Exception:
-            pass
-
-        # 2. Fallback to RPi.GPIO (python3-rpi-lgpio)
+        # 1. Try RPi.GPIO (python3-rpi-lgpio) first — auto-detects the right gpiochip on RPi 3/4/5
         try:
             import RPi.GPIO as GPIO  # type: ignore
 
@@ -86,6 +70,28 @@ class Ubuntu24DualServoHAL:
             self.mode = "rpi_gpio"
             print("[RPi Servo HAL] Using RPi.GPIO (python3-rpi-lgpio) @ 50Hz (auto-idle anti-jitter)")
             return
+        except Exception:
+            pass
+
+        # 2. Fallback to native lgpio (only pick the chip that has >= 28 lines = the 40-pin header!)
+        try:
+            import lgpio  # type: ignore
+
+            for chip in (4, 0, 1, 2):
+                try:
+                    h = lgpio.gpiochip_open(chip)
+                    info = lgpio.gpio_get_chip_info(h)
+                    # info is [status, lines, name, label]; 40-pin header has >= 28 GPIO lines
+                    lines = info[1] if isinstance(info, (list, tuple)) and len(info) > 1 else 0
+                    if lines >= 28:
+                        self.handle = h
+                        self.lgpio = lgpio
+                        self.mode = "lgpio"
+                        print(f"[RPi Servo HAL] Using native lgpio (gpiochip{chip}, {lines} lines) @ 50Hz")
+                        return
+                    lgpio.gpiochip_close(h)
+                except Exception:
+                    continue
         except Exception as exc:
             print(f"[RPi Servo HAL] Running in simulation mode ({exc})")
 

@@ -32,8 +32,8 @@ if getent group gpio >/dev/null; then
     sudo usermod -aG gpio "$USER"
 fi
 
-# 3. Install openswarm-slave (with --system-site-packages if using venv, or --break-system-packages on dedicated RPi server)
-python3 -m pip install --break-system-packages --upgrade openswarm-slave
+# 3. Install openswarm-slave system-wide so both `python3` and `sudo python3` see it
+sudo python3 -m pip install --break-system-packages --upgrade openswarm-slave
 
 echo ""
 echo "=================================================================="

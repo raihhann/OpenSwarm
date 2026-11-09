@@ -24,6 +24,7 @@ class LinuxHAL:
         self._rpi_gpio = None
         self._lgpio = None
         self._lgpio_handle: Optional[int] = None
+        self._unoq_bridge = None
         self._pwm_instances: Dict[int, Any] = {}
         self._servo_instances: Dict[int, Any] = {}
         self._sim_pins: Dict[int, int] = {}
@@ -83,9 +84,20 @@ class LinuxHAL:
         return "255.255.255.255"
 
     # -------------------------------------------------------------------------
-    # GPIO / PWM Backend Initialization (RPi.GPIO / rpi-lgpio -> lgpio -> sysfs -> Virtual Sim)
+    # GPIO / PWM Backend Initialization (UNO Q Bridge -> RPi.GPIO / rpi-lgpio -> lgpio -> sysfs -> Sim)
     # -------------------------------------------------------------------------
     def _init_gpio_backend(self) -> None:
+        # 1. Check for Arduino UNO Q RPC Bridge (arduino.app_utils.Bridge -> STM32U585 MCU)
+        try:
+            from arduino.app_utils import Bridge  # type: ignore
+
+            self._unoq_bridge = Bridge
+            self._gpio_backend = "unoq_bridge"
+            return
+        except Exception:
+            pass
+
+        # 2. Check for Raspberry Pi RPi.GPIO (or python3-rpi-lgpio on Ubuntu 24.04)
         try:
             import RPi.GPIO as GPIO  # type: ignore
 
@@ -119,6 +131,8 @@ class LinuxHAL:
 
     def setup_pin(self, pin: int, mode: str = "OUT", pullup: bool = False) -> None:
         if pin < 0 or pin == 255:
+            return
+        if self._gpio_backend == "unoq_bridge":
             return
         if self._gpio_backend == "rpi_gpio" and self._rpi_gpio is not None:
             if mode == "OUT":
@@ -156,6 +170,12 @@ class LinuxHAL:
         if pin < 0 or pin == 255:
             return
         v = 1 if value > 0 else 0
+        if self._gpio_backend == "unoq_bridge" and self._unoq_bridge is not None:
+            try:
+                self._unoq_bridge.call("set_led", bool(v))
+                return
+            except Exception:
+                pass
         if self._gpio_backend == "rpi_gpio" and self._rpi_gpio is not None:
             self._rpi_gpio.output(pin, self._rpi_gpio.HIGH if v else self._rpi_gpio.LOW)
         elif self._gpio_backend == "lgpio" and self._lgpio is not None and self._lgpio_handle is not None:
@@ -226,6 +246,12 @@ class LinuxHAL:
         pulse_us = int(500 + (ang / 180.0) * 1900)  # 500 us (0 deg) .. 2400 us (180 deg)
         duty_pct = (pulse_us / 20000.0) * 100.0      # 2.5% .. 12.0% at 50 Hz (20,000 us period)
 
+        if self._gpio_backend == "unoq_bridge" and self._unoq_bridge is not None:
+            try:
+                self._unoq_bridge.call("set_servo", ang)
+                return
+            except Exception:
+                pass
         if self._gpio_backend == "rpi_gpio" and self._rpi_gpio is not None:
             if pin not in self._servo_instances:
                 self._rpi_gpio.setup(pin, self._rpi_gpio.OUT)

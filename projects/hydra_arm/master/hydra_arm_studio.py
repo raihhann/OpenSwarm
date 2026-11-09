@@ -5,8 +5,8 @@ OpenSwarm HydraArm Studio — 3D Interactive Digital Twin & Multi-Controller Mas
 ===============================================================================
 Controls the 4-DOF "Servo Mini Arm" where each servo is wired to a different
 heterogeneous Slave controller over Wi-Fi UDP:
-  - Joint 1 (Base Yaw)       -> ESP32 #1          (node_id: "arm_base_esp32")
-  - Joint 2 (Shoulder Pitch) -> ESP32 #2          (node_id: "arm_shoulder_esp32")
+  - Joint 1 (Base Yaw)       -> ESP32             (node_id: "arm_base_esp32")
+  - Joint 2 (Shoulder Pitch) -> Arduino UNO Q     (node_id: "arm_shoulder_unoq")
   - Joint 3 (Elbow Pitch)    -> RP2040            (node_id: "arm_elbow_rp2040")
   - Joint 4 (Gripper Claw)   -> Raspberry Pi      (node_id: "arm_gripper_rpi")
 
@@ -48,7 +48,7 @@ JOINT_CONFIG: Dict[str, Dict[str, Any]] = {
         "joint_id": "base",
         "label": "Joint 1: Base Yaw",
         "node_id": "arm_base_esp32",
-        "controller": "ESP32 #1",
+        "controller": "ESP32",
         "pin_label": "GPIO 13",
         "color": "#38bdf8",
         "min_angle": 0,
@@ -60,9 +60,9 @@ JOINT_CONFIG: Dict[str, Dict[str, Any]] = {
     "shoulder": {
         "joint_id": "shoulder",
         "label": "Joint 2: Shoulder Pitch",
-        "node_id": "arm_shoulder_esp32",
-        "controller": "ESP32 #2",
-        "pin_label": "GPIO 13",
+        "node_id": "arm_shoulder_unoq",
+        "controller": "Arduino UNO Q",
+        "pin_label": "Pin D9 (MCU Bridge)",
         "color": "#a855f7",
         "min_angle": 20,
         "max_angle": 160,
@@ -438,7 +438,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
     <span class="brand-badge">OPENSWARM HYDRA-ARM</span>
     <div>
       <div class="brand-title">4-Controller Distributed Servo Mini Arm Studio</div>
-      <div class="brand-sub">ESP32 #1 (Base) + ESP32 #2 (Shoulder) + RP2040 (Elbow) + Raspberry Pi Ubuntu 24 (Gripper)</div>
+      <div class="brand-sub">ESP32 (Base) + Arduino UNO Q (Shoulder) + RP2040 (Elbow) + Raspberry Pi Ubuntu 24 (Gripper)</div>
     </div>
   </div>
   <div class="top-actions">
@@ -482,8 +482,8 @@ HTML_PAGE = r"""<!DOCTYPE html>
 
 <script>
 const JOINTS_META = {
-  base:     { id: "base",     short: "J1 Base (ESP32 #1)",     color: "#38bdf8", min: 0,  max: 180, home: 90 },
-  shoulder: { id: "shoulder", short: "J2 Shoulder (ESP32 #2)", color: "#a855f7", min: 20, max: 160, home: 90 },
+  base:     { id: "base",     short: "J1 Base (ESP32)",        color: "#38bdf8", min: 0,  max: 180, home: 90 },
+  shoulder: { id: "shoulder", short: "J2 Shoulder (UNO Q)",    color: "#a855f7", min: 20, max: 160, home: 90 },
   elbow:    { id: "elbow",    short: "J3 Elbow (RP2040)",      color: "#f97316", min: 20, max: 160, home: 90 },
   gripper:  { id: "gripper",  short: "J4 Gripper (RPi)",       color: "#22c55e", min: 10, max: 95,  home: 45 }
 };
@@ -1154,7 +1154,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="OpenSwarm HydraArm 3D Interactive Studio")
     parser.add_argument("--port", type=int, default=8090, help="Local web server port (default: 8090)")
     parser.add_argument("--base-ip", type=str, default=None, help="Optional direct IP for arm_base_esp32")
-    parser.add_argument("--shoulder-ip", type=str, default=None, help="Optional direct IP for arm_shoulder_esp32")
+    parser.add_argument("--shoulder-ip", type=str, default=None, help="Optional direct IP for arm_shoulder_unoq")
     parser.add_argument("--elbow-ip", type=str, default=None, help="Optional direct IP for arm_elbow_rp2040")
     parser.add_argument("--gripper-ip", type=str, default=None, help="Optional direct IP for arm_gripper_rpi")
     args = parser.parse_args()

@@ -31,7 +31,7 @@ void setup() {
     Serial.println("=====================================================");
 
     // 1. Connect to Wi-Fi
-    node.connectWiFi("YOUR_WIFI_SSID", "YOUR_WIFI_PASSWORD");
+    node.connectWiFi("lazycreep", "Porsch@91");
 
     // 2. Declare Attached Hardware Pins ONLY — Zero Control Logic!
     node.registerServo("servo", 6);         // Elbow Pitch SG90 Servo on Pin 6 (D6 / GP6)

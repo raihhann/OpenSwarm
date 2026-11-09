@@ -20,6 +20,15 @@ Core Rule:
 """
 
 import argparse
+import os
+import sys
+
+# Ensure local `slaves/linux` package in the cloned repo is always importable
+# (even when run with `sudo python3` where user site-packages isn't on sys.path)
+REPO_LINUX_SLAVE = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "slaves", "linux"))
+if os.path.isdir(REPO_LINUX_SLAVE) and REPO_LINUX_SLAVE not in sys.path:
+    sys.path.insert(0, REPO_LINUX_SLAVE)
+
 from openswarm_slave import SwarmNode
 
 
@@ -30,37 +39,37 @@ def _make_ubuntu24_servo_driver(bcm_pin: int):
     """
     state = {"mode": "sim", "handle": None, "lgpio": None, "pwm": None}
 
-    # 1. Try native lgpio (works on both Raspberry Pi 5 gpiochip4 and RPi 4 gpiochip0)
+    # 1. Try RPi.GPIO (provided by python3-rpi-lgpio on Ubuntu 24.04)
     try:
-        import lgpio  # type: ignore
+        import RPi.GPIO as GPIO  # type: ignore
 
-        for chip in (4, 0):
-            try:
-                h = lgpio.gpiochip_open(chip)
-                lgpio.gpio_claim_output(h, bcm_pin, 0)
-                state["mode"] = "lgpio"
-                state["handle"] = h
-                state["lgpio"] = lgpio
-                print(f"[RPi Servo HAL] Using native lgpio (gpiochip{chip}) on BCM GPIO {bcm_pin} @ 50Hz")
-                break
-            except Exception:
-                continue
+        GPIO.setwarnings(False)
+        GPIO.setmode(GPIO.BCM)
+        GPIO.setup(bcm_pin, GPIO.OUT)
+        pwm = GPIO.PWM(bcm_pin, 50)
+        pwm.start(0)
+        state["mode"] = "rpi_gpio"
+        state["pwm"] = pwm
+        print(f"[RPi Servo HAL] Using RPi.GPIO 50Hz PWM on BCM GPIO {bcm_pin} (Physical Pin 12)")
     except Exception:
         pass
 
-    # 2. Fallback to RPi.GPIO (provided by python3-rpi-lgpio on Ubuntu 24.04)
+    # 2. Fallback to native lgpio (works on both Raspberry Pi 5 gpiochip4 and RPi 4 gpiochip0)
     if state["mode"] == "sim":
         try:
-            import RPi.GPIO as GPIO  # type: ignore
+            import lgpio  # type: ignore
 
-            GPIO.setwarnings(False)
-            GPIO.setmode(GPIO.BCM)
-            GPIO.setup(bcm_pin, GPIO.OUT)
-            pwm = GPIO.PWM(bcm_pin, 50)
-            pwm.start(0)
-            state["mode"] = "rpi_gpio"
-            state["pwm"] = pwm
-            print(f"[RPi Servo HAL] Using RPi.GPIO 50Hz PWM on BCM GPIO {bcm_pin}")
+            for chip in (4, 0):
+                try:
+                    h = lgpio.gpiochip_open(chip)
+                    lgpio.gpio_claim_output(h, bcm_pin, 0)
+                    state["mode"] = "lgpio"
+                    state["handle"] = h
+                    state["lgpio"] = lgpio
+                    print(f"[RPi Servo HAL] Using native lgpio (gpiochip{chip}) on BCM GPIO {bcm_pin} @ 50Hz")
+                    break
+                except Exception:
+                    continue
         except Exception as exc:
             print(f"[RPi Servo HAL] Running in simulation mode ({exc})")
 

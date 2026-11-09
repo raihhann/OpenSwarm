@@ -49,40 +49,43 @@ logger = logging.getLogger("hydra_arm_studio")
 JOINT_CONFIG: Dict[str, Dict[str, Any]] = {
     "base": {
         "joint_id": "base",
-        "label": "Joint 1: Base Yaw",
+        "code": "J1",
+        "label": "Base Yaw",
         "node_id": "arm_base_esp32",
         "actuator_name": "servo",
         "controller": "ESP32",
         "pin_label": "GPIO 13",
-        "color": "#38bdf8",
+        "color": "#2563eb",
         "min_angle": 0,
         "max_angle": 180,
         "home_angle": 90,
         "angle": 90,
-        "description": "Rotates the entire upper arm assembly left/right on the circular base.",
+        "description": "Rotates the upper arm assembly left/right on the circular base.",
     },
     "shoulder": {
         "joint_id": "shoulder",
-        "label": "Joint 2: Shoulder Pitch",
+        "code": "J2",
+        "label": "Shoulder Pitch",
         "node_id": "arm_gripper_rpi",
         "actuator_name": "shoulder_servo",
-        "controller": "Raspberry Pi (Ubuntu 24.04)",
-        "pin_label": "BCM GPIO 14 (Pin 8)",
-        "color": "#a855f7",
+        "controller": "Raspberry Pi",
+        "pin_label": "BCM 14 (Pin 8)",
+        "color": "#0284c7",
         "min_angle": 20,
         "max_angle": 160,
         "home_angle": 140,
         "angle": 140,
-        "description": "Drives the twin black vertical linkage bars forward and backward.",
+        "description": "Drives the twin vertical linkage bars forward and backward.",
     },
     "elbow": {
         "joint_id": "elbow",
-        "label": "Joint 3: Elbow Pitch",
+        "code": "J3",
+        "label": "Elbow Pitch",
         "node_id": "arm_elbow_rp2040",
         "actuator_name": "servo",
-        "controller": "RP2040 (Nano / Pico W)",
-        "pin_label": "Pin D6 / GP6",
-        "color": "#f97316",
+        "controller": "RP2040",
+        "pin_label": "GP6 (Pin D6)",
+        "color": "#4f46e5",
         "min_angle": 20,
         "max_angle": 160,
         "home_angle": 90,
@@ -91,12 +94,13 @@ JOINT_CONFIG: Dict[str, Dict[str, Any]] = {
     },
     "gripper": {
         "joint_id": "gripper",
-        "label": "Joint 4: Gripper Claw",
+        "code": "J4",
+        "label": "Gripper Claw",
         "node_id": "arm_gripper_rpi",
         "actuator_name": "gripper_servo",
-        "controller": "Raspberry Pi (Ubuntu 24.04)",
-        "pin_label": "BCM GPIO 18 (Pin 12)",
-        "color": "#22c55e",
+        "controller": "Raspberry Pi",
+        "pin_label": "BCM 18 (Pin 12)",
+        "color": "#0d9488",
         "min_angle": 10,
         "max_angle": 95,
         "home_angle": 45,
@@ -111,231 +115,535 @@ HTML_PAGE = r"""<!DOCTYPE html>
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>OpenSwarm HydraArm Studio — 4-Controller Distributed Robotic Arm</title>
+<title>OpenSwarm — HydraArm Teach Pendant</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 <style>
   :root {
-    --bg: #0b0f19;
-    --panel: rgba(15, 23, 42, 0.88);
-    --border: rgba(148, 163, 184, 0.18);
-    --text: #f8fafc;
-    --muted: #94a3b8;
-    --accent: #38bdf8;
+    --bg-app: #f4f5f7;
+    --bg-panel: #ffffff;
+    --bg-subtle: #f8f9fa;
+    --bg-muted: #f1f3f5;
+    --border: #e4e4e7;
+    --border-strong: #d4d4d8;
+    --text-primary: #18181b;
+    --text-secondary: #52525b;
+    --text-muted: #71717a;
+    --accent: #18181b;
+    --accent-blue: #2563eb;
+    --accent-blue-soft: #eff6ff;
+    --green: #16a34a;
+    --green-bg: #f0fdf4;
+    --green-border: #bbf7d0;
+    --amber: #d97706;
+    --amber-bg: #fffbeb;
+    --amber-border: #fde68a;
+    --red: #dc2626;
+    --red-bg: #fef2f2;
+    --red-border: #fecaca;
+    --mono: 'JetBrains Mono', 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   }
+
   * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
   body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg-app);
+    color: var(--text-primary);
+    font-family: var(--sans);
     overflow: hidden;
     height: 100vh;
     width: 100vw;
+    display: flex;
+    flex-direction: column;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Top Docked Header Bar */
+  .topbar {
+    height: 52px;
+    background: var(--bg-panel);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 18px;
+    z-index: 20;
+    flex-shrink: 0;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .brand-mark {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--bg-panel);
+    background: var(--text-primary);
+    padding: 4px 8px;
+    border-radius: 4px;
+  }
+  .brand-divider {
+    width: 1px;
+    height: 18px;
+    background: var(--border);
+  }
+  .brand-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: -0.01em;
+  }
+  .brand-sub {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-family: var(--mono);
+  }
+
+  .top-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .preset-group {
+    display: flex;
+    align-items: center;
+    background: var(--bg-muted);
+    padding: 3px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    gap: 2px;
+  }
+  .preset-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    padding: 0 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .btn {
+    background: var(--bg-panel);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+    padding: 5px 11px;
+    border-radius: 5px;
+    font-size: 12px;
+    font-weight: 500;
+    font-family: var(--sans);
+    cursor: pointer;
+    transition: background 0.1s ease, border-color 0.1s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+  }
+  .btn:hover {
+    background: var(--bg-subtle);
+    border-color: var(--border-strong);
+  }
+  .btn:active {
+    background: var(--bg-muted);
+  }
+  .preset-group .btn {
+    border-color: transparent;
+    background: transparent;
+    color: var(--text-secondary);
+    padding: 4px 10px;
+  }
+  .preset-group .btn:hover {
+    background: var(--bg-panel);
+    color: var(--text-primary);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  }
+  .btn-dark {
+    background: var(--text-primary);
+    color: #ffffff;
+    border-color: var(--text-primary);
+  }
+  .btn-dark:hover {
+    background: #27272a;
+    border-color: #27272a;
+  }
+
+  /* Main Workspace Split: Left Inspector + Right 3D Viewport */
+  .workspace {
+    flex: 1;
+    display: flex;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Left Docked Inspector */
+  .sidebar {
+    width: 372px;
+    background: var(--bg-panel);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    z-index: 15;
+    flex-shrink: 0;
+  }
+  .sidebar-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 2px 4px 2px;
+  }
+  .section-title {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+  }
+  .section-meta {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  /* Joint Axis Cards */
+  .joint-card {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 11px 12px;
+    transition: border-color 0.12s ease, box-shadow 0.12s ease;
+    cursor: pointer;
+  }
+  .joint-card:hover {
+    border-color: var(--border-strong);
+  }
+  .joint-card.active {
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 0 1px var(--accent-blue);
+    background: #fcfdff;
+  }
+  .joint-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  .joint-id-group {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .axis-badge {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: var(--bg-muted);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+  }
+  .joint-card.active .axis-badge {
+    background: var(--accent-blue);
+    color: #ffffff;
+    border-color: var(--accent-blue);
+  }
+  .joint-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  .status-pill {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  .status-online {
+    background: var(--green-bg);
+    color: var(--green);
+    border: 1px solid var(--green-border);
+  }
+  .status-online .status-dot {
+    background: var(--green);
+  }
+  .status-waiting {
+    background: var(--bg-muted);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+  }
+  .status-waiting .status-dot {
+    background: #a1a1aa;
+  }
+
+  .joint-hw-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-bottom: 9px;
+  }
+  .hw-tag {
+    background: var(--bg-subtle);
+    padding: 1px 6px;
+    border-radius: 3px;
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+  }
+
+  /* Precision Control Row: [-1] [Slider] [+1] [Angle] */
+  .control-row {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .jog-btn {
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: var(--bg-subtle);
+    color: var(--text-secondary);
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .jog-btn:hover {
+    background: var(--bg-muted);
+    color: var(--text-primary);
+    border-color: var(--border-strong);
+  }
+  .slider-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  input[type="range"].axis-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 5px;
+    background: #e4e4e7;
+    border-radius: 999px;
+    outline: none;
+    cursor: pointer;
+  }
+  input[type="range"].axis-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--text-primary);
+    border: 2px solid #ffffff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    cursor: grab;
+  }
+  .joint-card.active input[type="range"].axis-slider::-webkit-slider-thumb {
+    background: var(--accent-blue);
+  }
+  .range-limits {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--mono);
+    font-size: 9.5px;
+    color: #a1a1aa;
+  }
+  .readout-box {
+    min-width: 58px;
+    text-align: right;
+    font-family: var(--mono);
+    background: var(--bg-subtle);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 3px 6px;
+  }
+  .angle-val {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-primary);
+    display: block;
+    line-height: 1.1;
+  }
+  .pulse-val {
+    font-size: 9.5px;
+    color: var(--text-muted);
+    display: block;
+  }
+
+  .telemetry-strip {
+    margin-top: 7px;
+    padding-top: 6px;
+    border-top: 1px dashed var(--border);
+    font-family: var(--mono);
+    font-size: 10.5px;
+    color: var(--text-secondary);
+    display: none;
+  }
+
+  /* Bottom Docked Trajectory Recorder in Sidebar */
+  .recorder-dock {
+    padding: 12px 14px;
+    background: var(--bg-subtle);
+    border-top: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .rec-row {
+    display: flex;
+    gap: 6px;
+  }
+  .rec-input {
+    flex: 1;
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    color: var(--text-primary);
+    padding: 5px 9px;
+    font-size: 12px;
+    font-family: var(--mono);
+    outline: none;
+  }
+  .rec-input:focus {
+    border-color: var(--text-primary);
+  }
+  .btn-rec {
+    background: var(--bg-panel);
+    border: 1px solid var(--red-border);
+    color: var(--red);
+    font-weight: 600;
+  }
+  .btn-rec:hover {
+    background: var(--red-bg);
+    border-color: var(--red);
+  }
+  .btn-rec.recording {
+    background: var(--red);
+    border-color: var(--red);
+    color: #ffffff;
+  }
+  .btn-play {
+    background: var(--bg-panel);
+    border: 1px solid var(--green-border);
+    color: var(--green);
+    font-weight: 600;
+  }
+  .btn-play:hover {
+    background: var(--green-bg);
+    border-color: var(--green);
+  }
+  .btn-play.playing {
+    background: var(--green);
+    border-color: var(--green);
+    color: #ffffff;
+  }
+  .rec-status {
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 5px 8px;
+    border-radius: 4px;
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Right 3D Viewport Area */
+  .viewport {
+    flex: 1;
+    position: relative;
+    background: var(--bg-app);
+    overflow: hidden;
   }
   #canvas-container {
     position: absolute;
     inset: 0;
   }
 
-  /* Top Header Bar */
-  .topbar {
+  /* Viewport Corner HUD Overlay */
+  .viewport-hud {
     position: absolute;
-    top: 16px;
-    left: 16px;
-    right: 16px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 20px;
-    background: var(--panel);
-    backdrop-filter: blur(14px);
+    bottom: 14px;
+    left: 14px;
+    background: rgba(255, 255, 255, 0.9);
     border: 1px solid var(--border);
-    border-radius: 14px;
-    z-index: 10;
-    pointer-events: auto;
-  }
-  .brand {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-  }
-  .brand-badge {
-    background: linear-gradient(135deg, #0ea5e9, #6366f1);
-    color: white;
-    font-weight: 800;
-    font-size: 13px;
-    padding: 6px 11px;
-    border-radius: 8px;
-    letter-spacing: 0.6px;
-  }
-  .brand-title {
-    font-size: 17px;
-    font-weight: 700;
-  }
-  .brand-sub {
-    font-size: 12px;
-    color: var(--muted);
-  }
-  .top-actions {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  .btn {
-    background: rgba(30, 41, 59, 0.9);
-    color: var(--text);
-    border: 1px solid var(--border);
-    padding: 8px 14px;
-    border-radius: 9px;
-    font-size: 12.5px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.15s ease;
-  }
-  .btn:hover {
-    background: rgba(51, 65, 85, 0.95);
-    border-color: var(--accent);
-  }
-  .btn-primary {
-    background: linear-gradient(135deg, #0284c7, #2563eb);
-    border-color: rgba(56, 189, 248, 0.4);
-  }
-  .btn-danger {
-    background: rgba(185, 28, 28, 0.85);
-    border-color: rgba(248, 113, 113, 0.4);
-  }
-
-  /* Left Sidebar: 4 Distributed Controllers Status & Joint Rack */
-  .sidebar {
-    position: absolute;
-    top: 84px;
-    left: 16px;
-    bottom: 16px;
-    width: 350px;
-    background: var(--panel);
-    backdrop-filter: blur(14px);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    overflow-y: auto;
-    z-index: 10;
-  }
-  .section-title {
-    font-size: 11.5px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.9px;
-    color: var(--muted);
-  }
-  .hint-banner {
-    background: rgba(56, 189, 248, 0.1);
-    border: 1px solid rgba(56, 189, 248, 0.3);
-    border-radius: 10px;
-    padding: 10px 12px;
-    font-size: 12px;
-    line-height: 1.45;
-    color: #e0f2fe;
-  }
-
-  .joint-card {
-    background: rgba(30, 41, 59, 0.65);
-    border: 1.5px solid rgba(148, 163, 184, 0.16);
-    border-radius: 12px;
-    padding: 12px;
-    cursor: pointer;
-    transition: all 0.16s ease;
-  }
-  .joint-card:hover {
-    border-color: rgba(148, 163, 184, 0.45);
-  }
-  .joint-card.active {
-    background: rgba(30, 41, 59, 0.95);
-    box-shadow: 0 0 0 1px currentColor, 0 8px 24px -6px rgba(0, 0, 0, 0.6);
-  }
-  .joint-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 6px;
-  }
-  .joint-name {
-    font-size: 13.5px;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .color-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    display: inline-block;
-  }
-  .status-pill {
-    font-size: 10.5px;
-    font-weight: 700;
-    padding: 2px 8px;
-    border-radius: 999px;
-    letter-spacing: 0.4px;
-  }
-  .status-online {
-    background: rgba(34, 197, 94, 0.18);
-    color: #4ade80;
-    border: 1px solid rgba(34, 197, 94, 0.4);
-  }
-  .status-waiting {
-    background: rgba(245, 158, 11, 0.16);
-    color: #fbbf24;
-    border: 1px solid rgba(245, 158, 11, 0.35);
-  }
-  .joint-meta {
-    font-size: 11.5px;
-    color: var(--muted);
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 8px;
-  }
-  .slider-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  .slider-row input[type="range"] {
-    flex: 1;
-    accent-color: var(--accent);
-    cursor: pointer;
-    height: 6px;
-  }
-  .angle-readout {
-    font-family: 'JetBrains Mono', Consolas, monospace;
-    font-size: 13px;
-    font-weight: 700;
-    min-width: 44px;
-    text-align: right;
-  }
-  .telemetry-line {
-    margin-top: 6px;
-    font-size: 11px;
-    font-family: 'JetBrains Mono', Consolas, monospace;
-    color: #cbd5e1;
-    background: rgba(15, 23, 42, 0.55);
-    padding: 4px 8px;
     border-radius: 6px;
+    padding: 6px 10px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-secondary);
+    pointer-events: none;
+    z-index: 10;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
   }
 
-  /* Floating 3D Click Popup Slider (Appears right over the clicked Servo Motor!) */
+  /* 3D Servo Callout Tags in Viewport */
+  .servo-tag {
+    position: absolute;
+    padding: 3px 8px;
+    background: rgba(255, 255, 255, 0.94);
+    border: 1px solid var(--border-strong);
+    border-radius: 4px;
+    color: var(--text-primary);
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    pointer-events: auto;
+    cursor: pointer;
+    transform: translate(-50%, -50%);
+    white-space: nowrap;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.06);
+    transition: border-color 0.1s ease, transform 0.1s ease;
+    z-index: 12;
+  }
+  .servo-tag:hover {
+    border-color: var(--text-primary);
+    transform: translate(-50%, -50%) scale(1.04);
+  }
+  .servo-tag.active {
+    background: var(--text-primary);
+    color: #ffffff;
+    border-color: var(--text-primary);
+  }
+
+  /* Floating 3D Popover Inspector */
   #floating-popup {
     position: absolute;
-    width: 280px;
-    background: rgba(15, 23, 42, 0.95);
-    backdrop-filter: blur(16px);
-    border: 2px solid var(--accent);
-    border-radius: 14px;
-    padding: 14px 16px;
-    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.65);
+    width: 268px;
+    background: #ffffff;
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+    padding: 12px 14px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 4px 10px -3px rgba(0, 0, 0, 0.06);
     z-index: 25;
     display: none;
     pointer-events: auto;
@@ -344,230 +652,186 @@ HTML_PAGE = r"""<!DOCTYPE html>
   #floating-popup::after {
     content: "";
     position: absolute;
-    bottom: -9px;
+    bottom: -6px;
     left: 50%;
-    transform: translateX(-50%);
-    border-width: 9px 9px 0;
-    border-style: solid;
-    border-color: var(--accent) transparent;
+    transform: translateX(-50%) rotate(45deg);
+    width: 10px;
+    height: 10px;
+    background: #ffffff;
+    border-right: 1px solid var(--border-strong);
+    border-bottom: 1px solid var(--border-strong);
   }
   .popup-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 4px;
+    margin-bottom: 2px;
   }
   .popup-title {
-    font-size: 14px;
-    font-weight: 800;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
   }
   .popup-close {
     background: none;
     border: none;
-    color: var(--muted);
-    font-size: 16px;
+    color: var(--text-muted);
+    font-size: 14px;
     cursor: pointer;
-    padding: 0 4px;
+    padding: 2px 4px;
+    border-radius: 4px;
+  }
+  .popup-close:hover {
+    background: var(--bg-muted);
+    color: var(--text-primary);
   }
   .popup-sub {
-    font-size: 11.5px;
-    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 10.5px;
+    color: var(--text-muted);
     margin-bottom: 10px;
   }
   .popup-slider-wrap {
     display: flex;
     align-items: center;
     gap: 10px;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
   }
   .popup-slider-wrap input[type="range"] {
     flex: 1;
     cursor: pointer;
+    accent-color: var(--text-primary);
   }
   .popup-angle-badge {
-    font-family: 'JetBrains Mono', Consolas, monospace;
-    font-size: 16px;
-    font-weight: 800;
-    color: #38bdf8;
-    min-width: 50px;
+    font-family: var(--mono);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+    min-width: 42px;
     text-align: right;
   }
   .popup-quick-btns {
     display: flex;
     justify-content: space-between;
-    gap: 6px;
+    gap: 4px;
   }
   .popup-quick-btns button {
     flex: 1;
-    background: rgba(30, 41, 59, 0.9);
+    background: var(--bg-subtle);
     border: 1px solid var(--border);
-    color: var(--text);
-    font-size: 11px;
+    color: var(--text-secondary);
+    font-family: var(--mono);
+    font-size: 10.5px;
     font-weight: 600;
-    padding: 5px 0;
-    border-radius: 6px;
+    padding: 4px 0;
+    border-radius: 4px;
     cursor: pointer;
   }
   .popup-quick-btns button:hover {
-    border-color: var(--accent);
-  }
-
-  /* 3D Servo Labels in Viewport */
-  .servo-tag {
-    position: absolute;
-    padding: 4px 9px;
-    background: rgba(15, 23, 42, 0.86);
-    border: 1.5px solid #38bdf8;
-    border-radius: 999px;
-    color: #f8fafc;
-    font-size: 11px;
-    font-weight: 700;
-    pointer-events: auto;
-    cursor: pointer;
-    transform: translate(-50%, -50%);
-    white-space: nowrap;
-    transition: transform 0.12s ease, box-shadow 0.12s ease;
-    z-index: 15;
-  }
-  .servo-tag:hover {
-    transform: translate(-50%, -50%) scale(1.08);
-    box-shadow: 0 0 14px rgba(56, 189, 248, 0.55);
-  }
-
-  /* Episode Recorder & Replay Panel */
-  .recorder-panel {
-    margin-top: 4px;
-    padding-top: 12px;
-    border-top: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-  .rec-input-row {
-    display: flex;
-    gap: 6px;
-  }
-  .rec-input {
-    flex: 1;
-    background: rgba(15, 23, 42, 0.85);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    color: var(--text);
-    padding: 6px 10px;
-    font-size: 12px;
-    outline: none;
-  }
-  .rec-input:focus {
-    border-color: var(--accent);
-  }
-  .btn-rec {
-    background: rgba(239, 68, 68, 0.18);
-    border: 1px solid rgba(239, 68, 68, 0.5);
-    color: #f87171;
-  }
-  .btn-rec.recording {
-    background: #ef4444;
-    color: #ffffff;
-    animation: pulse-rec 1.1s infinite;
-  }
-  .btn-play {
-    background: rgba(34, 197, 94, 0.18);
-    border: 1px solid rgba(34, 197, 94, 0.5);
-    color: #4ade80;
-  }
-  .btn-play.playing {
-    background: #22c55e;
-    color: #052e16;
-  }
-  @keyframes pulse-rec {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); }
-    50% { box-shadow: 0 0 0 7px rgba(239, 68, 68, 0); }
-  }
-  .rec-status {
-    font-size: 11px;
-    font-family: 'JetBrains Mono', Consolas, monospace;
-    padding: 6px 8px;
-    border-radius: 6px;
-    background: rgba(15, 23, 42, 0.65);
-    color: #cbd5e1;
+    background: var(--bg-muted);
+    color: var(--text-primary);
+    border-color: var(--border-strong);
   }
 </style>
 </head>
 <body>
 
-<div id="canvas-container"></div>
-
-<!-- Top Navigation & Preset Bar -->
-<div class="topbar">
+<!-- Top Docked Toolbar -->
+<header class="topbar">
   <div class="brand">
-    <span class="brand-badge">OPENSWARM HYDRA-ARM</span>
-    <div>
-      <div class="brand-title">Multi-Controller Distributed Servo Mini Arm Studio</div>
-      <div class="brand-sub">ESP32 (Base) + RP2040 (Elbow) + Raspberry Pi Ubuntu 24 (Shoulder GPIO 14 &amp; Gripper GPIO 18)</div>
-    </div>
+    <span class="brand-mark">OPENSWARM</span>
+    <span class="brand-divider"></span>
+    <span class="brand-title">HydraArm Teach Pendant</span>
+    <span class="brand-sub" id="nodes-summary-badge">UDP :4210 / :4211</span>
   </div>
   <div class="top-actions">
-    <button class="btn btn-primary" onclick="sendPreset(90, 140, 90, 45)">Home Pose</button>
-    <button class="btn" onclick="sendPreset(90, 125, 65, 20)">Reach Cube</button>
-    <button class="btn" onclick="sendPreset(90, 125, 65, 85)">Grab Cube</button>
-    <button class="btn" onclick="sendPreset(135, 75, 115, 85)">Lift &amp; Swing Left</button>
-    <button class="btn" onclick="sendPreset(45, 115, 75, 20)">Drop Right</button>
-  </div>
-</div>
-
-<!-- Left Sidebar: All 4 Controllers + Direct Sliders + Episode Recorder -->
-<div class="sidebar">
-  <div class="section-title">Interactive 3D Servo Control</div>
-  <div class="hint-banner">
-    <strong>Click any blue SG90 servo motor</strong> directly on the 3D arm (or its floating badge) to pop up its joint slider and move the real robot!
-  </div>
-  <div id="joint-cards-container" style="display:flex; flex-direction:column; gap:10px;"></div>
-
-  <!-- Episode Recorder & Replay Controls -->
-  <div class="recorder-panel">
-    <div class="section-title">Episode Recorder &amp; Replay</div>
-    <div class="rec-input-row">
-      <input type="text" id="episode-name-input" class="rec-input" placeholder="Episode name (e.g. pick_cube)" value="episode_1" />
-      <button class="btn btn-rec" id="btn-rec-toggle" onclick="toggleRecording()">● Record</button>
+    <div class="preset-group">
+      <span class="preset-label">Poses</span>
+      <button class="btn" onclick="sendPreset(90, 140, 90, 45)">Home</button>
+      <button class="btn" onclick="sendPreset(90, 125, 65, 20)">Reach</button>
+      <button class="btn" onclick="sendPreset(90, 125, 65, 85)">Grasp</button>
+      <button class="btn" onclick="sendPreset(135, 75, 115, 85)">Lift Left</button>
+      <button class="btn" onclick="sendPreset(45, 115, 75, 20)">Place Right</button>
     </div>
-    <div class="rec-input-row">
-      <select id="episode-select" class="rec-input"></select>
-      <button class="btn btn-play" id="btn-play-ep" onclick="playSelectedEpisode(false)">▶ Play</button>
-      <button class="btn" id="btn-loop-ep" onclick="playSelectedEpisode(true)">↻ Loop</button>
-      <button class="btn" onclick="stopPlayback()">■ Stop</button>
+    <button class="btn" onclick="resetCameraView()">Reset View</button>
+  </div>
+</header>
+
+<div class="workspace">
+  <!-- Left Docked Inspector -->
+  <aside class="sidebar">
+    <div class="sidebar-scroll">
+      <div class="section-header">
+        <span class="section-title">Joint Axes (4-DOF)</span>
+        <span class="section-meta">50 Hz · 500–2400 µs</span>
+      </div>
+      <div id="joint-cards-container" style="display:flex; flex-direction:column; gap:8px;"></div>
     </div>
-    <div class="rec-status" id="rec-status-box">Ready • Move sliders while recording to save trajectory</div>
-  </div>
-</div>
 
-<!-- Floating Slider Popup over Clicked 3D Servo -->
-<div id="floating-popup">
-  <div class="popup-header">
-    <div class="popup-title" id="popup-title">Joint 1: Base Yaw</div>
-    <button class="popup-close" onclick="closePopup()">✕</button>
-  </div>
-  <div class="popup-sub" id="popup-sub">ESP32 #1 (arm_base_esp32) • GPIO 13</div>
-  <div class="popup-slider-wrap">
-    <input type="range" id="popup-slider" min="0" max="180" value="90" />
-    <div class="popup-angle-badge" id="popup-angle">90°</div>
-  </div>
-  <div class="popup-quick-btns">
-    <button id="popup-btn-min">Min</button>
-    <button id="popup-btn-home">Home (90°)</button>
-    <button id="popup-btn-max">Max</button>
-  </div>
-</div>
+    <!-- Episode Recorder & Player -->
+    <div class="recorder-dock">
+      <div class="section-header" style="padding-bottom:2px;">
+        <span class="section-title">Trajectory Recorder</span>
+        <span class="section-meta" id="rec-step-badge">episodes/</span>
+      </div>
+      <div class="rec-row">
+        <input type="text" id="episode-name-input" class="rec-input" placeholder="episode_name" value="episode_1" />
+        <button class="btn btn-rec" id="btn-rec-toggle" onclick="toggleRecording()">Record</button>
+      </div>
+      <div class="rec-row">
+        <select id="episode-select" class="rec-input"></select>
+        <button class="btn btn-play" id="btn-play-ep" onclick="playSelectedEpisode(false)">Play</button>
+        <button class="btn" id="btn-loop-ep" onclick="playSelectedEpisode(true)">Loop</button>
+        <button class="btn" onclick="stopPlayback()">Stop</button>
+      </div>
+      <div class="rec-status" id="rec-status-box">Idle — Ready to record or replay</div>
+    </div>
+  </aside>
 
-<!-- 3D Clickable Pill Tags Anchored to Each Servo -->
-<div id="tags-layer"></div>
+  <!-- Right 3D Viewport -->
+  <main class="viewport" id="viewport-root">
+    <div id="canvas-container"></div>
+
+    <!-- Floating Popover over Selected 3D Servo -->
+    <div id="floating-popup">
+      <div class="popup-header">
+        <div class="popup-title" id="popup-title">J1 · Base Yaw</div>
+        <button class="popup-close" onclick="closePopup()">✕</button>
+      </div>
+      <div class="popup-sub" id="popup-sub">ESP32 (arm_base_esp32) · GPIO 13</div>
+      <div class="popup-slider-wrap">
+        <input type="range" id="popup-slider" min="0" max="180" value="90" />
+        <div class="popup-angle-badge" id="popup-angle">90°</div>
+      </div>
+      <div class="popup-quick-btns">
+        <button id="popup-btn-min">Min</button>
+        <button id="popup-btn-m5">-5°</button>
+        <button id="popup-btn-home">Home</button>
+        <button id="popup-btn-p5">+5°</button>
+        <button id="popup-btn-max">Max</button>
+      </div>
+    </div>
+
+    <!-- 3D Clickable Callout Tags -->
+    <div id="tags-layer"></div>
+
+    <div class="viewport-hud">
+      LMB: Orbit &nbsp;·&nbsp; RMB: Pan &nbsp;·&nbsp; Scroll: Zoom &nbsp;·&nbsp; Click Servo: Inspect Axis
+    </div>
+  </main>
+</div>
 
 <script>
 const JOINTS_META = {
-  base:     { id: "base",     short: "J1 Base (ESP32)",        color: "#38bdf8", min: 0,  max: 180, home: 90 },
-  shoulder: { id: "shoulder", short: "J2 Shoulder (RPi P8)",   color: "#a855f7", min: 20, max: 160, home: 140 },
-  elbow:    { id: "elbow",    short: "J3 Elbow (RP2040)",      color: "#f97316", min: 20, max: 160, home: 90 },
-  gripper:  { id: "gripper",  short: "J4 Gripper (RPi P12)",   color: "#22c55e", min: 10, max: 95,  home: 45 }
+  base:     { id: "base",     code: "J1", name: "Base Yaw",       hw: "ESP32 · GPIO 13",      color: "#2563eb", min: 0,  max: 180, home: 90 },
+  shoulder: { id: "shoulder", code: "J2", name: "Shoulder Pitch", hw: "RPi · BCM 14 (Pin 8)", color: "#0284c7", min: 20, max: 160, home: 140 },
+  elbow:    { id: "elbow",    code: "J3", name: "Elbow Pitch",    hw: "RP2040 · GP6 (D6)",    color: "#4f46e5", min: 20, max: 160, home: 90 },
+  gripper:  { id: "gripper",  code: "J4", name: "Gripper Claw",   hw: "RPi · BCM 18 (Pin 12)",color: "#0d9488", min: 10, max: 95,  home: 45 }
 };
+
+function angleToPulseUs(deg) {
+  return Math.round(500 + (deg / 180.0) * 1900);
+}
 
 let armState = {
   base: 90,
@@ -593,10 +857,7 @@ function connectWS() {
       for (const [jid, jinfo] of Object.entries(msg.joints)) {
         if (selectedJoint !== jid || (msg.recorder && msg.recorder.playing)) {
           targetAngles[jid] = jinfo.target_angle !== undefined ? jinfo.target_angle : jinfo.angle;
-          const sSlider = document.getElementById(`slider-${jid}`);
-          const sReadout = document.getElementById(`readout-${jid}`);
-          if (sSlider) sSlider.value = targetAngles[jid];
-          if (sReadout) sReadout.textContent = targetAngles[jid] + "°";
+          updateCardReadout(jid, targetAngles[jid]);
         }
       }
       renderSidebarCards();
@@ -609,6 +870,19 @@ function connectWS() {
 }
 connectWS();
 
+function updateCardReadout(jointId, angle) {
+  const sSlider = document.getElementById(`slider-${jointId}`);
+  const sReadout = document.getElementById(`readout-${jointId}`);
+  const sPulse = document.getElementById(`pulse-${jointId}`);
+  if (sSlider) sSlider.value = angle;
+  if (sReadout) sReadout.textContent = `${angle}°`;
+  if (sPulse) sPulse.textContent = `${angleToPulseUs(angle)} µs`;
+  const tag = tagElements[jointId];
+  if (tag) {
+    tag.textContent = `${JOINTS_META[jointId].code} · ${angle}°`;
+  }
+}
+
 function sendJointAngle(jointId, angle) {
   const meta = JOINTS_META[jointId];
   const clamped = Math.max(meta.min, Math.min(meta.max, Math.round(angle)));
@@ -618,14 +892,17 @@ function sendJointAngle(jointId, angle) {
     document.getElementById("popup-slider").value = clamped;
     document.getElementById("popup-angle").textContent = clamped + "°";
   }
-  const sSlider = document.getElementById(`slider-${jointId}`);
-  const sReadout = document.getElementById(`readout-${jointId}`);
-  if (sSlider) sSlider.value = clamped;
-  if (sReadout) sReadout.textContent = clamped + "°";
+  updateCardReadout(jointId, clamped);
 
   if (ws && ws.readyState === WebSocket.OPEN) {
     ws.send(JSON.stringify({ op: "SET_JOINT", joint: jointId, angle: clamped }));
   }
+}
+
+function jogJoint(jointId, delta, ev) {
+  if (ev) ev.stopPropagation();
+  const cur = targetAngles[jointId] !== undefined ? targetAngles[jointId] : JOINTS_META[jointId].home;
+  sendJointAngle(jointId, cur + delta);
 }
 
 function sendPreset(b, s, e, g) {
@@ -668,20 +945,20 @@ function updateRecorderUI(rec) {
 
   if (rec.recording) {
     recBtn.className = "btn btn-rec recording";
-    recBtn.textContent = "■ Stop & Save";
-    statusBox.style.color = "#fca5a5";
-    statusBox.textContent = `● REC '${rec.active_name}' • ${rec.frame_count} steps (${rec.elapsed_sec}s)`;
+    recBtn.textContent = "Save";
+    statusBox.style.color = "var(--red)";
+    statusBox.textContent = `REC ${rec.active_name} · ${rec.frame_count} frames (${rec.elapsed_sec}s)`;
   } else {
     recBtn.className = "btn btn-rec";
-    recBtn.textContent = "● Record";
+    recBtn.textContent = "Record";
     if (rec.playing) {
       playBtn.className = "btn btn-play playing";
-      statusBox.style.color = "#86efac";
-      statusBox.textContent = `▶ PLAYING '${rec.playing_file}' ${rec.loop ? "(LOOP)" : ""} • ${rec.play_progress}`;
+      statusBox.style.color = "var(--green)";
+      statusBox.textContent = `PLAY ${rec.playing_file} ${rec.loop ? "[LOOP]" : ""} · ${rec.play_progress}`;
     } else {
       playBtn.className = "btn btn-play";
-      statusBox.style.color = "#cbd5e1";
-      statusBox.textContent = rec.last_message || "Ready • Saved episodes in projects/hydra_arm/episodes/";
+      statusBox.style.color = "var(--text-secondary)";
+      statusBox.textContent = rec.last_message || "Idle — Ready to record or replay";
     }
   }
 
@@ -694,7 +971,7 @@ function updateRecorderUI(rec) {
     for (const ep of (rec.episodes || [])) {
       const opt = document.createElement("option");
       opt.value = ep.filename;
-      opt.textContent = `${ep.filename} (${ep.steps} steps, ${ep.duration_sec}s)`;
+      opt.textContent = `${ep.filename} (${ep.steps}f, ${ep.duration_sec}s)`;
       sel.appendChild(opt);
     }
     if (rec.last_saved) {
@@ -712,34 +989,50 @@ function buildSidebarCards() {
   const container = document.getElementById("joint-cards-container");
   container.innerHTML = "";
   for (const [jid, meta] of Object.entries(JOINTS_META)) {
+    const initAng = targetAngles[jid];
     const card = document.createElement("div");
     card.className = "joint-card";
     card.id = `card-${jid}`;
-    card.style.color = meta.color;
     card.onclick = (ev) => {
-      if (ev.target.tagName.toLowerCase() !== "input") {
+      const tag = ev.target.tagName.toLowerCase();
+      if (tag !== "input" && tag !== "button") {
         selectServoJoint(jid);
       }
     };
     card.innerHTML = `
-      <div class="joint-header">
-        <div class="joint-name" style="color:#f8fafc;">
-          <span class="color-dot" style="background:${meta.color};"></span>
-          <span id="title-${jid}">${meta.short}</span>
+      <div class="joint-top">
+        <div class="joint-id-group">
+          <span class="axis-badge">${meta.code}</span>
+          <span class="joint-name">${meta.name}</span>
         </div>
-        <span class="status-pill status-waiting" id="status-${jid}">WAITING</span>
+        <span class="status-pill status-waiting" id="status-${jid}">
+          <span class="status-dot"></span>
+          <span id="status-text-${jid}">SIM</span>
+        </span>
       </div>
-      <div class="joint-meta">
-        <span id="ctrl-${jid}">Node: arm_${jid}</span>
-        <span id="pin-${jid}">Pin: --</span>
+      <div class="joint-hw-row">
+        <span id="ctrl-${jid}">${meta.hw}</span>
+        <span class="hw-tag" id="pin-${jid}">Home ${meta.home}°</span>
       </div>
-      <div class="slider-row">
-        <input type="range" id="slider-${jid}" min="${meta.min}" max="${meta.max}" value="${targetAngles[jid]}"
-               style="accent-color:${meta.color}"
-               oninput="onSidebarSlider('${jid}', this.value)" />
-        <span class="angle-readout" id="readout-${jid}" style="color:${meta.color}">${targetAngles[jid]}°</span>
+      <div class="control-row">
+        <button class="jog-btn" title="-1°" onclick="jogJoint('${jid}', -1, event)">-</button>
+        <div class="slider-wrap">
+          <input type="range" class="axis-slider" id="slider-${jid}"
+                 min="${meta.min}" max="${meta.max}" value="${initAng}"
+                 oninput="onSidebarSlider('${jid}', this.value)" />
+          <div class="range-limits">
+            <span>${meta.min}°</span>
+            <span>${meta.home}°</span>
+            <span>${meta.max}°</span>
+          </div>
+        </div>
+        <button class="jog-btn" title="+1°" onclick="jogJoint('${jid}', 1, event)">+</button>
+        <div class="readout-box">
+          <span class="angle-val" id="readout-${jid}">${initAng}°</span>
+          <span class="pulse-val" id="pulse-${jid}">${angleToPulseUs(initAng)} µs</span>
+        </div>
       </div>
-      <div class="telemetry-line" id="telem-${jid}">Waiting for UDP broadcast on port 4211...</div>
+      <div class="telemetry-strip" id="telem-${jid}"></div>
     `;
     container.appendChild(card);
   }
@@ -752,139 +1045,164 @@ function onSidebarSlider(jid, val) {
 }
 
 function renderSidebarCards() {
+  let onlineCount = 0;
+  const totalCount = Object.keys(JOINTS_META).length;
+
   for (const [jid, info] of Object.entries(serverJointsData)) {
     const pill = document.getElementById(`status-${jid}`);
+    const statusText = document.getElementById(`status-text-${jid}`);
     const ctrl = document.getElementById(`ctrl-${jid}`);
     const pin = document.getElementById(`pin-${jid}`);
     const telem = document.getElementById(`telem-${jid}`);
     if (!pill) continue;
 
     if (info.online) {
+      onlineCount++;
       pill.className = "status-pill status-online";
-      pill.textContent = `ONLINE • ${info.ip}`;
+      statusText.textContent = info.ip.split(":")[0];
     } else {
       pill.className = "status-pill status-waiting";
-      pill.textContent = "OFFLINE / SIM";
+      statusText.textContent = "OFFLINE";
     }
-    ctrl.textContent = `${info.controller} (${info.node_id})`;
+    ctrl.textContent = `${info.controller} · ${info.node_id}`;
     pin.textContent = info.pin_label;
 
     const sKeys = Object.keys(info.sensors || {});
     if (info.online && sKeys.length > 0) {
       const pairs = sKeys.map(k => {
         const v = info.sensors[k];
-        return `${k}: ${Array.isArray(v) ? v.map(x => Number(x).toFixed(1)).join(",") : v}`;
+        return `${k}: ${Array.isArray(v) ? v.map(x => Number(x).toFixed(1)).join(", ") : v}`;
       });
-      telem.textContent = pairs.join(" | ");
+      telem.style.display = "block";
+      telem.textContent = pairs.join("  ·  ");
     } else {
-      telem.textContent = `3D Twin Active • Ready for '${info.node_id}' on UDP 4210`;
+      telem.style.display = "none";
     }
+  }
+
+  const badge = document.getElementById("nodes-summary-badge");
+  if (badge) {
+    badge.textContent = `${onlineCount}/${totalCount} Axes Online · UDP :4210`;
   }
 }
 
 // ============================================================================
-// THREE.JS 3D REPLICA OF "SERVO MINI ARM BY LUCA DILO"
+// THREE.JS 3D REPLICA OF "SERVO MINI ARM BY LUCA DILO" (LIGHT STUDIO THEME)
 // ============================================================================
+const viewportEl = document.getElementById("viewport-root");
 const container = document.getElementById("canvas-container");
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x0b0f19);
-scene.fog = new THREE.FogExp2(0x0b0f19, 0.018);
+scene.background = new THREE.Color(0xf4f5f7);
+scene.fog = new THREE.FogExp2(0xf4f5f7, 0.012);
 
-const camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.1, 200);
-camera.position.set(14.5, 11.5, 16.5);
+function getViewportSize() {
+  return {
+    w: viewportEl.clientWidth || (window.innerWidth - 372),
+    h: viewportEl.clientHeight || (window.innerHeight - 52)
+  };
+}
+
+const initSize = getViewportSize();
+const camera = new THREE.PerspectiveCamera(40, initSize.w / initSize.h, 0.1, 200);
+camera.position.set(13.5, 10.5, 15.5);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setSize(initSize.w, initSize.h);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 container.appendChild(renderer.domElement);
 
 const controls = new THREE.OrbitControls(camera, renderer.domElement);
-controls.target.set(0, 4.8, 0);
+controls.target.set(0, 4.6, 0);
 controls.enableDamping = true;
-controls.dampingFactor = 0.07;
+controls.dampingFactor = 0.08;
 
-// Lights
-scene.add(new THREE.AmbientLight(0xffffff, 0.65));
-const dirLight = new THREE.DirectionalLight(0xffffff, 0.95);
-dirLight.position.set(12, 22, 16);
+function resetCameraView() {
+  camera.position.set(13.5, 10.5, 15.5);
+  controls.target.set(0, 4.6, 0);
+  controls.update();
+}
+
+// Clean Daylight Studio Lighting
+scene.add(new THREE.AmbientLight(0xffffff, 0.85));
+const hemiLight = new THREE.HemisphereLight(0xffffff, 0xe4e4e7, 0.45);
+hemiLight.position.set(0, 25, 0);
+scene.add(hemiLight);
+
+const dirLight = new THREE.DirectionalLight(0xffffff, 0.75);
+dirLight.position.set(12, 24, 16);
 dirLight.castShadow = true;
+dirLight.shadow.mapSize.width = 2048;
+dirLight.shadow.mapSize.height = 2048;
 scene.add(dirLight);
 
-const rimLight = new THREE.DirectionalLight(0x38bdf8, 0.4);
-rimLight.position.set(-14, 10, -10);
-scene.add(rimLight);
-
-// Workbench Surface & Subtle Grid
-const tableGeo = new THREE.CylinderGeometry(18, 18, 0.3, 64);
-const tableMat = new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.85, metalness: 0.1 });
+// Light Architectural Workbench Surface & Precision CAD Grid
+const tableGeo = new THREE.CylinderGeometry(16, 16, 0.25, 64);
+const tableMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.9, metalness: 0.02 });
 const tableMesh = new THREE.Mesh(tableGeo, tableMat);
-tableMesh.position.y = -0.15;
+tableMesh.position.y = -0.125;
 tableMesh.receiveShadow = true;
 scene.add(tableMesh);
 
-const grid = new THREE.GridHelper(30, 30, 0x1e293b, 0x1e293b);
+const grid = new THREE.GridHelper(28, 28, 0xd4d4d8, 0xe4e4e7);
 grid.position.y = 0.01;
 scene.add(grid);
 
-// Red Target Cube on the Table (Matches the red cube in the MakerWorld photo!)
-const cubeGeo = new THREE.BoxGeometry(1.6, 1.6, 1.6);
-const cubeMat = new THREE.MeshStandardMaterial({ color: 0xdc2626, roughness: 0.4 });
+// Target Calibration Cube on the Workbench
+const cubeGeo = new THREE.BoxGeometry(1.5, 1.5, 1.5);
+const cubeMat = new THREE.MeshStandardMaterial({ color: 0xdc2626, roughness: 0.35 });
 const redCube = new THREE.Mesh(cubeGeo, cubeMat);
-redCube.position.set(4.5, 0.8, 3.8);
+redCube.position.set(4.5, 0.75, 3.8);
 redCube.castShadow = true;
 scene.add(redCube);
 
-// Materials matching the 3D-printed "Servo Mini Arm" photo:
-// 1. Grey PLA (Round spoked base & upper skeletal forearm)
-const greyPlaMat = new THREE.MeshStandardMaterial({ color: 0x7c8594, roughness: 0.45, metalness: 0.1 });
-// 2. Matte Black PLA (Turret pedestal, twin vertical shoulder links, geared gripper fingers)
-const blackPlaMat = new THREE.MeshStandardMaterial({ color: 0x18181b, roughness: 0.55, metalness: 0.15 });
-// 3. Translucent Blue SG90 Servo Body
-function makeServoMaterial(hexColor) {
+// Materials matching the 3D-printed "Servo Mini Arm":
+// 1. Industrial Cool Grey PLA (Spoked base & upper skeletal forearm)
+const greyPlaMat = new THREE.MeshStandardMaterial({ color: 0x9ca3af, roughness: 0.45, metalness: 0.08 });
+// 2. Matte Charcoal PLA (Turret pedestal, twin vertical shoulder links, geared gripper fingers)
+const blackPlaMat = new THREE.MeshStandardMaterial({ color: 0x27272a, roughness: 0.5, metalness: 0.12 });
+// 3. SG90 Servo Body
+function makeServoMaterial() {
   return new THREE.MeshStandardMaterial({
-    color: 0x1d4ed8,
-    emissive: new THREE.Color(hexColor),
-    emissiveIntensity: 0.22,
-    roughness: 0.3,
-    metalness: 0.2
+    color: 0x2563eb,
+    emissive: new THREE.Color(0x1d4ed8),
+    emissiveIntensity: 0.08,
+    roughness: 0.32,
+    metalness: 0.15
   });
 }
-const hornMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.4 });
+const hornMat = new THREE.MeshStandardMaterial({ color: 0xfafafa, roughness: 0.35 });
 
 // Clickable Servo Meshes registry for Raycasting
 const clickableServos = [];
 const servoVisuals = {};
 
-function createSG90ServoMesh(jointId, hexColor) {
+function createSG90ServoMesh(jointId) {
   const group = new THREE.Group();
-  const mat = makeServoMaterial(hexColor);
+  const mat = makeServoMaterial();
 
-  // Main blue SG90 body
   const body = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.6, 2.3), mat);
   body.castShadow = true;
   body.userData.jointId = jointId;
   group.add(body);
 
-  // Mounting ears
   const ears = new THREE.Mesh(new THREE.BoxGeometry(1.25, 0.2, 3.1), mat);
   ears.position.y = 0.35;
   ears.userData.jointId = jointId;
   group.add(ears);
 
-  // White output horn boss
   const horn = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.35, 20), hornMat);
   horn.position.set(0, 0.92, 0.55);
   horn.userData.jointId = jointId;
   group.add(horn);
 
-  // Glowing selection ring around the servo
-  const ringGeo = new THREE.RingGeometry(1.35, 1.55, 32);
+  const ringGeo = new THREE.RingGeometry(1.3, 1.46, 32);
   const ringMat = new THREE.MeshBasicMaterial({
-    color: new THREE.Color(hexColor),
+    color: new THREE.Color(0x18181b),
     side: THREE.DoubleSide,
     transparent: true,
-    opacity: 0.35
+    opacity: 0.15
   });
   const ring = new THREE.Mesh(ringGeo, ringMat);
   ring.rotation.x = Math.PI / 2;
@@ -902,9 +1220,9 @@ function createSG90ServoMesh(jointId, hexColor) {
 const armRoot = new THREE.Group();
 scene.add(armRoot);
 
-// 1. Spoked Circular Grey Base Plate (matches photo!)
 const baseRingOuter = new THREE.Mesh(new THREE.CylinderGeometry(5.2, 5.2, 0.28, 48), greyPlaMat);
 baseRingOuter.position.y = 0.14;
+baseRingOuter.receiveShadow = true;
 armRoot.add(baseRingOuter);
 
 const baseInnerCut = new THREE.Mesh(new THREE.CylinderGeometry(4.2, 4.2, 0.30, 48), tableMat);
@@ -918,39 +1236,34 @@ for (let i = 0; i < 4; i++) {
   armRoot.add(spoke);
 }
 
-// Center Base Hub
 const baseHub = new THREE.Mesh(new THREE.CylinderGeometry(1.6, 1.8, 0.6, 32), greyPlaMat);
 baseHub.position.y = 0.3;
 armRoot.add(baseHub);
 
-// --- JOINT 1: BASE YAW PIVOT (ESP32 #1) ---
+// --- JOINT 1: BASE YAW PIVOT (ESP32) ---
 const baseYawPivot = new THREE.Group();
 baseYawPivot.position.set(0, 0.6, 0);
 armRoot.add(baseYawPivot);
 
-// Black Turret Pedestal
 const pedestal = new THREE.Mesh(new THREE.BoxGeometry(2.2, 2.0, 2.4), blackPlaMat);
 pedestal.position.y = 1.0;
 pedestal.castShadow = true;
 baseYawPivot.add(pedestal);
 
-// Servo #1 (Base Yaw — ESP32 #1) inside bottom of pedestal
-const servo1 = createSG90ServoMesh("base", JOINTS_META.base.color);
+const servo1 = createSG90ServoMesh("base");
 servo1.position.set(0, 0.9, 0);
 baseYawPivot.add(servo1);
 
-// Servo #2 (Shoulder Pitch — ESP32 #2) mounted horizontally in upper pedestal
-const servo2 = createSG90ServoMesh("shoulder", JOINTS_META.shoulder.color);
+const servo2 = createSG90ServoMesh("shoulder");
 servo2.rotation.z = Math.PI / 2;
 servo2.position.set(0.3, 2.1, 0);
 baseYawPivot.add(servo2);
 
-// --- JOINT 2: SHOULDER PITCH PIVOT (ESP32 #2) ---
+// --- JOINT 2: SHOULDER PITCH PIVOT (Raspberry Pi BCM 14) ---
 const shoulderPivot = new THREE.Group();
 shoulderPivot.position.set(0, 2.2, 0);
 baseYawPivot.add(shoulderPivot);
 
-// Twin Black A-Frame Vertical Linkage Struts (Characteristic look of Luca Dilo's Servo Mini Arm!)
 const lowerArmLen = 5.4;
 for (const side of [-1, 1]) {
   const lowerHalf = new THREE.Mesh(new THREE.BoxGeometry(0.28, lowerArmLen * 0.55, 0.62), blackPlaMat);
@@ -963,22 +1276,19 @@ for (const side of [-1, 1]) {
   upperHalf.castShadow = true;
   shoulderPivot.add(upperHalf);
 }
-// Crossbrace on the black vertical link
 const crossBrace = new THREE.Mesh(new THREE.BoxGeometry(2.3, 0.35, 0.55), blackPlaMat);
 crossBrace.position.set(0, lowerArmLen * 0.48, 0);
 shoulderPivot.add(crossBrace);
 
-// --- JOINT 3: ELBOW PITCH PIVOT (RP2040) ---
+// --- JOINT 3: ELBOW PITCH PIVOT (RP2040 GP6) ---
 const elbowPivot = new THREE.Group();
 elbowPivot.position.set(0, lowerArmLen, 0);
 shoulderPivot.add(elbowPivot);
 
-// Servo #3 (Elbow Pitch — RP2040) nestled in the rear of the grey forearm
-const servo3 = createSG90ServoMesh("elbow", JOINTS_META.elbow.color);
+const servo3 = createSG90ServoMesh("elbow");
 servo3.position.set(0, 0.15, 0.9);
 elbowPivot.add(servo3);
 
-// Grey Skeletal Forearm Rails (extends forward along +Z)
 const forearmLen = 5.6;
 for (const side of [-1, 1]) {
   const rail = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.95, forearmLen), greyPlaMat);
@@ -986,24 +1296,21 @@ for (const side of [-1, 1]) {
   rail.castShadow = true;
   elbowPivot.add(rail);
 }
-// Forearm cross-ribs
 for (const zOff of [0.1, 2.2, 4.1, 5.1]) {
   const rib = new THREE.Mesh(new THREE.BoxGeometry(1.65, 0.85, 0.28), greyPlaMat);
   rib.position.set(0, 0.1, zOff);
   elbowPivot.add(rib);
 }
 
-// --- JOINT 4: GRIPPER CLAW PIVOT (Raspberry Pi Ubuntu 24.04) ---
+// --- JOINT 4: GRIPPER CLAW PIVOT (Raspberry Pi BCM 18) ---
 const gripperGroup = new THREE.Group();
 gripperGroup.position.set(0, 0.1, forearmLen - 0.35);
 elbowPivot.add(gripperGroup);
 
-// Servo #4 (Gripper — Raspberry Pi) mounted underneath the front tip of the forearm
-const servo4 = createSG90ServoMesh("gripper", JOINTS_META.gripper.color);
+const servo4 = createSG90ServoMesh("gripper");
 servo4.position.set(0, -0.75, -0.35);
 gripperGroup.add(servo4);
 
-// Twin Meshed Black Gears + Parallel Gripper Fingers
 const leftFingerPivot = new THREE.Group();
 leftFingerPivot.position.set(-0.48, 0.15, 0.25);
 gripperGroup.add(leftFingerPivot);
@@ -1031,15 +1338,14 @@ leftFingerPivot.add(buildClawFinger(true));
 rightFingerPivot.add(buildClawFinger(false));
 
 // ============================================================================
-// 3D PILL TAGS & FLOATING SLIDER POPUP POSITIONING
+// 3D CALLOUT TAGS & FLOATING POPOVER POSITIONING
 // ============================================================================
 const tagsLayer = document.getElementById("tags-layer");
 const tagElements = {};
 for (const [jid, meta] of Object.entries(JOINTS_META)) {
   const el = document.createElement("div");
   el.className = "servo-tag";
-  el.style.borderColor = meta.color;
-  el.innerHTML = `<span style="color:${meta.color}">●</span> ${meta.short}`;
+  el.textContent = `${meta.code} · ${targetAngles[jid]}°`;
   el.onclick = () => selectServoJoint(jid);
   tagsLayer.appendChild(el);
   tagElements[jid] = el;
@@ -1050,37 +1356,34 @@ function selectServoJoint(jointId) {
   const meta = JOINTS_META[jointId];
   const info = serverJointsData[jointId] || {};
 
-  // Highlight active sidebar card
   for (const k of Object.keys(JOINTS_META)) {
     const c = document.getElementById(`card-${k}`);
     if (c) c.classList.toggle("active", k === jointId);
+    if (tagElements[k]) tagElements[k].classList.toggle("active", k === jointId);
   }
 
-  // Configure floating popup
   const popup = document.getElementById("floating-popup");
   popup.style.display = "block";
-  popup.style.borderColor = meta.color;
-  document.getElementById("popup-title").textContent = info.label || meta.short;
-  document.getElementById("popup-title").style.color = meta.color;
+  document.getElementById("popup-title").textContent = `${meta.code} · ${meta.name}`;
   document.getElementById("popup-sub").textContent =
-    `${info.controller || ""} (${info.node_id || ""}) • ${info.pin_label || ""}`;
+    `${info.controller || meta.hw} (${info.node_id || ""}) · ${info.pin_label || ""}`;
 
   const pSlider = document.getElementById("popup-slider");
   pSlider.min = meta.min;
   pSlider.max = meta.max;
   pSlider.value = Math.round(targetAngles[jointId]);
-  pSlider.style.accentColor = meta.color;
   pSlider.oninput = (e) => sendJointAngle(jointId, parseInt(e.target.value, 10));
 
   const pAngle = document.getElementById("popup-angle");
   pAngle.textContent = Math.round(targetAngles[jointId]) + "°";
-  pAngle.style.color = meta.color;
 
-  document.getElementById("popup-btn-min").textContent = `Min (${meta.min}°)`;
+  document.getElementById("popup-btn-min").textContent = `${meta.min}°`;
   document.getElementById("popup-btn-min").onclick = () => sendJointAngle(jointId, meta.min);
+  document.getElementById("popup-btn-m5").onclick = () => jogJoint(jointId, -5);
   document.getElementById("popup-btn-home").textContent = `Home (${meta.home}°)`;
   document.getElementById("popup-btn-home").onclick = () => sendJointAngle(jointId, meta.home);
-  document.getElementById("popup-btn-max").textContent = `Max (${meta.max}°)`;
+  document.getElementById("popup-btn-p5").onclick = () => jogJoint(jointId, 5);
+  document.getElementById("popup-btn-max").textContent = `${meta.max}°`;
   document.getElementById("popup-btn-max").onclick = () => sendJointAngle(jointId, meta.max);
 }
 
@@ -1090,10 +1393,10 @@ function closePopup() {
   for (const k of Object.keys(JOINTS_META)) {
     const c = document.getElementById(`card-${k}`);
     if (c) c.classList.remove("active");
+    if (tagElements[k]) tagElements[k].classList.remove("active");
   }
 }
 
-// Raycaster so clicking directly on any 3D blue servo motor opens its slider
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 let downPos = { x: 0, y: 0 };
@@ -1103,8 +1406,9 @@ renderer.domElement.addEventListener("pointerdown", (e) => {
 });
 renderer.domElement.addEventListener("pointerup", (e) => {
   if (Math.hypot(e.clientX - downPos.x, e.clientY - downPos.y) > 6) return;
-  mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
-  mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+  const rect = renderer.domElement.getBoundingClientRect();
+  mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+  mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
   raycaster.setFromCamera(mouse, camera);
   const hits = raycaster.intersectObjects(clickableServos, false);
   if (hits.length > 0 && hits[0].object.userData.jointId) {
@@ -1112,11 +1416,12 @@ renderer.domElement.addEventListener("pointerup", (e) => {
   }
 });
 
-function worldToScreen(worldVec) {
+function worldToViewport(worldVec) {
+  const sz = getViewportSize();
   const v = worldVec.clone().project(camera);
   return {
-    x: (v.x * 0.5 + 0.5) * window.innerWidth,
-    y: (-v.y * 0.5 + 0.5) * window.innerHeight,
+    x: (v.x * 0.5 + 0.5) * sz.w,
+    y: (-v.y * 0.5 + 0.5) * sz.h,
     visible: v.z < 1.0
   };
 }
@@ -1130,46 +1435,38 @@ function animate() {
   requestAnimationFrame(animate);
   controls.update();
 
-  // Smoothly interpolate visual joint angles toward targetAngles
   for (const k of Object.keys(armState)) {
     armState[k] += (targetAngles[k] - armState[k]) * 0.18;
   }
 
-  // 1. Base Yaw (90 deg = facing forward +Z)
   baseYawPivot.rotation.y = THREE.MathUtils.degToRad(armState.base - 90);
 
-  // 2. Shoulder Pitch (90 deg = upright, >90 tilts forward)
   const shoulderRad = THREE.MathUtils.degToRad(armState.shoulder - 90);
   shoulderPivot.rotation.x = shoulderRad;
 
-  // 3. Elbow Pitch (90 deg = horizontal forearm, <90 tilts down toward table)
   const elbowRad = THREE.MathUtils.degToRad(90 - armState.elbow);
   elbowPivot.rotation.x = elbowRad - shoulderRad * 0.45;
 
-  // 4. Gripper Claw (10 deg = open wide, 95 deg = closed)
-  const gripNorm = (armState.gripper - 10) / 85.0; // 0 = open, 1 = closed
+  const gripNorm = (armState.gripper - 10) / 85.0;
   const fingerAngle = (1.0 - gripNorm) * 0.55;
   leftFingerPivot.rotation.y = fingerAngle;
   rightFingerPivot.rotation.y = -fingerAngle;
 
-  // Pulse selected servo ring
-  const pulse = 0.55 + 0.35 * Math.sin(performance.now() * 0.006);
   for (const [jid, vis] of Object.entries(servoVisuals)) {
     const isSel = selectedJoint === jid;
-    vis.ringMat.opacity = isSel ? 0.95 : 0.3;
-    vis.ring.scale.setScalar(isSel ? 1.0 + 0.12 * pulse : 1.0);
-    vis.mat.emissiveIntensity = isSel ? 0.55 : 0.2;
+    vis.ringMat.opacity = isSel ? 0.75 : 0.14;
+    vis.mat.emissiveIntensity = isSel ? 0.35 : 0.06;
   }
 
-  // Update 2D screen positions of servo pill tags & floating popup
+  const sz = getViewportSize();
   for (const [jid, vis] of Object.entries(servoVisuals)) {
     vis.group.getWorldPosition(tmpVec);
     tmpVec.y += 0.85;
-    const sc = worldToScreen(tmpVec);
+    const sc = worldToViewport(tmpVec);
     const tag = tagElements[jid];
     if (sc.visible) {
       tag.style.display = "block";
-      tag.style.left = `${sc.x + 48}px`;
+      tag.style.left = `${sc.x + 42}px`;
       tag.style.top = `${sc.y}px`;
     } else {
       tag.style.display = "none";
@@ -1177,8 +1474,8 @@ function animate() {
 
     if (selectedJoint === jid && sc.visible) {
       const popup = document.getElementById("floating-popup");
-      const clampedX = Math.max(490, Math.min(window.innerWidth - 160, sc.x));
-      const clampedY = Math.max(210, Math.min(window.innerHeight - 60, sc.y - 18));
+      const clampedX = Math.max(150, Math.min(sz.w - 150, sc.x));
+      const clampedY = Math.max(155, Math.min(sz.h - 40, sc.y - 16));
       popup.style.left = `${clampedX}px`;
       popup.style.top = `${clampedY}px`;
     }
@@ -1189,9 +1486,10 @@ function animate() {
 animate();
 
 window.addEventListener("resize", () => {
-  camera.aspect = window.innerWidth / window.innerHeight;
+  const sz = getViewportSize();
+  camera.aspect = sz.w / sz.h;
   camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setSize(sz.w, sz.h);
 });
 </script>
 </body>

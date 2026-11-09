@@ -66,8 +66,8 @@ JOINT_CONFIG: Dict[str, Dict[str, Any]] = {
         "color": "#a855f7",
         "min_angle": 20,
         "max_angle": 160,
-        "home_angle": 90,
-        "angle": 90,
+        "home_angle": 140,
+        "angle": 140,
         "description": "Drives the twin black vertical linkage bars forward and backward.",
     },
     "elbow": {
@@ -442,7 +442,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
     </div>
   </div>
   <div class="top-actions">
-    <button class="btn btn-primary" onclick="sendPreset(90, 90, 90, 45)">Home Pose</button>
+    <button class="btn btn-primary" onclick="sendPreset(90, 140, 90, 45)">Home Pose</button>
     <button class="btn" onclick="sendPreset(90, 125, 65, 20)">Reach Cube</button>
     <button class="btn" onclick="sendPreset(90, 125, 65, 85)">Grab Cube</button>
     <button class="btn" onclick="sendPreset(135, 75, 115, 85)">Lift &amp; Swing Left</button>
@@ -483,14 +483,14 @@ HTML_PAGE = r"""<!DOCTYPE html>
 <script>
 const JOINTS_META = {
   base:     { id: "base",     short: "J1 Base (ESP32)",        color: "#38bdf8", min: 0,  max: 180, home: 90 },
-  shoulder: { id: "shoulder", short: "J2 Shoulder (UNO Q)",    color: "#a855f7", min: 20, max: 160, home: 90 },
+  shoulder: { id: "shoulder", short: "J2 Shoulder (UNO Q)",    color: "#a855f7", min: 20, max: 160, home: 140 },
   elbow:    { id: "elbow",    short: "J3 Elbow (RP2040)",      color: "#f97316", min: 20, max: 160, home: 90 },
   gripper:  { id: "gripper",  short: "J4 Gripper (RPi)",       color: "#22c55e", min: 10, max: 95,  home: 45 }
 };
 
 let armState = {
   base: 90,
-  shoulder: 90,
+  shoulder: 140,
   elbow: 90,
   gripper: 45
 };

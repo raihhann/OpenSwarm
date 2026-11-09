@@ -30,7 +30,7 @@ from openswarm.master import SwarmMaster
 
 JOINTS = {
     "base":     {"node_id": "arm_base_esp32",    "ctrl": "ESP32 (GPIO 13)",             "min": 0,  "max": 180, "home": 90},
-    "shoulder": {"node_id": "arm_shoulder_unoq", "ctrl": "Arduino UNO Q (Pin D9)",      "min": 20, "max": 160, "home": 90},
+    "shoulder": {"node_id": "arm_shoulder_unoq", "ctrl": "Arduino UNO Q (Pin D9)",      "min": 20, "max": 160, "home": 140},
     "elbow":    {"node_id": "arm_elbow_rp2040",  "ctrl": "RP2040 (Pin D6 / GP6)",       "min": 20, "max": 160, "home": 90},
     "gripper":  {"node_id": "arm_gripper_rpi",   "ctrl": "Raspberry Pi (BCM GPIO 18)",  "min": 10, "max": 95,  "home": 45},
 }
@@ -129,7 +129,7 @@ class HydraArmCLI:
                 elif cmd == "status":
                     self.print_status()
                 elif cmd == "home":
-                    self.set_pose(90, 90, 90, 45)
+                    self.set_pose(90, 140, 90, 45)
                 elif cmd == "demo":
                     self.run_demo_wave()
                 elif cmd == "pose" and len(parts) == 5:

@@ -32,7 +32,7 @@ if os.path.isdir(REPO_LINUX_SLAVE) and REPO_LINUX_SLAVE not in sys.path:
 from openswarm_slave import SwarmNode
 
 
-def _make_unoq_servo_driver(pin: int):
+def _make_unoq_servo_driver(pin: int, default_angle: int = 140):
     """
     Forwards servo angle commands from the UNO Q Linux processor to the
     UNO Q STM32U585 microcontroller over Arduino's RPC Bridge (`set_servo`).
@@ -43,6 +43,11 @@ def _make_unoq_servo_driver(pin: int):
 
         state["bridge"] = Bridge
         print(f"[UNO Q Servo HAL] Connected to Arduino_RouterBridge -> MCU Pin D{pin}")
+        try:
+            Bridge.call("set_servo", int(default_angle))
+            print(f"[UNO Q Servo HAL] Initialized Shoulder Servo D{pin} to default {default_angle} deg")
+        except Exception as init_err:
+            print(f"[UNO Q Servo HAL] Initial set_servo({default_angle}) warning: {init_err}")
     except Exception as exc:
         print(f"[UNO Q Servo HAL] arduino.app_utils.Bridge not detected ({exc}) — using LinuxHAL fallback")
 
@@ -50,7 +55,7 @@ def _make_unoq_servo_driver(pin: int):
         angle = max(0, min(180, int(v1)))
         if state["bridge"] is not None:
             try:
-                state["bridge"].call("set_servo", angle)
+                state["bridge"].call("set_servo", int(angle))
             except Exception as err:
                 print(f"  [UNO Q Bridge Warning] call('set_servo', {angle}) failed: {err}")
         print(f"  [UNO Q Shoulder Servo D{pin}] -> {angle:3d} deg")

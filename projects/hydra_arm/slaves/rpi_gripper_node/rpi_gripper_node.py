@@ -5,7 +5,7 @@ OpenSwarm HydraArm — Joint 2 (SHOULDER) + Joint 4 (GRIPPER) Slave Node
                      Raspberry Pi running Ubuntu 24.04 Server
 ===============================================================================
 Target Board : Raspberry Pi (RPi 4 / RPi 5 / RPi Zero 2 W) running Ubuntu 24.04 Server
-Node ID      : "arm_rpi"
+Node ID      : "arm_gripper_rpi"
 Joint Roles  :
   1. Joint 2 (Shoulder Pitch, 20..160 deg, Home = 140 deg) -> Actuator: "shoulder_servo"
   2. Joint 4 (Gripper Claw,   10..95 deg,  Home = 45 deg)  -> Actuator: "gripper_servo"
@@ -21,9 +21,6 @@ WIRING (2× SG90 / MG90S Servos -> Raspberry Pi 40-Pin Header):
     - Red           (VCC 5V) -> Physical Pin 4 (5V Power)
     - Brown/Black   (GND)    -> Physical Pin 14 (GND)
 
-  (Note: Physical Pins 4, 6, 8, 12, 14 are all right next to each other on the
-   outer edge of the Raspberry Pi header!)
-
 Core Rule:
   - This Slave script ONLY declares Node ID and attached hardware pins/sensors.
   - Zero control logic lives on the Raspberry Pi! All control runs on the
@@ -34,6 +31,8 @@ Core Rule:
 import argparse
 import os
 import sys
+import threading
+import time
 
 # Ensure local `slaves/linux` package in the cloned repo is always importable
 # (even when run with `sudo python3` where user site-packages isn't on sys.path)
@@ -46,8 +45,10 @@ from openswarm_slave import SwarmNode
 
 class Ubuntu24DualServoHAL:
     """
-    Manages 50 Hz (500..2400 us) servo PWM on Ubuntu 24.04 Raspberry Pi
-    across multiple BCM GPIO pins using native lgpio or RPi.GPIO (python3-rpi-lgpio).
+    Manages jitter-free 50 Hz (500..2400 us) servo PWM on Ubuntu 24.04 Raspberry Pi:
+      - Sends a short 350 ms pulse burst ONLY when a new target angle is commanded,
+        then idles the signal line LOW (0) so Linux kernel scheduling jitter can
+        NEVER cause random servo twitching while the arm is stationary!
     """
 
     def __init__(self):
@@ -56,21 +57,10 @@ class Ubuntu24DualServoHAL:
         self.lgpio = None
         self.handle = None
         self.pwms = {}
+        self.stop_timers = {}
+        self._lock = threading.Lock()
 
-        # 1. Try RPi.GPIO (provided by python3-rpi-lgpio on Ubuntu 24.04)
-        try:
-            import RPi.GPIO as GPIO  # type: ignore
-
-            GPIO.setwarnings(False)
-            GPIO.setmode(GPIO.BCM)
-            self.gpio = GPIO
-            self.mode = "rpi_gpio"
-            print("[RPi Servo HAL] Using RPi.GPIO (python3-rpi-lgpio) @ 50Hz")
-            return
-        except Exception:
-            pass
-
-        # 2. Fallback to native lgpio (works on both Raspberry Pi 5 gpiochip4 and RPi 4 gpiochip0)
+        # 1. Prefer native lgpio on Ubuntu 24.04 (uses kernel C hrtimer via tx_servo)
         try:
             import lgpio  # type: ignore
 
@@ -79,24 +69,48 @@ class Ubuntu24DualServoHAL:
                     self.handle = lgpio.gpiochip_open(chip)
                     self.lgpio = lgpio
                     self.mode = "lgpio"
-                    print(f"[RPi Servo HAL] Using native lgpio (gpiochip{chip}) @ 50Hz")
+                    print(f"[RPi Servo HAL] Using native lgpio (gpiochip{chip}) @ 50Hz (auto-idle anti-jitter)")
                     return
                 except Exception:
                     continue
+        except Exception:
+            pass
+
+        # 2. Fallback to RPi.GPIO (python3-rpi-lgpio)
+        try:
+            import RPi.GPIO as GPIO  # type: ignore
+
+            GPIO.setwarnings(False)
+            GPIO.setmode(GPIO.BCM)
+            self.gpio = GPIO
+            self.mode = "rpi_gpio"
+            print("[RPi Servo HAL] Using RPi.GPIO (python3-rpi-lgpio) @ 50Hz (auto-idle anti-jitter)")
+            return
         except Exception as exc:
             print(f"[RPi Servo HAL] Running in simulation mode ({exc})")
 
+    def _idle_pin(self, bcm_pin: int) -> None:
+        with self._lock:
+            if self.mode == "lgpio" and self.lgpio is not None and self.handle is not None:
+                try:
+                    self.lgpio.tx_pwm(self.handle, bcm_pin, 0, 0)
+                    self.lgpio.gpio_write(self.handle, bcm_pin, 0)
+                except Exception:
+                    pass
+            elif self.mode == "rpi_gpio" and bcm_pin in self.pwms:
+                try:
+                    self.pwms[bcm_pin].ChangeDutyCycle(0)
+                except Exception:
+                    pass
+
     def make_writer(self, label: str, bcm_pin: int, phys_pin: int, default_angle: int):
-        if self.mode == "rpi_gpio" and self.gpio is not None:
+        if self.mode == "lgpio" and self.lgpio is not None and self.handle is not None:
+            self.lgpio.gpio_claim_output(self.handle, bcm_pin, 0)
+        elif self.mode == "rpi_gpio" and self.gpio is not None:
             self.gpio.setup(bcm_pin, self.gpio.OUT)
             pwm = self.gpio.PWM(bcm_pin, 50)
-            init_pulse = int(500 + (default_angle / 180.0) * 1900)
-            pwm.start((init_pulse / 20000.0) * 100.0)
+            pwm.start(0)
             self.pwms[bcm_pin] = pwm
-        elif self.mode == "lgpio" and self.lgpio is not None and self.handle is not None:
-            self.lgpio.gpio_claim_output(self.handle, bcm_pin, 0)
-            init_pulse = int(500 + (default_angle / 180.0) * 1900)
-            self.lgpio.tx_servo(self.handle, bcm_pin, init_pulse, 50, 0, 0)
 
         print(
             f"[RPi Servo HAL] Attached {label:<15} -> BCM GPIO {bcm_pin} (Physical Pin {phys_pin}) "
@@ -107,12 +121,28 @@ class Ubuntu24DualServoHAL:
             angle = max(0, min(180, int(v1)))
             pulse_us = int(500 + (angle / 180.0) * 1900)  # 500 us (0 deg) .. 2400 us (180 deg)
             duty_pct = (pulse_us / 20000.0) * 100.0      # 2.5% .. 12.0% at 50 Hz
-            if self.mode == "lgpio" and self.lgpio is not None and self.handle is not None:
-                self.lgpio.tx_servo(self.handle, bcm_pin, pulse_us, 50, 0, 0)
-            elif self.mode == "rpi_gpio" and bcm_pin in self.pwms:
-                self.pwms[bcm_pin].ChangeDutyCycle(duty_pct)
+
+            with self._lock:
+                # Cancel any previous auto-idle timer on this pin
+                old_timer = self.stop_timers.get(bcm_pin)
+                if old_timer is not None:
+                    old_timer.cancel()
+
+                if self.mode == "lgpio" and self.lgpio is not None and self.handle is not None:
+                    self.lgpio.tx_servo(self.handle, bcm_pin, pulse_us, 50, 0, 0)
+                elif self.mode == "rpi_gpio" and bcm_pin in self.pwms:
+                    self.pwms[bcm_pin].ChangeDutyCycle(duty_pct)
+
+                # Stop PWM after 0.35s once the servo reaches target angle -> 0% idle jitter!
+                t = threading.Timer(0.35, self._idle_pin, args=(bcm_pin,))
+                t.daemon = True
+                t.start()
+                self.stop_timers[bcm_pin] = t
+
             print(f"  [{label:<14} BCM {bcm_pin}] -> {angle:3d} deg ({pulse_us} us @ 50Hz)")
 
+        # Move briefly to default home angle on startup, then auto-idle
+        write_servo(default_angle, 0, "")
         return write_servo
 
 

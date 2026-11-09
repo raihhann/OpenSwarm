@@ -492,19 +492,6 @@ void SwarmNode::_backgroundTick() {
         }
     }
 
-    if (_masterConnected && !_watchdogTripped && (now - _lastServoMs >= 20)) {
-        _lastServoMs = now;
-        for (uint8_t i = 0; i < _actuatorCount; i++) {
-            if (_actuators[i].type == ACT_SERVO && _actuators[i].bus_addr == 1) {
-                int16_t angle = constrain(_actuators[i].val1, 0, 180);
-                uint16_t pulseUs = (uint16_t)map(angle, 0, 180, 500, 2400);
-                digitalWrite(_actuators[i].pins[0], HIGH);
-                delayMicroseconds(pulseUs);
-                digitalWrite(_actuators[i].pins[0], LOW);
-            }
-        }
-    }
-
     if (_masterConnected && (now - _lastTelemetryMs >= SWARM_TELEMETRY_MS)) {
         _lastTelemetryMs = now;
         _sendTelemetry();

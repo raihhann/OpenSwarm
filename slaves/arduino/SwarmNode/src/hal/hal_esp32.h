@@ -341,12 +341,9 @@ namespace SwarmHAL {
             case ACT_SERVO: {
                 int16_t angle = constrain(v1, 0, 180);
                 uint16_t pulseUs = map(angle, 0, 180, 500, 2400);
-                for (int i = 0; i < 3; i++) {
-                    digitalWrite(act.pins[0], HIGH);
-                    delayMicroseconds(pulseUs);
-                    digitalWrite(act.pins[0], LOW);
-                    delayMicroseconds(20000 - pulseUs);
-                }
+                digitalWrite(act.pins[0], HIGH);
+                delayMicroseconds(pulseUs);
+                digitalWrite(act.pins[0], LOW);
                 break;
             }
 

@@ -95,6 +95,8 @@ bool SwarmNode::registerServo(const char* name, uint8_t pin) {
     act.type = ACT_SERVO;
     strncpy(act.name, name, sizeof(act.name) - 1);
     act.pins[0] = pin;
+    act.val1 = 90;
+    act.bus_addr = 0;  // Set to 1 once the Master commands an angle (enables 50 Hz holding)
     SwarmHAL::setupActuator(act);
     return true;
 }
@@ -490,6 +492,19 @@ void SwarmNode::_backgroundTick() {
         }
     }
 
+    if (_masterConnected && !_watchdogTripped && (now - _lastServoMs >= 20)) {
+        _lastServoMs = now;
+        for (uint8_t i = 0; i < _actuatorCount; i++) {
+            if (_actuators[i].type == ACT_SERVO && _actuators[i].bus_addr == 1) {
+                int16_t angle = constrain(_actuators[i].val1, 0, 180);
+                uint16_t pulseUs = (uint16_t)map(angle, 0, 180, 500, 2400);
+                digitalWrite(_actuators[i].pins[0], HIGH);
+                delayMicroseconds(pulseUs);
+                digitalWrite(_actuators[i].pins[0], LOW);
+            }
+        }
+    }
+
     if (_masterConnected && (now - _lastTelemetryMs >= SWARM_TELEMETRY_MS)) {
         _lastTelemetryMs = now;
         _sendTelemetry();
@@ -562,6 +577,9 @@ void SwarmNode::_processCommand(const char* json, IPAddress senderIP, uint16_t s
 
         for (uint8_t i = 0; i < _actuatorCount; i++) {
             if (strcmp(_actuators[i].name, targetName) == 0) {
+                if (_actuators[i].type == ACT_SERVO) {
+                    _actuators[i].bus_addr = 1;
+                }
                 SwarmHAL::writeActuator(_actuators[i], v1, v2, dataPayload);
                 break;
             }

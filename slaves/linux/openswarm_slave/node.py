@@ -329,7 +329,9 @@ class SwarmNode:
             self.hal.drive_hbridge_2pin(pins[0], pins[1], v1)
         elif t == "DIGITAL_OUT":
             self.hal.digital_write(pins[0], 1 if v1 > 0 else 0)
-        elif t == "PWM_OUT" or t == "SERVO":
+        elif t == "SERVO":
+            self.hal.servo_write(pins[0], v1)
+        elif t == "PWM_OUT":
             self.hal.pwm_write(pins[0], v1)
         elif t == "I2C_BUS":
             self.hal.i2c_write_reg(act["bus"], act["addr"], v1, v2)

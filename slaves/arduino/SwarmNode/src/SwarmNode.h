@@ -147,6 +147,7 @@ private:
     uint32_t _lastMasterPacketMs = 0;
     uint32_t _lastTelemetryMs = 0;
     uint32_t _lastHelloMs = 0;
+    uint32_t _lastServoMs = 0;
     bool _watchdogTripped = false;
 
     void _handleIncomingPacket();

@@ -22,7 +22,10 @@ class LinuxHAL:
         self.board_name = self._detect_board()
         self._gpio_backend = "sim"
         self._rpi_gpio = None
+        self._lgpio = None
+        self._lgpio_handle: Optional[int] = None
         self._pwm_instances: Dict[int, Any] = {}
+        self._servo_instances: Dict[int, Any] = {}
         self._sim_pins: Dict[int, int] = {}
         self._i2c_buses: Dict[int, Any] = {}
         self._spi_devs: Dict[Tuple[int, int], Any] = {}
@@ -80,7 +83,7 @@ class LinuxHAL:
         return "255.255.255.255"
 
     # -------------------------------------------------------------------------
-    # GPIO / PWM Backend Initialization (RPi.GPIO -> sysfs -> Virtual Sim)
+    # GPIO / PWM Backend Initialization (RPi.GPIO / rpi-lgpio -> lgpio -> sysfs -> Virtual Sim)
     # -------------------------------------------------------------------------
     def _init_gpio_backend(self) -> None:
         try:
@@ -91,6 +94,21 @@ class LinuxHAL:
             self._rpi_gpio = GPIO
             self._gpio_backend = "rpi_gpio"
             return
+        except Exception:
+            pass
+
+        try:
+            import lgpio  # type: ignore
+
+            # RPi 5 uses gpiochip4 for the 40-pin header; RPi 3/4 uses gpiochip0
+            for chip in (4, 0):
+                try:
+                    self._lgpio_handle = lgpio.gpiochip_open(chip)
+                    self._lgpio = lgpio
+                    self._gpio_backend = "lgpio"
+                    return
+                except Exception:
+                    continue
         except Exception:
             pass
 
@@ -109,6 +127,15 @@ class LinuxHAL:
             else:
                 pud = self._rpi_gpio.PUD_UP if pullup else self._rpi_gpio.PUD_OFF
                 self._rpi_gpio.setup(pin, self._rpi_gpio.IN, pull_up_down=pud)
+        elif self._gpio_backend == "lgpio" and self._lgpio is not None and self._lgpio_handle is not None:
+            try:
+                if mode == "OUT":
+                    self._lgpio.gpio_claim_output(self._lgpio_handle, pin, 0)
+                else:
+                    flags = self._lgpio.SET_PULL_UP if pullup else 0
+                    self._lgpio.gpio_claim_input(self._lgpio_handle, pin, flags)
+            except Exception:
+                pass
         elif self._gpio_backend == "sysfs":
             gpio_dir = f"/sys/class/gpio/gpio{pin}"
             if not os.path.exists(gpio_dir):
@@ -131,6 +158,11 @@ class LinuxHAL:
         v = 1 if value > 0 else 0
         if self._gpio_backend == "rpi_gpio" and self._rpi_gpio is not None:
             self._rpi_gpio.output(pin, self._rpi_gpio.HIGH if v else self._rpi_gpio.LOW)
+        elif self._gpio_backend == "lgpio" and self._lgpio is not None and self._lgpio_handle is not None:
+            try:
+                self._lgpio.gpio_write(self._lgpio_handle, pin, v)
+            except Exception:
+                pass
         elif self._gpio_backend == "sysfs":
             try:
                 with open(f"/sys/class/gpio/gpio{pin}/value", "w") as f:
@@ -149,6 +181,12 @@ class LinuxHAL:
         if self._gpio_backend == "rpi_gpio" and self._rpi_gpio is not None:
             raw = int(self._rpi_gpio.input(pin))
             return float(1 - raw if pullup else raw)
+        elif self._gpio_backend == "lgpio" and self._lgpio is not None and self._lgpio_handle is not None:
+            try:
+                raw = int(self._lgpio.gpio_read(self._lgpio_handle, pin))
+                return float(1 - raw if pullup else raw)
+            except Exception:
+                return 0.0
         elif self._gpio_backend == "sysfs":
             try:
                 with open(f"/sys/class/gpio/gpio{pin}/value", "r") as f:
@@ -169,11 +207,41 @@ class LinuxHAL:
                 pwm.start(0)
                 self._pwm_instances[pin] = pwm
             self._pwm_instances[pin].ChangeDutyCycle((d / 255.0) * 100.0)
+        elif self._gpio_backend == "lgpio" and self._lgpio is not None and self._lgpio_handle is not None:
+            self._lgpio.tx_pwm(self._lgpio_handle, pin, 1000, (d / 255.0) * 100.0)
         else:
             prev = self._sim_pins.get(pin)
             self._sim_pins[pin] = d
             if self.verbose_sim and prev != d:
                 print(f"  [LinuxHAL] PWM Pin {pin} -> duty {d}/255")
+
+    def servo_write(self, pin: int, angle: int) -> None:
+        """
+        Writes a standard 50 Hz hobby servo angle (0..180 deg -> 500..2400 us pulse width).
+        Works on Raspberry Pi running Ubuntu 24.04 Server (via rpi-lgpio or lgpio).
+        """
+        if pin < 0 or pin == 255:
+            return
+        ang = max(0, min(180, int(angle)))
+        pulse_us = int(500 + (ang / 180.0) * 1900)  # 500 us (0 deg) .. 2400 us (180 deg)
+        duty_pct = (pulse_us / 20000.0) * 100.0      # 2.5% .. 12.0% at 50 Hz (20,000 us period)
+
+        if self._gpio_backend == "rpi_gpio" and self._rpi_gpio is not None:
+            if pin not in self._servo_instances:
+                self._rpi_gpio.setup(pin, self._rpi_gpio.OUT)
+                pwm = self._rpi_gpio.PWM(pin, 50)
+                pwm.start(duty_pct)
+                self._servo_instances[pin] = pwm
+            else:
+                self._servo_instances[pin].ChangeDutyCycle(duty_pct)
+        elif self._gpio_backend == "lgpio" and self._lgpio is not None and self._lgpio_handle is not None:
+            self._lgpio.gpio_claim_output(self._lgpio_handle, pin)
+            self._lgpio.tx_servo(self._lgpio_handle, pin, pulse_us, 50, 0, 0)
+        else:
+            prev = self._sim_pins.get(pin)
+            self._sim_pins[pin] = ang
+            if self.verbose_sim and prev != ang:
+                print(f"  [LinuxHAL] SERVO Pin {pin} -> {ang} deg ({pulse_us} us @ 50Hz)")
 
     # -------------------------------------------------------------------------
     # H-Bridge Motor Helpers

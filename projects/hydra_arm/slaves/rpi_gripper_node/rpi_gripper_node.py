@@ -60,20 +60,7 @@ class Ubuntu24DualServoHAL:
         self.stop_timers = {}
         self._lock = threading.Lock()
 
-        # 1. Try RPi.GPIO (python3-rpi-lgpio) first — auto-detects the right gpiochip on RPi 3/4/5
-        try:
-            import RPi.GPIO as GPIO  # type: ignore
-
-            GPIO.setwarnings(False)
-            GPIO.setmode(GPIO.BCM)
-            self.gpio = GPIO
-            self.mode = "rpi_gpio"
-            print("[RPi Servo HAL] Using RPi.GPIO (python3-rpi-lgpio) @ 50Hz (auto-idle anti-jitter)")
-            return
-        except Exception:
-            pass
-
-        # 2. Fallback to native lgpio (only pick the chip that has >= 28 lines = the 40-pin header!)
+        # 1. Try native lgpio first (pick the 40-pin header chip with >= 28 lines)
         try:
             import lgpio  # type: ignore
 
@@ -92,30 +79,37 @@ class Ubuntu24DualServoHAL:
                     lgpio.gpiochip_close(h)
                 except Exception:
                     continue
+        except Exception:
+            pass
+
+        # 2. Fallback to RPi.GPIO (python3-rpi-lgpio)
+        try:
+            import RPi.GPIO as GPIO  # type: ignore
+
+            GPIO.setwarnings(False)
+            GPIO.setmode(GPIO.BCM)
+            self.gpio = GPIO
+            self.mode = "rpi_gpio"
+            print("[RPi Servo HAL] Using RPi.GPIO (python3-rpi-lgpio) @ 50Hz")
+            return
         except Exception as exc:
             print(f"[RPi Servo HAL] Running in simulation mode ({exc})")
 
-    def _idle_pin(self, bcm_pin: int) -> None:
-        with self._lock:
-            if self.mode == "lgpio" and self.lgpio is not None and self.handle is not None:
-                try:
-                    self.lgpio.tx_pwm(self.handle, bcm_pin, 0, 0)
-                    self.lgpio.gpio_write(self.handle, bcm_pin, 0)
-                except Exception:
-                    pass
-            elif self.mode == "rpi_gpio" and bcm_pin in self.pwms:
-                try:
-                    self.pwms[bcm_pin].ChangeDutyCycle(0)
-                except Exception:
-                    pass
-
     def make_writer(self, label: str, bcm_pin: int, phys_pin: int, default_angle: int):
+        init_pulse = int(500 + (default_angle / 180.0) * 1900)
+        init_duty = (init_pulse / 20000.0) * 100.0
+
         if self.mode == "lgpio" and self.lgpio is not None and self.handle is not None:
+            try:
+                self.lgpio.gpio_free(self.handle, bcm_pin)
+            except Exception:
+                pass
             self.lgpio.gpio_claim_output(self.handle, bcm_pin, 0)
+            self.lgpio.tx_servo(self.handle, bcm_pin, init_pulse, 50, 0, 0)
         elif self.mode == "rpi_gpio" and self.gpio is not None:
             self.gpio.setup(bcm_pin, self.gpio.OUT)
             pwm = self.gpio.PWM(bcm_pin, 50)
-            pwm.start(0)
+            pwm.start(init_duty)
             self.pwms[bcm_pin] = pwm
 
         print(
@@ -129,26 +123,13 @@ class Ubuntu24DualServoHAL:
             duty_pct = (pulse_us / 20000.0) * 100.0      # 2.5% .. 12.0% at 50 Hz
 
             with self._lock:
-                # Cancel any previous auto-idle timer on this pin
-                old_timer = self.stop_timers.get(bcm_pin)
-                if old_timer is not None:
-                    old_timer.cancel()
-
                 if self.mode == "lgpio" and self.lgpio is not None and self.handle is not None:
                     self.lgpio.tx_servo(self.handle, bcm_pin, pulse_us, 50, 0, 0)
                 elif self.mode == "rpi_gpio" and bcm_pin in self.pwms:
                     self.pwms[bcm_pin].ChangeDutyCycle(duty_pct)
 
-                # Stop PWM after 0.35s once the servo reaches target angle -> 0% idle jitter!
-                t = threading.Timer(0.35, self._idle_pin, args=(bcm_pin,))
-                t.daemon = True
-                t.start()
-                self.stop_timers[bcm_pin] = t
-
             print(f"  [{label:<14} BCM {bcm_pin}] -> {angle:3d} deg ({pulse_us} us @ 50Hz)")
 
-        # Move briefly to default home angle on startup, then auto-idle
-        write_servo(default_angle, 0, "")
         return write_servo
 
 

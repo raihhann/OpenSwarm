@@ -5,10 +5,10 @@ OpenSwarm HydraArm Studio — 3D Interactive Digital Twin & Multi-Controller Mas
 ===============================================================================
 Controls the 4-DOF "Servo Mini Arm" where each servo is wired to a different
 heterogeneous Slave controller over Wi-Fi UDP:
-  - Joint 1 (Base Yaw)       -> ESP32             (node_id: "arm_base_esp32")
-  - Joint 2 (Shoulder Pitch) -> Arduino UNO Q     (node_id: "arm_shoulder_unoq")
-  - Joint 3 (Elbow Pitch)    -> RP2040            (node_id: "arm_elbow_rp2040")
-  - Joint 4 (Gripper Claw)   -> Raspberry Pi      (node_id: "arm_gripper_rpi")
+  - Joint 1 (Base Yaw)       -> ESP32             (node_id: "arm_base_esp32",   actuator: "servo")
+  - Joint 2 (Shoulder Pitch) -> Raspberry Pi      (node_id: "arm_gripper_rpi",  actuator: "shoulder_servo")
+  - Joint 3 (Elbow Pitch)    -> RP2040            (node_id: "arm_elbow_rp2040", actuator: "servo")
+  - Joint 4 (Gripper Claw)   -> Raspberry Pi      (node_id: "arm_gripper_rpi",  actuator: "gripper_servo")
 
 Features:
   - Interactive 3D Three.js replica of the "Servo Mini Arm by Luca Dilo"
@@ -48,6 +48,7 @@ JOINT_CONFIG: Dict[str, Dict[str, Any]] = {
         "joint_id": "base",
         "label": "Joint 1: Base Yaw",
         "node_id": "arm_base_esp32",
+        "actuator_name": "servo",
         "controller": "ESP32",
         "pin_label": "GPIO 13",
         "color": "#38bdf8",
@@ -60,9 +61,10 @@ JOINT_CONFIG: Dict[str, Dict[str, Any]] = {
     "shoulder": {
         "joint_id": "shoulder",
         "label": "Joint 2: Shoulder Pitch",
-        "node_id": "arm_shoulder_unoq",
-        "controller": "Arduino UNO Q",
-        "pin_label": "Pin D9 (MCU Bridge)",
+        "node_id": "arm_gripper_rpi",
+        "actuator_name": "shoulder_servo",
+        "controller": "Raspberry Pi (Ubuntu 24.04)",
+        "pin_label": "BCM GPIO 14 (Pin 8)",
         "color": "#a855f7",
         "min_angle": 20,
         "max_angle": 160,
@@ -74,6 +76,7 @@ JOINT_CONFIG: Dict[str, Dict[str, Any]] = {
         "joint_id": "elbow",
         "label": "Joint 3: Elbow Pitch",
         "node_id": "arm_elbow_rp2040",
+        "actuator_name": "servo",
         "controller": "RP2040 (Nano / Pico W)",
         "pin_label": "Pin D6 / GP6",
         "color": "#f97316",
@@ -87,6 +90,7 @@ JOINT_CONFIG: Dict[str, Dict[str, Any]] = {
         "joint_id": "gripper",
         "label": "Joint 4: Gripper Claw",
         "node_id": "arm_gripper_rpi",
+        "actuator_name": "gripper_servo",
         "controller": "Raspberry Pi (Ubuntu 24.04)",
         "pin_label": "BCM GPIO 18 (Pin 12)",
         "color": "#22c55e",
@@ -437,8 +441,8 @@ HTML_PAGE = r"""<!DOCTYPE html>
   <div class="brand">
     <span class="brand-badge">OPENSWARM HYDRA-ARM</span>
     <div>
-      <div class="brand-title">4-Controller Distributed Servo Mini Arm Studio</div>
-      <div class="brand-sub">ESP32 (Base) + Arduino UNO Q (Shoulder) + RP2040 (Elbow) + Raspberry Pi Ubuntu 24 (Gripper)</div>
+      <div class="brand-title">Multi-Controller Distributed Servo Mini Arm Studio</div>
+      <div class="brand-sub">ESP32 (Base) + RP2040 (Elbow) + Raspberry Pi Ubuntu 24 (Shoulder GPIO 14 &amp; Gripper GPIO 18)</div>
     </div>
   </div>
   <div class="top-actions">
@@ -483,9 +487,9 @@ HTML_PAGE = r"""<!DOCTYPE html>
 <script>
 const JOINTS_META = {
   base:     { id: "base",     short: "J1 Base (ESP32)",        color: "#38bdf8", min: 0,  max: 180, home: 90 },
-  shoulder: { id: "shoulder", short: "J2 Shoulder (UNO Q)",    color: "#a855f7", min: 20, max: 160, home: 140 },
+  shoulder: { id: "shoulder", short: "J2 Shoulder (RPi P8)",   color: "#a855f7", min: 20, max: 160, home: 140 },
   elbow:    { id: "elbow",    short: "J3 Elbow (RP2040)",      color: "#f97316", min: 20, max: 160, home: 90 },
-  gripper:  { id: "gripper",  short: "J4 Gripper (RPi)",       color: "#22c55e", min: 10, max: 95,  home: 45 }
+  gripper:  { id: "gripper",  short: "J4 Gripper (RPi P12)",   color: "#22c55e", min: 10, max: 95,  home: 45 }
 };
 
 let armState = {
@@ -1075,7 +1079,7 @@ class HydraArmStudioServer:
 
         node = self.master.get(cfg["node_id"])
         if node is not None:
-            node.servo("servo", clamped)
+            node.servo(cfg.get("actuator_name", "servo"), clamped)
             return True
         return False
 
@@ -1154,7 +1158,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="OpenSwarm HydraArm 3D Interactive Studio")
     parser.add_argument("--port", type=int, default=8090, help="Local web server port (default: 8090)")
     parser.add_argument("--base-ip", type=str, default=None, help="Optional direct IP for arm_base_esp32")
-    parser.add_argument("--shoulder-ip", type=str, default=None, help="Optional direct IP for arm_shoulder_unoq")
+    parser.add_argument("--shoulder-ip", type=str, default=None, help="Optional direct IP for arm_gripper_rpi")
     parser.add_argument("--elbow-ip", type=str, default=None, help="Optional direct IP for arm_elbow_rp2040")
     parser.add_argument("--gripper-ip", type=str, default=None, help="Optional direct IP for arm_gripper_rpi")
     args = parser.parse_args()

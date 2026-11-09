@@ -236,7 +236,11 @@ class SwarmMaster:
         if pkt_type not in ("HELLO", "STATE") or not isinstance(node_id, str) or not node_id:
             return
 
-        sender_ip = msg.get("ip") or addr[0]
+        raw_ip = msg.get("ip")
+        if isinstance(raw_ip, str) and raw_ip and not raw_ip.startswith("127.") and raw_ip != "0.0.0.0":
+            sender_ip = raw_ip
+        else:
+            sender_ip = addr[0]
         if not isinstance(sender_ip, str):
             logger.debug("Ignoring packet with invalid IP from %s", addr)
             return

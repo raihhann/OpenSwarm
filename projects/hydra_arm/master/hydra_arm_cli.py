@@ -5,9 +5,9 @@ OpenSwarm HydraArm CLI — Interactive Terminal Controller for the 4-Node Arm
 ===============================================================================
 Allows typing joint angles directly in the terminal on your Linux Master PC:
   hydra> base 120          # Rotate ESP32 Base Yaw to 120 deg
-  hydra> shoulder 110      # Tilt Arduino UNO Q Shoulder Pitch to 110 deg
+  hydra> shoulder 110      # Tilt Raspberry Pi Shoulder Pitch (GPIO 14 / Pin 8) to 110 deg
   hydra> elbow 75          # Move RP2040 Elbow Pitch to 75 deg
-  hydra> gripper 20        # Open Raspberry Pi Gripper Claw to 20 deg
+  hydra> gripper 20        # Open Raspberry Pi Gripper Claw (GPIO 18 / Pin 12) to 20 deg
   hydra> pose 90 120 70 85 # Command all 4 controllers at once!
   hydra> home              # Return all 4 joints to [90, 90, 90, 45]
   hydra> demo              # Run a coordinated 4-controller pick & place wave
@@ -29,10 +29,10 @@ if MASTER_PKG_DIR not in sys.path:
 from openswarm.master import SwarmMaster
 
 JOINTS = {
-    "base":     {"node_id": "arm_base_esp32",    "ctrl": "ESP32 (GPIO 13)",             "min": 0,  "max": 180, "home": 90},
-    "shoulder": {"node_id": "arm_shoulder_unoq", "ctrl": "Arduino UNO Q (Pin D9)",      "min": 20, "max": 160, "home": 140},
-    "elbow":    {"node_id": "arm_elbow_rp2040",  "ctrl": "RP2040 (Pin D6 / GP6)",       "min": 20, "max": 160, "home": 90},
-    "gripper":  {"node_id": "arm_gripper_rpi",   "ctrl": "Raspberry Pi (BCM GPIO 18)",  "min": 10, "max": 95,  "home": 45},
+    "base":     {"node_id": "arm_base_esp32",   "act": "servo",          "ctrl": "ESP32 (GPIO 13)",                 "min": 0,  "max": 180, "home": 90},
+    "shoulder": {"node_id": "arm_gripper_rpi",  "act": "shoulder_servo", "ctrl": "Raspberry Pi (BCM 14 / Pin 8)",   "min": 20, "max": 160, "home": 140},
+    "elbow":    {"node_id": "arm_elbow_rp2040", "act": "servo",          "ctrl": "RP2040 (Pin D6 / GP6)",           "min": 20, "max": 160, "home": 90},
+    "gripper":  {"node_id": "arm_gripper_rpi",  "act": "gripper_servo",  "ctrl": "Raspberry Pi (BCM 18 / Pin 12)",  "min": 10, "max": 95,  "home": 45},
 }
 
 ALIASES = {
@@ -58,8 +58,8 @@ class HydraArmCLI:
         self.angles[joint] = clamped
         node = self.master.get(cfg["node_id"])
         if node is not None:
-            node.servo("servo", clamped)
-            print(f"  [SENT -> {cfg['node_id']} ({node.ip}:{node.port})] {joint.upper()} = {clamped}°")
+            node.servo(cfg.get("act", "servo"), clamped)
+            print(f"  [SENT -> {cfg['node_id']}.{cfg.get('act', 'servo')} ({node.ip}:{node.port})] {joint.upper()} = {clamped}°")
         else:
             print(f"  [QUEUED (Node '{cfg['node_id']}' not discovered yet)] {joint.upper()} = {clamped}°")
 
@@ -156,7 +156,7 @@ class HydraArmCLI:
 def main() -> None:
     parser = argparse.ArgumentParser(description="OpenSwarm HydraArm Terminal Controller")
     parser.add_argument("--base-ip", type=str, default=None, help="Optional direct IP for arm_base_esp32")
-    parser.add_argument("--shoulder-ip", type=str, default=None, help="Optional direct IP for arm_shoulder_unoq")
+    parser.add_argument("--shoulder-ip", type=str, default=None, help="Optional direct IP for arm_gripper_rpi")
     parser.add_argument("--elbow-ip", type=str, default=None, help="Optional direct IP for arm_elbow_rp2040")
     parser.add_argument("--gripper-ip", type=str, default=None, help="Optional direct IP for arm_gripper_rpi")
     args = parser.parse_args()

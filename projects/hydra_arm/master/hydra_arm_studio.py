@@ -28,13 +28,16 @@ import logging
 import os
 import sys
 import time
-from typing import Dict, Any, Optional
+from datetime import datetime
+from typing import Dict, Any, List, Optional
 
 from aiohttp import web
 
 # Ensure local `master/` package is importable even if not pip-installed yet
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 MASTER_PKG_DIR = os.path.join(REPO_ROOT, "master")
+EPISODES_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "episodes"))
+os.makedirs(EPISODES_DIR, exist_ok=True)
 if MASTER_PKG_DIR not in sys.path:
     sys.path.insert(0, MASTER_PKG_DIR)
 
@@ -430,6 +433,64 @@ HTML_PAGE = r"""<!DOCTYPE html>
     transform: translate(-50%, -50%) scale(1.08);
     box-shadow: 0 0 14px rgba(56, 189, 248, 0.55);
   }
+
+  /* Episode Recorder & Replay Panel */
+  .recorder-panel {
+    margin-top: 4px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .rec-input-row {
+    display: flex;
+    gap: 6px;
+  }
+  .rec-input {
+    flex: 1;
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    padding: 6px 10px;
+    font-size: 12px;
+    outline: none;
+  }
+  .rec-input:focus {
+    border-color: var(--accent);
+  }
+  .btn-rec {
+    background: rgba(239, 68, 68, 0.18);
+    border: 1px solid rgba(239, 68, 68, 0.5);
+    color: #f87171;
+  }
+  .btn-rec.recording {
+    background: #ef4444;
+    color: #ffffff;
+    animation: pulse-rec 1.1s infinite;
+  }
+  .btn-play {
+    background: rgba(34, 197, 94, 0.18);
+    border: 1px solid rgba(34, 197, 94, 0.5);
+    color: #4ade80;
+  }
+  .btn-play.playing {
+    background: #22c55e;
+    color: #052e16;
+  }
+  @keyframes pulse-rec {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); }
+    50% { box-shadow: 0 0 0 7px rgba(239, 68, 68, 0); }
+  }
+  .rec-status {
+    font-size: 11px;
+    font-family: 'JetBrains Mono', Consolas, monospace;
+    padding: 6px 8px;
+    border-radius: 6px;
+    background: rgba(15, 23, 42, 0.65);
+    color: #cbd5e1;
+  }
 </style>
 </head>
 <body>
@@ -454,13 +515,29 @@ HTML_PAGE = r"""<!DOCTYPE html>
   </div>
 </div>
 
-<!-- Left Sidebar: All 4 Controllers + Direct Sliders -->
+<!-- Left Sidebar: All 4 Controllers + Direct Sliders + Episode Recorder -->
 <div class="sidebar">
   <div class="section-title">Interactive 3D Servo Control</div>
   <div class="hint-banner">
     <strong>Click any blue SG90 servo motor</strong> directly on the 3D arm (or its floating badge) to pop up its joint slider and move the real robot!
   </div>
   <div id="joint-cards-container" style="display:flex; flex-direction:column; gap:10px;"></div>
+
+  <!-- Episode Recorder & Replay Controls -->
+  <div class="recorder-panel">
+    <div class="section-title">Episode Recorder &amp; Replay</div>
+    <div class="rec-input-row">
+      <input type="text" id="episode-name-input" class="rec-input" placeholder="Episode name (e.g. pick_cube)" value="episode_1" />
+      <button class="btn btn-rec" id="btn-rec-toggle" onclick="toggleRecording()">● Record</button>
+    </div>
+    <div class="rec-input-row">
+      <select id="episode-select" class="rec-input"></select>
+      <button class="btn btn-play" id="btn-play-ep" onclick="playSelectedEpisode(false)">▶ Play</button>
+      <button class="btn" id="btn-loop-ep" onclick="playSelectedEpisode(true)">↻ Loop</button>
+      <button class="btn" onclick="stopPlayback()">■ Stop</button>
+    </div>
+    <div class="rec-status" id="rec-status-box">Ready • Move sliders while recording to save trajectory</div>
+  </div>
 </div>
 
 <!-- Floating Slider Popup over Clicked 3D Servo -->
@@ -514,11 +591,18 @@ function connectWS() {
     if (msg.joints) {
       serverJointsData = msg.joints;
       for (const [jid, jinfo] of Object.entries(msg.joints)) {
-        if (selectedJoint !== jid) {
-          targetAngles[jid] = jinfo.angle;
+        if (selectedJoint !== jid || (msg.recorder && msg.recorder.playing)) {
+          targetAngles[jid] = jinfo.target_angle !== undefined ? jinfo.target_angle : jinfo.angle;
+          const sSlider = document.getElementById(`slider-${jid}`);
+          const sReadout = document.getElementById(`readout-${jid}`);
+          if (sSlider) sSlider.value = targetAngles[jid];
+          if (sReadout) sReadout.textContent = targetAngles[jid] + "°";
         }
       }
       renderSidebarCards();
+    }
+    if (msg.recorder) {
+      updateRecorderUI(msg.recorder);
     }
   };
   ws.onclose = () => setTimeout(connectWS, 1000);
@@ -549,6 +633,76 @@ function sendPreset(b, s, e, g) {
   sendJointAngle("shoulder", s);
   sendJointAngle("elbow", e);
   sendJointAngle("gripper", g);
+}
+
+let isRecordingState = false;
+let lastEpisodeListJson = "";
+
+function toggleRecording() {
+  if (!ws || ws.readyState !== WebSocket.OPEN) return;
+  if (!isRecordingState) {
+    const epName = document.getElementById("episode-name-input").value.trim() || "episode";
+    ws.send(JSON.stringify({ op: "START_RECORD", name: epName }));
+  } else {
+    ws.send(JSON.stringify({ op: "STOP_RECORD" }));
+  }
+}
+
+function playSelectedEpisode(loopMode) {
+  if (!ws || ws.readyState !== WebSocket.OPEN) return;
+  const sel = document.getElementById("episode-select");
+  if (!sel || !sel.value) return;
+  ws.send(JSON.stringify({ op: "PLAY_EPISODE", filename: sel.value, loop: Boolean(loopMode) }));
+}
+
+function stopPlayback() {
+  if (!ws || ws.readyState !== WebSocket.OPEN) return;
+  ws.send(JSON.stringify({ op: "STOP_PLAYBACK" }));
+}
+
+function updateRecorderUI(rec) {
+  isRecordingState = Boolean(rec.recording);
+  const recBtn = document.getElementById("btn-rec-toggle");
+  const playBtn = document.getElementById("btn-play-ep");
+  const statusBox = document.getElementById("rec-status-box");
+
+  if (rec.recording) {
+    recBtn.className = "btn btn-rec recording";
+    recBtn.textContent = "■ Stop & Save";
+    statusBox.style.color = "#fca5a5";
+    statusBox.textContent = `● REC '${rec.active_name}' • ${rec.frame_count} steps (${rec.elapsed_sec}s)`;
+  } else {
+    recBtn.className = "btn btn-rec";
+    recBtn.textContent = "● Record";
+    if (rec.playing) {
+      playBtn.className = "btn btn-play playing";
+      statusBox.style.color = "#86efac";
+      statusBox.textContent = `▶ PLAYING '${rec.playing_file}' ${rec.loop ? "(LOOP)" : ""} • ${rec.play_progress}`;
+    } else {
+      playBtn.className = "btn btn-play";
+      statusBox.style.color = "#cbd5e1";
+      statusBox.textContent = rec.last_message || "Ready • Saved episodes in projects/hydra_arm/episodes/";
+    }
+  }
+
+  const listJson = JSON.stringify(rec.episodes || []);
+  if (listJson !== lastEpisodeListJson) {
+    lastEpisodeListJson = listJson;
+    const sel = document.getElementById("episode-select");
+    const prevVal = sel.value;
+    sel.innerHTML = "";
+    for (const ep of (rec.episodes || [])) {
+      const opt = document.createElement("option");
+      opt.value = ep.filename;
+      opt.textContent = `${ep.filename} (${ep.steps} steps, ${ep.duration_sec}s)`;
+      sel.appendChild(opt);
+    }
+    if (rec.last_saved) {
+      sel.value = rec.last_saved;
+    } else if (prevVal) {
+      sel.value = prevVal;
+    }
+  }
 }
 
 // ============================================================================
@@ -1060,6 +1214,20 @@ class HydraArmStudioServer:
         }
         self.websockets = set()
 
+        # Episode Recording & Playback State
+        self.recording: bool = False
+        self.record_name: str = "episode_1"
+        self.record_start_time: float = 0.0
+        self.recorded_frames: List[Dict[str, Any]] = []
+        self.last_saved_file: str = ""
+        self.last_rec_message: str = "Ready • Saved episodes in projects/hydra_arm/episodes/"
+
+        self.playing: bool = False
+        self.playing_file: str = ""
+        self.play_loop: bool = False
+        self.play_progress: str = ""
+        self._play_task: Optional[asyncio.Task] = None
+
         # Pre-register any explicit IP overrides passed via CLI flags
         if ip_overrides:
             for jid, ip_str in ip_overrides.items():
@@ -1072,14 +1240,146 @@ class HydraArmStudioServer:
         self.app.router.add_get("/ws", self.handle_ws)
         self.app.on_cleanup.append(self._cleanup)
 
-    def command_joint(self, joint_id: str, angle: int) -> bool:
+    def command_joint(self, joint_id: str, angle: int, from_playback: bool = False) -> bool:
         """Sets the target angle for smooth 1-degree-at-a-time trajectory interpolation."""
         if joint_id not in self.joints:
             return False
         cfg = self.joints[joint_id]
         clamped = max(cfg["min_angle"], min(cfg["max_angle"], int(angle)))
         cfg["target_angle"] = clamped
+
+        if self.recording and not from_playback:
+            t_rel = round(time.monotonic() - self.record_start_time, 3)
+            pose = {jid: int(jcfg["target_angle"]) for jid, jcfg in self.joints.items()}
+            # Avoid duplicate consecutive frames with identical pose
+            if not self.recorded_frames or self.recorded_frames[-1]["joints"] != pose:
+                self.recorded_frames.append({"t": t_rel, "joints": pose})
+
         return self.master.get(cfg["node_id"]) is not None
+
+    def start_recording(self, name: str) -> None:
+        self.stop_playback()
+        clean_name = "".join(c if (c.isalnum() or c in ("_", "-")) else "_" for c in name.strip()) or "episode"
+        self.record_name = clean_name
+        self.recording = True
+        self.record_start_time = time.monotonic()
+        initial_pose = {jid: int(jcfg["target_angle"]) for jid, jcfg in self.joints.items()}
+        self.recorded_frames = [{"t": 0.0, "joints": initial_pose}]
+        self.last_rec_message = f"Recording '{clean_name}'..."
+        print(f"[Episode Recorder] Started recording '{clean_name}' (initial pose: {initial_pose})")
+
+    def stop_recording(self) -> Optional[str]:
+        if not self.recording:
+            return None
+        self.recording = False
+        duration = round(time.monotonic() - self.record_start_time, 2)
+        # Ensure final pose at stop time is captured
+        final_pose = {jid: int(jcfg["target_angle"]) for jid, jcfg in self.joints.items()}
+        if not self.recorded_frames or self.recorded_frames[-1]["joints"] != final_pose:
+            self.recorded_frames.append({"t": duration, "joints": final_pose})
+
+        fname = f"{self.record_name}.json"
+        fpath = os.path.join(EPISODES_DIR, fname)
+        payload = {
+            "name": self.record_name,
+            "created_at": datetime.now().isoformat(timespec="seconds"),
+            "duration_sec": duration,
+            "steps": len(self.recorded_frames),
+            "frames": self.recorded_frames,
+        }
+        with open(fpath, "w", encoding="utf-8") as f:
+            json.dump(payload, f, indent=2)
+
+        self.last_saved_file = fname
+        self.last_rec_message = f"Saved '{fname}' ({len(self.recorded_frames)} steps, {duration}s)"
+        print(f"[Episode Recorder] Saved episode -> {fpath} ({len(self.recorded_frames)} steps, {duration}s)")
+        return fname
+
+    def list_episodes(self) -> List[Dict[str, Any]]:
+        out: List[Dict[str, Any]] = []
+        if not os.path.isdir(EPISODES_DIR):
+            return out
+        for fn in sorted(os.listdir(EPISODES_DIR)):
+            if not fn.endswith(".json"):
+                continue
+            fpath = os.path.join(EPISODES_DIR, fn)
+            try:
+                with open(fpath, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                out.append({
+                    "filename": fn,
+                    "name": data.get("name", fn[:-5]),
+                    "steps": int(data.get("steps", len(data.get("frames", [])))),
+                    "duration_sec": float(data.get("duration_sec", 0.0)),
+                })
+            except Exception:
+                continue
+        return out
+
+    def stop_playback(self) -> None:
+        self.playing = False
+        self.play_loop = False
+        if self._play_task is not None and not self._play_task.done():
+            self._play_task.cancel()
+        self._play_task = None
+        self.last_rec_message = "Playback stopped"
+
+    def start_playback(self, filename: str, loop_mode: bool = False) -> None:
+        if self.recording:
+            self.stop_recording()
+        self.stop_playback()
+        safe_fn = os.path.basename(filename)
+        fpath = os.path.join(EPISODES_DIR, safe_fn)
+        if not os.path.isfile(fpath):
+            self.last_rec_message = f"Episode '{safe_fn}' not found"
+            return
+        self.playing = True
+        self.playing_file = safe_fn
+        self.play_loop = loop_mode
+        self._play_task = asyncio.create_task(self._playback_runner(fpath, safe_fn, loop_mode))
+
+    async def _playback_runner(self, fpath: str, safe_fn: str, loop_mode: bool) -> None:
+        try:
+            with open(fpath, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            frames = data.get("frames", [])
+            if not frames:
+                self.last_rec_message = f"Episode '{safe_fn}' has 0 frames"
+                self.playing = False
+                return
+
+            print(f"[Episode Player] Playing '{safe_fn}' ({len(frames)} frames, loop={loop_mode})")
+            while self.playing:
+                start_t = time.monotonic()
+                for idx, frame in enumerate(frames):
+                    if not self.playing:
+                        break
+                    target_t = float(frame.get("t", 0.0))
+                    now_rel = time.monotonic() - start_t
+                    wait_s = target_t - now_rel
+                    if wait_s > 0:
+                        await asyncio.sleep(wait_s)
+                    if not self.playing:
+                        break
+
+                    joints_pose = frame.get("joints", {})
+                    for jid, ang in joints_pose.items():
+                        self.command_joint(jid, int(ang), from_playback=True)
+                    self.play_progress = f"Step {idx + 1}/{len(frames)} ({target_t:.1f}s)"
+
+                # Wait briefly at end of episode for smooth interpolator to finish reaching final pose
+                await asyncio.sleep(0.5)
+                if not loop_mode:
+                    break
+
+            self.last_rec_message = f"Finished playing '{safe_fn}'"
+        except asyncio.CancelledError:
+            pass
+        except Exception as exc:
+            self.last_rec_message = f"Playback error: {exc}"
+        finally:
+            self.playing = False
+            self.play_progress = ""
 
     async def smooth_motion_loop(self) -> None:
         """
@@ -1116,7 +1416,20 @@ class HydraArmStudioServer:
                 "board": node.board if node is not None else "WAITING",
                 "sensors": node.sensors if node is not None else {},
             }
-        return {"joints": joints_out}
+        rec_out = {
+            "recording": self.recording,
+            "active_name": self.record_name,
+            "frame_count": len(self.recorded_frames),
+            "elapsed_sec": round(time.monotonic() - self.record_start_time, 1) if self.recording else 0.0,
+            "playing": self.playing,
+            "playing_file": self.playing_file,
+            "loop": self.play_loop,
+            "play_progress": self.play_progress,
+            "last_saved": self.last_saved_file,
+            "last_message": self.last_rec_message,
+            "episodes": self.list_episodes(),
+        }
+        return {"joints": joints_out, "recorder": rec_out}
 
     async def handle_index(self, request: web.Request) -> web.Response:
         return web.Response(text=HTML_PAGE, content_type="text/html")
@@ -1142,6 +1455,17 @@ class HydraArmStudioServer:
                         angle = data.get("angle", 90)
                         if isinstance(angle, (int, float)) and not isinstance(angle, bool):
                             self.command_joint(joint_id, int(angle))
+                    elif op == "START_RECORD":
+                        self.start_recording(str(data.get("name", "episode_1")))
+                    elif op == "STOP_RECORD":
+                        self.stop_recording()
+                    elif op == "PLAY_EPISODE":
+                        self.start_playback(
+                            str(data.get("filename", "")),
+                            loop_mode=bool(data.get("loop", False)),
+                        )
+                    elif op == "STOP_PLAYBACK":
+                        self.stop_playback()
         finally:
             self.websockets.discard(ws)
         return ws

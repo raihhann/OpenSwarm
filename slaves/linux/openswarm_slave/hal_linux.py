@@ -86,7 +86,27 @@ class LinuxHAL:
     # GPIO / PWM Backend Initialization (RPi.GPIO / rpi-lgpio -> lgpio -> sysfs -> Sim)
     # -------------------------------------------------------------------------
     def _init_gpio_backend(self) -> None:
-        # 1. Check for Raspberry Pi RPi.GPIO (or python3-rpi-lgpio on Ubuntu 24.04)
+        # 1. Prefer native lgpio (pick the 40-pin header chip with >= 28 lines)
+        try:
+            import lgpio  # type: ignore
+
+            for chip in (4, 0, 1, 2):
+                try:
+                    h = lgpio.gpiochip_open(chip)
+                    info = lgpio.gpio_get_chip_info(h)
+                    lines = info[1] if isinstance(info, (list, tuple)) and len(info) > 1 else 0
+                    if lines >= 28:
+                        self._lgpio_handle = h
+                        self._lgpio = lgpio
+                        self._gpio_backend = "lgpio"
+                        return
+                    lgpio.gpiochip_close(h)
+                except Exception:
+                    continue
+        except Exception:
+            pass
+
+        # 2. Fallback to RPi.GPIO (or python3-rpi-lgpio on Ubuntu 24.04)
         try:
             import RPi.GPIO as GPIO  # type: ignore
 
@@ -95,21 +115,6 @@ class LinuxHAL:
             self._rpi_gpio = GPIO
             self._gpio_backend = "rpi_gpio"
             return
-        except Exception:
-            pass
-
-        try:
-            import lgpio  # type: ignore
-
-            # RPi 5 uses gpiochip4 for the 40-pin header; RPi 3/4 uses gpiochip0
-            for chip in (4, 0):
-                try:
-                    self._lgpio_handle = lgpio.gpiochip_open(chip)
-                    self._lgpio = lgpio
-                    self._gpio_backend = "lgpio"
-                    return
-                except Exception:
-                    continue
         except Exception:
             pass
 
@@ -236,8 +241,11 @@ class LinuxHAL:
             else:
                 self._servo_instances[pin].ChangeDutyCycle(duty_pct)
         elif self._gpio_backend == "lgpio" and self._lgpio is not None and self._lgpio_handle is not None:
-            self._lgpio.gpio_claim_output(self._lgpio_handle, pin)
-            self._lgpio.tx_servo(self._lgpio_handle, pin, pulse_us, 50, 0, 0)
+            try:
+                self._lgpio.gpio_claim_output(self._lgpio_handle, pin, 0)
+            except Exception:
+                pass
+            self._lgpio.tx_servo(self._lgpio_handle, pin, pulse_us, 50, 0, 12)
         else:
             prev = self._sim_pins.get(pin)
             self._sim_pins[pin] = ang

@@ -58,6 +58,7 @@ class Ubuntu24DualServoHAL:
         self.handle = None
         self.pwms = {}
         self.stop_timers = {}
+        self.last_angles = {}
         self._lock = threading.Lock()
 
         # 1. Try native lgpio first (pick the 40-pin header chip with >= 28 lines)
@@ -95,9 +96,21 @@ class Ubuntu24DualServoHAL:
         except Exception as exc:
             print(f"[RPi Servo HAL] Running in simulation mode ({exc})")
 
+    def _idle_pin(self, bcm_pin: int) -> None:
+        """Stop software PWM pulses once the servo has reached its target angle so it never shakes at rest."""
+        with self._lock:
+            self.stop_timers.pop(bcm_pin, None)
+            if self.mode == "lgpio" and self.lgpio is not None and self.handle is not None:
+                try:
+                    # Passing pulse_width=0 to lgpio.tx_servo stops servo pulses cleanly
+                    self.lgpio.tx_servo(self.handle, bcm_pin, 0, 50, 0, 0)
+                except Exception:
+                    pass
+
     def make_writer(self, label: str, bcm_pin: int, phys_pin: int, default_angle: int):
         init_pulse = int(500 + (default_angle / 180.0) * 1900)
         init_duty = (init_pulse / 20000.0) * 100.0
+        self.last_angles[bcm_pin] = default_angle
 
         if self.mode == "lgpio" and self.lgpio is not None and self.handle is not None:
             try:
@@ -105,7 +118,8 @@ class Ubuntu24DualServoHAL:
             except Exception:
                 pass
             self.lgpio.gpio_claim_output(self.handle, bcm_pin, 0)
-            self.lgpio.tx_servo(self.handle, bcm_pin, init_pulse, 50, 0, 0)
+            # Send 15 pulses (300 ms) to move to default_angle, then auto-stop in C
+            self.lgpio.tx_servo(self.handle, bcm_pin, init_pulse, 50, 0, 15)
         elif self.mode == "rpi_gpio" and self.gpio is not None:
             self.gpio.setup(bcm_pin, self.gpio.OUT)
             pwm = self.gpio.PWM(bcm_pin, 50)
@@ -123,10 +137,25 @@ class Ubuntu24DualServoHAL:
             duty_pct = (pulse_us / 20000.0) * 100.0      # 2.5% .. 12.0% at 50 Hz
 
             with self._lock:
+                # Ignore redundant commands for the exact same angle
+                if self.last_angles.get(bcm_pin) == angle:
+                    return
+                self.last_angles[bcm_pin] = angle
+
+                old_timer = self.stop_timers.pop(bcm_pin, None)
+                if old_timer is not None:
+                    old_timer.cancel()
+
                 if self.mode == "lgpio" and self.lgpio is not None and self.handle is not None:
-                    self.lgpio.tx_servo(self.handle, bcm_pin, pulse_us, 50, 0, 0)
+                    # Send 12 clean pulses (240 ms) then automatically stop pulsing so it never shakes at idle
+                    self.lgpio.tx_servo(self.handle, bcm_pin, pulse_us, 50, 0, 12)
                 elif self.mode == "rpi_gpio" and bcm_pin in self.pwms:
                     self.pwms[bcm_pin].ChangeDutyCycle(duty_pct)
+
+                timer = threading.Timer(0.26, self._idle_pin, args=(bcm_pin,))
+                timer.daemon = True
+                self.stop_timers[bcm_pin] = timer
+                timer.start()
 
             print(f"  [{label:<14} BCM {bcm_pin}] -> {angle:3d} deg ({pulse_us} us @ 50Hz)")
 

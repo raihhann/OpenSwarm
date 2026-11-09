@@ -44,8 +44,9 @@ ALIASES = {
 
 
 class HydraArmCLI:
-    def __init__(self, ip_overrides: Dict[str, Optional[str]]):
+    def __init__(self, ip_overrides: Dict[str, Optional[str]], step_delay_ms: int = 12):
         self.master = SwarmMaster()
+        self.step_delay_sec = max(0.004, step_delay_ms / 1000.0)
         self.angles = {k: v["home"] for k, v in JOINTS.items()}
 
         for jname, ip in ip_overrides.items():
@@ -54,20 +55,49 @@ class HydraArmCLI:
 
     def set_joint(self, joint: str, angle: int) -> None:
         cfg = JOINTS[joint]
-        clamped = max(cfg["min"], min(cfg["max"], int(angle)))
-        self.angles[joint] = clamped
+        target = max(cfg["min"], min(cfg["max"], int(angle)))
+        current = int(self.angles[joint])
         node = self.master.get(cfg["node_id"])
-        if node is not None:
-            node.servo(cfg.get("act", "servo"), clamped)
-            print(f"  [SENT -> {cfg['node_id']}.{cfg.get('act', 'servo')} ({node.ip}:{node.port})] {joint.upper()} = {clamped}°")
+        act_name = cfg.get("act", "servo")
+
+        if node is None:
+            self.angles[joint] = target
+            print(f"  [QUEUED (Node '{cfg['node_id']}' not discovered yet)] {joint.upper()} = {target}°")
+            return
+
+        print(f"  [SMOOTH MOVE -> {cfg['node_id']}.{act_name}] {joint.upper()}: {current}° -> {target}°")
+        if current < target:
+            for p in range(current + 1, target + 1):
+                node.servo(act_name, p)
+                time.sleep(self.step_delay_sec)
+        elif current > target:
+            for p in range(current - 1, target - 1, -1):
+                node.servo(act_name, p)
+                time.sleep(self.step_delay_sec)
         else:
-            print(f"  [QUEUED (Node '{cfg['node_id']}' not discovered yet)] {joint.upper()} = {clamped}°")
+            node.servo(act_name, target)
+
+        self.angles[joint] = target
 
     def set_pose(self, b: int, s: int, e: int, g: int) -> None:
-        self.set_joint("base", b)
-        self.set_joint("shoulder", s)
-        self.set_joint("elbow", e)
-        self.set_joint("gripper", g)
+        targets = {
+            "base": max(JOINTS["base"]["min"], min(JOINTS["base"]["max"], int(b))),
+            "shoulder": max(JOINTS["shoulder"]["min"], min(JOINTS["shoulder"]["max"], int(s))),
+            "elbow": max(JOINTS["elbow"]["min"], min(JOINTS["elbow"]["max"], int(e))),
+            "gripper": max(JOINTS["gripper"]["min"], min(JOINTS["gripper"]["max"], int(g))),
+        }
+        print(f"  [SMOOTH POSE] {self.angles} -> {targets}")
+        while any(self.angles[k] != targets[k] for k in JOINTS):
+            for k, cfg in JOINTS.items():
+                curr = self.angles[k]
+                tgt = targets[k]
+                if curr != tgt:
+                    nxt = curr + (1 if tgt > curr else -1)
+                    self.angles[k] = nxt
+                    node = self.master.get(cfg["node_id"])
+                    if node is not None:
+                        node.servo(cfg.get("act", "servo"), nxt)
+            time.sleep(self.step_delay_sec)
 
     def print_status(self) -> None:
         print("\n" + "-" * 78)

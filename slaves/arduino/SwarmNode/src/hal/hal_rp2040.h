@@ -6,6 +6,12 @@
 #include <Arduino.h>
 #include <Wire.h>
 #include <SPI.h>
+#if __has_include(<Servo.h>)
+  #include <Servo.h>
+  #define SWARM_RP2040_HAS_SERVO 1
+#else
+  #define SWARM_RP2040_HAS_SERVO 0
+#endif
 
 #if defined(ARDUINO_NANO_RP2040_CONNECT) || defined(ARDUINO_ARCH_MBED)
   #include <WiFiNINA.h>
@@ -22,6 +28,22 @@
 #include "../SwarmTypes.h"
 
 namespace SwarmHAL {
+
+    #if SWARM_RP2040_HAS_SERVO
+    inline Servo& rpServo(uint8_t pin) {
+        static Servo servos[4];
+        static uint8_t pins[4] = {255, 255, 255, 255};
+        for (int i = 0; i < 4; i++) {
+            if (pins[i] == pin) return servos[i];
+            if (pins[i] == 255) {
+                pins[i] = pin;
+                servos[i].attach(pin, 500, 2400);
+                return servos[i];
+            }
+        }
+        return servos[0];
+    }
+    #endif
 
     // Hardware Interrupt Quadrature Encoder State (Up to 4 encoders)
     inline volatile int32_t& encTicks(uint8_t i) {
@@ -173,8 +195,12 @@ namespace SwarmHAL {
                 break;
 
             case ACT_SERVO:
+                #if SWARM_RP2040_HAS_SERVO
+                rpServo(act.pins[0]).write(90);
+                #else
                 pinMode(act.pins[0], OUTPUT);
                 digitalWrite(act.pins[0], LOW);
+                #endif
                 break;
 
             case ACT_STEPPER:
@@ -378,13 +404,14 @@ namespace SwarmHAL {
 
             case ACT_SERVO: {
                 int16_t angle = constrain(v1, 0, 180);
+                #if SWARM_RP2040_HAS_SERVO
+                rpServo(act.pins[0]).write(angle);
+                #else
                 uint16_t pulseUs = map(angle, 0, 180, 500, 2400);
-                for (int i = 0; i < 4; i++) {
-                    digitalWrite(act.pins[0], HIGH);
-                    delayMicroseconds(pulseUs);
-                    digitalWrite(act.pins[0], LOW);
-                    delayMicroseconds(20000 - pulseUs);
-                }
+                digitalWrite(act.pins[0], HIGH);
+                delayMicroseconds(pulseUs);
+                digitalWrite(act.pins[0], LOW);
+                #endif
                 break;
             }
 

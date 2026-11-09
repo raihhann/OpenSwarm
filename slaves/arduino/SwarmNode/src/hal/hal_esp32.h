@@ -8,9 +8,40 @@
 #include <WiFiUdp.h>
 #include <Wire.h>
 #include <SPI.h>
+#if __has_include(<ESP32Servo.h>)
+  #include <ESP32Servo.h>
+  #define SWARM_HAS_ESP32SERVO 1
+#else
+  #define SWARM_HAS_ESP32SERVO 0
+#endif
 #include "../SwarmTypes.h"
 
 namespace SwarmHAL {
+
+    #if SWARM_HAS_ESP32SERVO
+    inline Servo& espServo(uint8_t pin) {
+        static Servo servos[4];
+        static uint8_t pins[4] = {255, 255, 255, 255};
+        static bool timersAllocated = false;
+        if (!timersAllocated) {
+            ESP32PWM::allocateTimer(0);
+            ESP32PWM::allocateTimer(1);
+            ESP32PWM::allocateTimer(2);
+            ESP32PWM::allocateTimer(3);
+            timersAllocated = true;
+        }
+        for (int i = 0; i < 4; i++) {
+            if (pins[i] == pin) return servos[i];
+            if (pins[i] == 255) {
+                pins[i] = pin;
+                servos[i].setPeriodHertz(50);
+                servos[i].attach(pin, 500, 2400);
+                return servos[i];
+            }
+        }
+        return servos[0];
+    }
+    #endif
 
     // Hardware Interrupt Quadrature Encoder State (Up to 4 encoders)
     inline volatile int32_t& encTicks(uint8_t i) {
@@ -147,8 +178,12 @@ namespace SwarmHAL {
                 break;
 
             case ACT_SERVO:
+                #if SWARM_HAS_ESP32SERVO
+                espServo(act.pins[0]).write(90);
+                #else
                 pinMode(act.pins[0], OUTPUT);
                 digitalWrite(act.pins[0], LOW);
+                #endif
                 break;
 
             case ACT_STEPPER:
@@ -340,13 +375,14 @@ namespace SwarmHAL {
 
             case ACT_SERVO: {
                 int16_t angle = constrain(v1, 0, 180);
+                #if SWARM_HAS_ESP32SERVO
+                espServo(act.pins[0]).write(angle);
+                #else
                 uint16_t pulseUs = map(angle, 0, 180, 500, 2400);
-                for (int i = 0; i < 4; i++) {
-                    digitalWrite(act.pins[0], HIGH);
-                    delayMicroseconds(pulseUs);
-                    digitalWrite(act.pins[0], LOW);
-                    delayMicroseconds(20000 - pulseUs);
-                }
+                digitalWrite(act.pins[0], HIGH);
+                delayMicroseconds(pulseUs);
+                digitalWrite(act.pins[0], LOW);
+                #endif
                 break;
             }
 

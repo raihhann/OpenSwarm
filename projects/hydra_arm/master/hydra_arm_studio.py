@@ -1050,11 +1050,13 @@ class HydraArmStudioServer:
         self,
         port: int = 8090,
         ip_overrides: Optional[Dict[str, str]] = None,
+        step_delay_ms: int = 12,
     ):
         self.port = port
+        self.step_delay_sec = max(0.004, step_delay_ms / 1000.0)
         self.master = SwarmMaster()
         self.joints: Dict[str, Dict[str, Any]] = {
-            k: dict(v) for k, v in JOINT_CONFIG.items()
+            k: {**v, "target_angle": v["home_angle"]} for k, v in JOINT_CONFIG.items()
         }
         self.websockets = set()
 
@@ -1071,17 +1073,36 @@ class HydraArmStudioServer:
         self.app.on_cleanup.append(self._cleanup)
 
     def command_joint(self, joint_id: str, angle: int) -> bool:
+        """Sets the target angle for smooth 1-degree-at-a-time trajectory interpolation."""
         if joint_id not in self.joints:
             return False
         cfg = self.joints[joint_id]
         clamped = max(cfg["min_angle"], min(cfg["max_angle"], int(angle)))
-        cfg["angle"] = clamped
+        cfg["target_angle"] = clamped
+        return self.master.get(cfg["node_id"]) is not None
 
-        node = self.master.get(cfg["node_id"])
-        if node is not None:
-            node.servo(cfg.get("actuator_name", "servo"), clamped)
-            return True
-        return False
+    async def smooth_motion_loop(self) -> None:
+        """
+        Smoothly steps each joint's current angle (`angle`) toward `target_angle`
+        by up to 2 degrees per tick (~12 ms step delay) so sudden jumps (e.g. 90 -> 150)
+        glide smoothly instead of snapping violently.
+        """
+        while True:
+            for jid, cfg in self.joints.items():
+                curr = int(cfg["angle"])
+                target = int(cfg.get("target_angle", curr))
+                if curr != target:
+                    diff = target - curr
+                    # Step 1 degree (or 2 degrees for large jumps) per tick for fast, silky motion
+                    step = 2 if abs(diff) > 15 else 1
+                    new_angle = curr + (step if diff > 0 else -step)
+                    cfg["angle"] = new_angle
+
+                    node = self.master.get(cfg["node_id"])
+                    if node is not None:
+                        node.servo(cfg.get("actuator_name", "servo"), new_angle)
+
+            await asyncio.sleep(self.step_delay_sec)
 
     def _build_status_payload(self) -> Dict[str, Any]:
         joints_out: Dict[str, Any] = {}
@@ -1142,6 +1163,7 @@ class HydraArmStudioServer:
     def run(self) -> None:
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
+        loop.create_task(self.smooth_motion_loop())
         loop.create_task(self.telemetry_broadcast_loop())
         print("=" * 74)
         print("  OpenSwarm HydraArm Studio — 4-Controller Distributed Robotic Arm")

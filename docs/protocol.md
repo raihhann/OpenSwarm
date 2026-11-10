@@ -44,7 +44,7 @@ parser handles JSON quote, backslash and control-character escapes. Send Unicode
 UTF-8 (the Python SDK does); firmware rejects `\u` escapes rather than misinterpreting
 them. Firmware names use 1..15 ASCII letters/digits/underscores/hyphens; node IDs use
 1..19. Registration returns false for invalid hardware names. Firmware string payloads
-are limited to 63 decoded bytes. Firmware integer parsing rejects invalid or overflowing
+are limited to 31 decoded bytes. Firmware integer parsing rejects invalid or overflowing
 values rather than converting them to zero or wrapping.
 
 Arduino HELLO and STATE buffers remain 256 and 384 bytes respectively; overflow can

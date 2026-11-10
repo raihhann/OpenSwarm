@@ -6,9 +6,9 @@ OpenSwarm HydraArm — Local 3-Controller Virtual Slave Emulator
 Spawns the 3 heterogeneous Slave nodes on localhost UDP so you can test
 `hydra_arm_studio.py` or `hydra_arm_cli.py` even before powering on the
 physical ESP32, RP2040, and Raspberry Pi:
-  1. arm_base_esp32   (ESP32)        on UDP Port 4210 -> ["servo"] (Base)
-  2. arm_elbow_rp2040 (RP2040)       on UDP Port 4213 -> ["servo"] (Elbow)
-  3. arm_gripper_rpi  (Raspberry Pi) on UDP Port 4214 -> ["shoulder_servo", "gripper_servo", "servo"]
+  1. arm_base_esp32           (ESP32)        on UDP Port 4210 -> ["servo"] (Base)
+  2. arm_elbow_rp2040         (RP2040)       on UDP Port 4213 -> ["servo"] (Elbow)
+  3. arm_shoulder_gripper_rpi (Raspberry Pi) on UDP Port 4214 -> ["shoulder_servo", "gripper_servo", "servo"]
 ===============================================================================
 """
 
@@ -105,9 +105,9 @@ class VirtualServoSlave:
 
 def main() -> None:
     nodes = [
-        VirtualServoSlave("arm_base_esp32",   "ESP32",        4210, ["servo"], {"rssi": -46.0}),
-        VirtualServoSlave("arm_elbow_rp2040", "RP2040",       4213, ["servo"], {"rssi": -51.0, "imu": [0.01, 0.02, 0.99, 0.0, 0.0, 0.0]}),
-        VirtualServoSlave("arm_gripper_rpi",  "RASPBERRY_PI", 4214, ["shoulder_servo", "gripper_servo", "servo"], {"cpu_temp": 44.5, "rssi": -43.0}),
+        VirtualServoSlave("arm_base_esp32",           "ESP32",        4210, ["servo"], {"rssi": -46.0}),
+        VirtualServoSlave("arm_elbow_rp2040",         "RP2040",       4213, ["servo"], {"rssi": -51.0, "imu": [0.01, 0.02, 0.99, 0.0, 0.0, 0.0]}),
+        VirtualServoSlave("arm_shoulder_gripper_rpi", "RASPBERRY_PI", 4214, ["shoulder_servo", "gripper_servo", "servo"], {"cpu_temp": 44.5, "rssi": -43.0}),
     ]
     print("=" * 74)
     print("  OpenSwarm HydraArm — Virtual Arm Slaves Online (127.0.0.1)")

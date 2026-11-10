@@ -29,10 +29,10 @@ if MASTER_PKG_DIR not in sys.path:
 from openswarm.master import SwarmMaster
 
 JOINTS = {
-    "base":     {"node_id": "arm_base_esp32",   "act": "servo",          "ctrl": "ESP32 (GPIO 13)",                 "min": 0,  "max": 180, "home": 90},
-    "shoulder": {"node_id": "arm_gripper_rpi",  "act": "shoulder_servo", "ctrl": "Raspberry Pi (BCM 14 / Pin 8)",   "min": 20, "max": 160, "home": 140},
-    "elbow":    {"node_id": "arm_elbow_rp2040", "act": "servo",          "ctrl": "RP2040 (Pin D6 / GP6)",           "min": 20, "max": 160, "home": 90},
-    "gripper":  {"node_id": "arm_gripper_rpi",  "act": "gripper_servo",  "ctrl": "Raspberry Pi (BCM 18 / Pin 12)",  "min": 10, "max": 95,  "home": 45},
+    "base":     {"node_id": "arm_base_esp32",           "act": "servo",          "ctrl": "ESP32 (GPIO 13)",                 "min": 0,  "max": 180, "home": 90},
+    "shoulder": {"node_id": "arm_shoulder_gripper_rpi", "act": "shoulder_servo", "ctrl": "Raspberry Pi (BCM 14 / Pin 8)",   "min": 20, "max": 160, "home": 140},
+    "elbow":    {"node_id": "arm_elbow_rp2040",         "act": "servo",          "ctrl": "RP2040 (Pin D6 / GP6)",           "min": 20, "max": 160, "home": 90},
+    "gripper":  {"node_id": "arm_shoulder_gripper_rpi", "act": "gripper_servo",  "ctrl": "Raspberry Pi (BCM 18 / Pin 12)",  "min": 10, "max": 95,  "home": 45},
 }
 
 ALIASES = {

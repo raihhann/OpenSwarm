@@ -35,10 +35,10 @@ if MASTER_PKG_DIR not in sys.path:
 from openswarm.master import SwarmMaster
 
 JOINTS = {
-    "base":     {"node_id": "arm_base_esp32",   "act": "servo",          "home": 90},
-    "shoulder": {"node_id": "arm_gripper_rpi",  "act": "shoulder_servo", "home": 140},
-    "elbow":    {"node_id": "arm_elbow_rp2040", "act": "servo",          "home": 90},
-    "gripper":  {"node_id": "arm_gripper_rpi",  "act": "gripper_servo",  "home": 45},
+    "base":     {"node_id": "arm_base_esp32",           "act": "servo",          "home": 90},
+    "shoulder": {"node_id": "arm_shoulder_gripper_rpi", "act": "shoulder_servo", "home": 140},
+    "elbow":    {"node_id": "arm_elbow_rp2040",         "act": "servo",          "home": 90},
+    "gripper":  {"node_id": "arm_shoulder_gripper_rpi", "act": "gripper_servo",  "home": 45},
 }
 
 

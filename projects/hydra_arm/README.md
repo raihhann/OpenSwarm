@@ -17,9 +17,9 @@ Each SG90 / MG90S servo has 3 wires:
 | Joint on the Arm | Role | Controller | Slave Node ID | Actuator Name | Signal Pin | Power (`+5V`) | Ground (`GND`) | Firmware / Script |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | **Joint 1: Base Yaw** | Rotates circular base left/right (`0°–180°`, Home `90°`) | **ESP32** | `arm_base_esp32` | `servo` | **GPIO 13** (`D13`) | `5V` / `VIN` | `GND` | [`esp32_base_node.ino`](./slaves/esp32_base_node/esp32_base_node.ino) |
-| **Joint 2: Shoulder Pitch** | Tilts black twin vertical link (`20°–160°`, Home `140°`) | **Raspberry Pi** *(Ubuntu 24.04)* | `arm_gripper_rpi` | `shoulder_servo` | **BCM GPIO 14** *(Physical Pin 8)* | **Physical Pin 2** (`5V`) | **Physical Pin 6** (`GND`) | [`rpi_gripper_node.py`](./slaves/rpi_gripper_node/rpi_gripper_node.py) |
+| **Joint 2: Shoulder Pitch** | Tilts black twin vertical link (`20°–160°`, Home `140°`) | **Raspberry Pi** *(Ubuntu 24.04)* | `arm_shoulder_gripper_rpi` | `shoulder_servo` | **BCM GPIO 14** *(Physical Pin 8)* | **Physical Pin 2** (`5V`) | **Physical Pin 6** (`GND`) | [`rpi_shoulder_gripper_node.py`](./slaves/rpi_shoulder_gripper_node/rpi_shoulder_gripper_node.py) |
 | **Joint 3: Elbow Pitch** | Raises/lowers grey forearm link (`20°–160°`, Home `90°`) | **RP2040** *(Nano RP2040 / Pico W)* | `arm_elbow_rp2040` | `servo` | **Pin 6** (`D6` / `GP6`) | `VUSB` / `VBUS` (`5V`) | `GND` | [`rp2040_elbow_node.ino`](./slaves/rp2040_elbow_node/rp2040_elbow_node.ino) |
-| **Joint 4: Gripper Claw** | Opens/closes geared black jaws (`10°–95°`, Home `45°`) | **Raspberry Pi** *(Ubuntu 24.04)* | `arm_gripper_rpi` | `gripper_servo` | **BCM GPIO 18** *(Physical Pin 12)* | **Physical Pin 4** (`5V`) | **Physical Pin 14** (`GND`) | [`rpi_gripper_node.py`](./slaves/rpi_gripper_node/rpi_gripper_node.py) |
+| **Joint 4: Gripper Claw** | Opens/closes geared black jaws (`10°–95°`, Home `45°`) | **Raspberry Pi** *(Ubuntu 24.04)* | `arm_shoulder_gripper_rpi` | `gripper_servo` | **BCM GPIO 18** *(Physical Pin 12)* | **Physical Pin 4** (`5V`) | **Physical Pin 14** (`GND`) | [`rpi_shoulder_gripper_node.py`](./slaves/rpi_shoulder_gripper_node/rpi_shoulder_gripper_node.py) |
 
 ### Raspberry Pi 40-Pin Header Quick Map (Outer Even Pin Row)
 Both Raspberry Pi servos wire cleanly to the **outer edge (even-numbered pins)** of the Raspberry Pi header:
@@ -43,7 +43,7 @@ Both Raspberry Pi servos wire cleanly to the **outer edge (even-numbered pins)**
 1. Open [`slaves/rp2040_elbow_node/rp2040_elbow_node.ino`](./slaves/rp2040_elbow_node/rp2040_elbow_node.ino) in Arduino IDE, set your `WIFI_SSID` and `WIFI_PASS`, and upload to your RP2040 board.
 2. Connect the **Elbow Pitch Servo** signal wire to **Pin 6 (`D6` / `GP6`)**.
 
-### C. Joint 2 (Shoulder) & Joint 4 (Gripper) — Raspberry Pi Ubuntu 24.04 (`arm_gripper_rpi`)
+### C. Joint 2 (Shoulder) & Joint 4 (Gripper) — Raspberry Pi Ubuntu 24.04 (`arm_shoulder_gripper_rpi`)
 SSH into your Raspberry Pi running **Ubuntu 24.04 LTS Server** and run:
 ```bash
 # 1. Install Ubuntu 24.04 GPIO packages & openswarm-slave
@@ -54,8 +54,8 @@ sudo python3 -m pip install --break-system-packages --upgrade openswarm-slave
 # 2. Pull the repo and start the Dual-Servo Raspberry Pi Slave node
 cd ~/OpenSwarm
 git pull
-cd projects/hydra_arm/slaves/rpi_gripper_node
-sudo python3 rpi_gripper_node.py
+cd projects/hydra_arm/slaves/rpi_shoulder_gripper_node
+sudo python3 rpi_shoulder_gripper_node.py
 ```
 
 ---

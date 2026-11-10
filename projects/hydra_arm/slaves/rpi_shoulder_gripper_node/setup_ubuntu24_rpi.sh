@@ -12,8 +12,8 @@ echo "  OpenSwarm HydraArm — Ubuntu 24.04 RPi Slave Dependency Installer"
 echo "=================================================================="
 
 # 1. Install system packages & GPIO libraries for Ubuntu 24.04 (Noble)
-#    Note: On Ubuntu 24.04 (Kernel 6.8), python3-rpi-lgpio provides the drop-in
-#    RPi.GPIO interface over modern /dev/gpiochip* for both RPi 4 and RPi 5!
+#    Note: On Ubuntu 24.04 (Kernel 6.8), python3-lgpio and python3-rpi-lgpio
+#    provide hardware/character-device GPIO access over /dev/gpiochip*
 sudo apt update
 sudo apt install -y \
     python3 \
@@ -49,5 +49,5 @@ echo "      - Red           (5V)     -> Physical Pin 4  (5V)"
 echo "      - Brown/Black   (GND)    -> Physical Pin 14 (GND)"
 echo ""
 echo " Start the Raspberry Pi Slave Node with:"
-echo "   sudo python3 rpi_gripper_node.py"
+echo "   sudo python3 rpi_shoulder_gripper_node.py"
 echo "=================================================================="

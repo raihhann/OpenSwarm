@@ -5,10 +5,10 @@ OpenSwarm HydraArm Studio — 3D Interactive Digital Twin & Multi-Controller Mas
 ===============================================================================
 Controls the 4-DOF "Servo Mini Arm" where each servo is wired to a different
 heterogeneous Slave controller over Wi-Fi UDP:
-  - Joint 1 (Base Yaw)       -> ESP32             (node_id: "arm_base_esp32",   actuator: "servo")
-  - Joint 2 (Shoulder Pitch) -> Raspberry Pi      (node_id: "arm_gripper_rpi",  actuator: "shoulder_servo")
-  - Joint 3 (Elbow Pitch)    -> RP2040            (node_id: "arm_elbow_rp2040", actuator: "servo")
-  - Joint 4 (Gripper Claw)   -> Raspberry Pi      (node_id: "arm_gripper_rpi",  actuator: "gripper_servo")
+  - Joint 1 (Base Yaw)       -> ESP32             (node_id: "arm_base_esp32",           actuator: "servo")
+  - Joint 2 (Shoulder Pitch) -> Raspberry Pi      (node_id: "arm_shoulder_gripper_rpi", actuator: "shoulder_servo")
+  - Joint 3 (Elbow Pitch)    -> RP2040            (node_id: "arm_elbow_rp2040",         actuator: "servo")
+  - Joint 4 (Gripper Claw)   -> Raspberry Pi      (node_id: "arm_shoulder_gripper_rpi", actuator: "gripper_servo")
 
 Features:
   - Interactive 3D Three.js replica of the "Servo Mini Arm by Luca Dilo"
@@ -66,7 +66,7 @@ JOINT_CONFIG: Dict[str, Dict[str, Any]] = {
         "joint_id": "shoulder",
         "code": "J2",
         "label": "Shoulder Pitch",
-        "node_id": "arm_gripper_rpi",
+        "node_id": "arm_shoulder_gripper_rpi",
         "actuator_name": "shoulder_servo",
         "controller": "Raspberry Pi",
         "pin_label": "BCM 14 (Pin 8)",
@@ -96,7 +96,7 @@ JOINT_CONFIG: Dict[str, Dict[str, Any]] = {
         "joint_id": "gripper",
         "code": "J4",
         "label": "Gripper Claw",
-        "node_id": "arm_gripper_rpi",
+        "node_id": "arm_shoulder_gripper_rpi",
         "actuator_name": "gripper_servo",
         "controller": "Raspberry Pi",
         "pin_label": "BCM 18 (Pin 12)",
@@ -1538,6 +1538,12 @@ class HydraArmStudioServer:
         self.app.router.add_get("/ws", self.handle_ws)
         self.app.on_cleanup.append(self._cleanup)
 
+    def _get_node(self, node_id: str):
+        node = self.master.get(node_id)
+        if node is None and node_id == "arm_shoulder_gripper_rpi":
+            node = self.master.get("arm_gripper_rpi")
+        return node
+
     def command_joint(self, joint_id: str, angle: int, from_playback: bool = False) -> bool:
         """Sets the target angle for smooth 1-degree-at-a-time trajectory interpolation."""
         if joint_id not in self.joints:
@@ -1553,7 +1559,7 @@ class HydraArmStudioServer:
             if not self.recorded_frames or self.recorded_frames[-1]["joints"] != pose:
                 self.recorded_frames.append({"t": t_rel, "joints": pose})
 
-        return self.master.get(cfg["node_id"]) is not None
+        return self._get_node(cfg["node_id"]) is not None
 
     def start_recording(self, name: str) -> None:
         self.stop_playback()
@@ -1696,7 +1702,7 @@ class HydraArmStudioServer:
                     new_angle = curr + (step if diff > 0 else -step)
                     cfg["angle"] = new_angle
 
-                    node = self.master.get(cfg["node_id"])
+                    node = self._get_node(cfg["node_id"])
                     if node is not None:
                         node.servo(cfg.get("actuator_name", "servo"), new_angle)
 
@@ -1705,7 +1711,7 @@ class HydraArmStudioServer:
     def _build_status_payload(self) -> Dict[str, Any]:
         joints_out: Dict[str, Any] = {}
         for jid, cfg in self.joints.items():
-            node = self.master.get(cfg["node_id"])
+            node = self._get_node(cfg["node_id"])
             online = bool(node is not None and node.is_online)
             joints_out[jid] = {
                 **cfg,
@@ -1802,9 +1808,9 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="OpenSwarm HydraArm 3D Interactive Studio")
     parser.add_argument("--port", type=int, default=8090, help="Local web server port (default: 8090)")
     parser.add_argument("--base-ip", type=str, default=None, help="Optional direct IP for arm_base_esp32")
-    parser.add_argument("--shoulder-ip", type=str, default=None, help="Optional direct IP for arm_gripper_rpi")
+    parser.add_argument("--shoulder-ip", type=str, default=None, help="Optional direct IP for arm_shoulder_gripper_rpi")
     parser.add_argument("--elbow-ip", type=str, default=None, help="Optional direct IP for arm_elbow_rp2040")
-    parser.add_argument("--gripper-ip", type=str, default=None, help="Optional direct IP for arm_gripper_rpi")
+    parser.add_argument("--gripper-ip", type=str, default=None, help="Optional direct IP for arm_shoulder_gripper_rpi")
     args = parser.parse_args()
 
     overrides = {

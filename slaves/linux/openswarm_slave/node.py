@@ -317,7 +317,7 @@ class SwarmNode:
             try:
                 self._execute_actuator(act, v1, v2, data_str)
             except Exception as exc:
-                print(f"[SwarmLinuxSlave] Actuator error on '{target}': {exc}")
+                print(f"[SwarmLinuxSlave] Actuator error on '{name}': {exc}")
 
     def _execute_actuator(self, act: Dict[str, Any], v1: int, v2: int, data_str: str) -> None:
         t = act["type"]

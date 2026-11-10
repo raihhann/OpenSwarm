@@ -31,7 +31,7 @@ void setup() {
     Serial.println("==================================================");
 
     // 1. Connect to Wi-Fi
-    node.connectWiFi("lazycreep", "Porsch@91");
+    node.connectWiFi("YOUR_WIFI_SSID", "YOUR_WIFI_PASSWORD");
 
     // 2. Declare Attached Hardware Pins ONLY — Zero Control Logic!
     node.registerServo("servo", 13);        // Base Yaw SG90 Servo on GPIO 13

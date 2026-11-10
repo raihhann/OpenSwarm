@@ -5,7 +5,7 @@ OpenSwarm HydraArm — Joint 2 (SHOULDER) + Joint 4 (GRIPPER) Slave Node
                      Raspberry Pi running Ubuntu 24.04 Server
 ===============================================================================
 Target Board : Raspberry Pi (RPi 4 / RPi 5 / RPi Zero 2 W) running Ubuntu 24.04 Server
-Node ID      : "arm_gripper_rpi"
+Node ID      : "arm_shoulder_gripper_rpi"
 Joint Roles  :
   1. Joint 2 (Shoulder Pitch, 20..160 deg, Home = 140 deg) -> Actuator: "shoulder_servo"
   2. Joint 4 (Gripper Claw,   10..95 deg,  Home = 45 deg)  -> Actuator: "gripper_servo"
@@ -24,7 +24,7 @@ WIRING (2× SG90 / MG90S Servos -> Raspberry Pi 40-Pin Header):
 Core Rule:
   - This Slave script ONLY declares Node ID and attached hardware pins/sensors.
   - Zero control logic lives on the Raspberry Pi! All control runs on the
-    Linux PC Master.
+    Master PC.
 ===============================================================================
 """
 
@@ -32,7 +32,6 @@ import argparse
 import os
 import sys
 import threading
-import time
 
 # Ensure local `slaves/linux` package in the cloned repo is always importable
 # (even when run with `sudo python3` where user site-packages isn't on sys.path)
@@ -46,9 +45,9 @@ from openswarm_slave import SwarmNode
 class Ubuntu24DualServoHAL:
     """
     Manages jitter-free 50 Hz (500..2400 us) servo PWM on Ubuntu 24.04 Raspberry Pi:
-      - Sends a short 350 ms pulse burst ONLY when a new target angle is commanded,
-        then idles the signal line LOW (0) so Linux kernel scheduling jitter can
-        NEVER cause random servo twitching while the arm is stationary!
+      - Updates lgpio's active servo slot in-place (cycles=0) while moving so its
+        5-slot TX queue never overflows, then stops pulses 280 ms after movement
+        ends so Linux kernel scheduling jitter never causes idle servo twitching.
     """
 
     def __init__(self):
@@ -177,7 +176,7 @@ class Ubuntu24DualServoHAL:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="HydraArm — RPi Dual Servo Slave Node (Shoulder + Gripper)")
-    parser.add_argument("--id", type=str, default="arm_gripper_rpi", help="Unique Slave Node ID")
+    parser.add_argument("--id", type=str, default="arm_shoulder_gripper_rpi", help="Unique Slave Node ID")
     parser.add_argument(
         "--shoulder-pin",
         type=int,

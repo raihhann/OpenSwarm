@@ -4,6 +4,8 @@ Exposes clean Python methods to read live sensors and command any actuator, pin,
 """
 
 import time
+import copy
+import threading
 from typing import Any, Callable, Dict, List, Optional, Union
 
 
@@ -28,8 +30,15 @@ class RemoteSwarmNode:
         self._send_fn = send_fn
         self._sensor_values: Dict[str, Union[float, List[float]]] = {}
         self.uptime_ms: int = 0
-        self.last_seen: float = time.time()
+        self.last_seen: float = 0.0
         self.last_telemetry: float = 0.0
+        self._seen_at: Optional[float] = None
+        self._telemetry_at: Optional[float] = None
+        self._state_received = threading.Event()
+        self.sensor_errors: Dict[str, str] = {}
+        self.is_virtual = False
+        self.capabilities: Dict[str, Any] = {}
+        self.max_command_bytes = 159
 
     # -------------------------------------------------------------------------
     # Internal state updates (called by SwarmMaster background thread)
@@ -41,14 +50,18 @@ class RemoteSwarmNode:
         self.declared_actuators = actuators
         self.declared_sensors = sensors
         self.last_seen = time.time()
+        self._seen_at = time.monotonic()
 
     def _update_state(self, uptime_ms: int, sensors_dict: Dict[str, Any]) -> None:
         self.uptime_ms = uptime_ms
         # A STATE packet contains the complete sample; don't retain values for omitted sensors.
-        self._sensor_values = dict(sensors_dict)
+        self._sensor_values = copy.deepcopy(sensors_dict)
         now = time.time()
         self.last_seen = now
         self.last_telemetry = now
+        self._seen_at = time.monotonic()
+        self._telemetry_at = self._seen_at
+        self._state_received.set()
 
     # -------------------------------------------------------------------------
     # Sensor Reading API
@@ -56,23 +69,25 @@ class RemoteSwarmNode:
     @property
     def sensors(self) -> Dict[str, Union[float, List[float]]]:
         """Returns a dictionary of the latest 20Hz streamed sensor values."""
-        return dict(self._sensor_values)
+        return copy.deepcopy(self._sensor_values)
 
-    def read(self, sensor_name: str, default: Any = 0.0) -> Union[float, List[float]]:
+    def read(self, sensor_name: str, default: Any = 0.0, *, max_age: Optional[float] = None) -> Union[float, List[float]]:
         """Reads the latest value of a named sensor (e.g., node.read('rssi') or node.read('front_sonar'))."""
-        return self._sensor_values.get(sensor_name, default)
+        if max_age is not None and self.telemetry_age > max_age:
+            return default
+        return copy.deepcopy(self._sensor_values.get(sensor_name, default))
 
     @property
     def telemetry_age(self) -> float:
         """Seconds since the last STATE telemetry packet was received (inf if none yet)."""
-        if self.last_telemetry <= 0.0:
+        if self._telemetry_at is None:
             return float("inf")
-        return time.time() - self.last_telemetry
+        return time.monotonic() - self._telemetry_at
 
     @property
     def is_online(self) -> bool:
         """Returns True if we heard from this Slave within the last 2.0 seconds."""
-        return (time.time() - self.last_seen) < 2.0
+        return self._seen_at is not None and (time.monotonic() - self._seen_at) < 2.0
 
     # -------------------------------------------------------------------------
     # Pin & GPIO Control API

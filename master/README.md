@@ -5,7 +5,14 @@ The Central Linux Master SDK & CLI for the [**OpenSwarm**](https://github.com/ra
 * **Zero Slave Control Logic:** All sensor processing, state machines, kinematics, and actuator commands run here on the Master.
 * **Zero Core Dependencies:** The SDK and CLI use only the Python standard library (`socket`, `threading`, `json`) and run on Linux, Windows, and macOS.
 * **Auto-Discovery + Direct IP:** Automatically discovers Slaves via UDP port `4211` (`HELLO` broadcast) or connects directly by IP (`192.168.x.x:4210`).
-* **Built-In Keepalive:** Sends a 200 ms background heartbeat (`PING`) to keep the Slave's 500 ms hardware safety watchdog active and stream 20 Hz sensor telemetry (`STATE`).
+* **Built-In Keepalive:** Sends a 200 ms background heartbeat (`PING`) to keep the Slave's 500 ms software transport watchdog active and stream 20 Hz sensor telemetry (`STATE`).
+
+Discovery is passive: scanning does not start keepalives or stop discovered nodes.
+Use `connect()` to wait for verified telemetry, or `subscribe(node_id)` to request it
+without blocking. The first actuator command also activates a discovered node.
+Shutdown stops active nodes only. `SwarmMaster` supports `with` for deterministic cleanup.
+Use `read(name, default=None, max_age=0.25)` when stale readings should be rejected.
+These are local session semantics; exclusive controller ownership is not implemented.
 
 ---
 

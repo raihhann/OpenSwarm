@@ -74,6 +74,8 @@ class VirtualSlaveNode:
         while self.running:
             hello = {
                 "type": "HELLO",
+                "virtual": True,
+                "max_command_bytes": 2048,
                 "node": self.node_id,
                 "board": self.board_type,
                 "port": self.port,

@@ -3,7 +3,7 @@
 <p align="center">
   <a href="https://pypi.org/project/openswarm-master/"><img src="https://img.shields.io/pypi/v/openswarm-master?style=for-the-badge&label=PyPI%20openswarm-master&color=3775A9" alt="PyPI openswarm-master" /></a>
   <a href="https://pypi.org/project/openswarm-slave/"><img src="https://img.shields.io/pypi/v/openswarm-slave?style=for-the-badge&label=PyPI%20openswarm-slave&color=0F766E" alt="PyPI openswarm-slave" /></a>
-  <a href="https://github.com/raihhann/OpenSwarm/tree/SwarmNode"><img src="https://img.shields.io/badge/Arduino%20Library-SwarmNode%20v0.4.0-00878F?style=for-the-badge&logo=arduino" alt="Arduino Library" /></a>
+  <a href="https://github.com/raihhann/OpenSwarm/tree/SwarmNode"><img src="https://img.shields.io/badge/Arduino%20Library-SwarmNode%20v0.4.1-00878F?style=for-the-badge&logo=arduino" alt="Arduino Library" /></a>
   <img src="https://img.shields.io/badge/Architecture-Klipper--Style%20Remote%20HAL-0A66C2?style=for-the-badge" alt="Architecture" />
   <img src="https://img.shields.io/badge/Slave%20Loop-100%25%20Empty-2EA043?style=for-the-badge" alt="Zero Slave Logic" />
 </p>
@@ -58,7 +58,7 @@ Building a heterogeneous micro-robot swarm (mixing small Wi-Fi Arduinos, 32-bit 
 | **Small / Low-RAM Boards** | Struggles on small Arduinos (requires a micro-ROS agent, RTOS and plenty of RAM) | **Runs on small Wi-Fi boards** — from a 6 KB RAM UNO WiFi Rev2 to ESP32/RP2040 and Linux SBCs |
 | **Where Does Logic Live?** | Distributed across C/C++ firmware on every robot (requires recompiling & reflashing to change behavior) | **0% control logic on Slaves.** `void loop()` is empty; 100% of logic runs in Python on the Linux Master |
 | **Adding Sensors / Buses** | Requires custom C++ `hardware_interface` plugins, URDFs, and firmware rebuilds | **1-line pin/bus declaration** (`L298N`, `Ultrasonic`, `MPU6050`, `SPI`, `I2C`, `UART`, or Custom Hook) |
-| **Safety** | Manual implementation per node | Built-in **500 ms hardware watchdog** on every Slave automatically stops motors if Master disconnects |
+| **Safety** | Manual implementation per node | Built-in **500 ms software transport watchdog** on every Slave automatically stops motors if Master disconnects |
 
 ---
 
@@ -215,7 +215,7 @@ You can also install it manually from the [**`SwarmNode` branch**](https://githu
 #### Option B: PlatformIO (`platformio.ini`)
 ```ini
 lib_deps =
-    raihann/SwarmNode@^0.4.0
+    raihann/SwarmNode@^0.4.1
 ```
 
 ---
@@ -296,6 +296,96 @@ OpenSwarm/
 ```
 
 ---
+
+## Framework architecture and current behavior
+
+The master owns application planning; nodes own hardware access. Keep timing-sensitive
+drivers and fault supervision local to the node rather than relying on Python or Wi-Fi
+timing. An empty sketch `loop()` is a convenience, not a real-time guarantee.
+
+* **Discovery is passive.** `discover_all()`, `nodes`, and `get()` observe nodes without
+  sending keepalives or STOP. `connect()` waits for actual telemetry; `subscribe(id)`
+  explicitly starts telemetry without blocking. Sending an actuator command also
+  activates that node. `close()` and `stop_all()` affect active nodes only; use
+  `stop_all(include_discovered=True)` only when that broader action is intended.
+  This is local session bookkeeping, not exclusive ownership between masters.
+* **Freshness is explicit.** `is_online` requires a received packet; elapsed times use
+  a monotonic clock. Use `node.read("sensor", default=None, max_age=0.25)` to reject
+  stale telemetry. `node.sensor_errors` reports Linux sensor callback failures;
+  failed readings are omitted rather than retained in the next sample.
+* **Drivers expose limitations.** Linux supports dependency injection through
+  `SwarmNode(..., hal=...)`, with `LinuxHAL(backend="sim")` for hardware-free tests.
+  `hal.capabilities` and HELLO metadata expose the selected backend and supported
+  output types. Linux stepper registration raises `NotImplementedError`; the
+  sysfs backend rejects PWM/servo operations instead of simulating their success.
+* **HydraArm has one joint model.** Studio, CLI, episode validation, and generated
+  browser metadata use `hydra_arm_model.py`. Angles remain command estimates, not
+  measured positions. Studio retains explicitly requested offline targets until a
+  node appears; the CLI reports unsent commands instead of claiming they were queued.
+* **Simulation is explicit.** The fleet server defaults to nodes advertising
+  `virtual: true`. `python -m openswarm.web_server --hardware` enables manual hardware
+  commands and disables the simulated autonomous planner. Virtual flags are descriptive,
+  not authenticated. Displayed positions are simulated and latency is unmeasured.
+
+The version-1 wire contract and compatibility limits are documented in
+[`docs/protocol.md`](docs/protocol.md). Python packages remain independently
+installable with no mandatory core dependencies.
+
+### Development checks and releases
+
+```bash
+python -m pip install -e "master[demo]" -e slaves/linux
+python -m unittest discover -s tests -t . -v
+```
+
+The suite uses loopback/simulated hardware. If `g++` is available, it also compiles
+and runs the actual firmware parser on the host. This does not replace board builds.
+CI runs tests and builds both Python packages on Windows/Linux with Python 3.8/3.12.
+Arduino synchronization waits for these checks and never rewrites an existing version
+tag. Python publication requires an explicit `master-v<version>` or `slave-v<version>`
+tag matching that package's version and a configured PyPI token; main pushes do not
+publish Python packages automatically.
+
+## TODO: safety and authentication (deferred)
+
+These remain open work, not implemented guarantees. Framework reliability is the
+current priority; no authentication or independent hardware safety system has been
+added in this iteration.
+
+- [ ] Application command leases: expire movement if the control application stalls,
+  even while transport heartbeats continue.
+- [ ] Independent local supervision and nonblocking stepper/UART/sensor scheduling;
+  the existing 500 ms watchdog is a software transport timeout, not a hardware guarantee.
+- [ ] Per-actuator stop/hold/release callbacks, including custom actuators, servos,
+  PWM/raw pins, and loaded-arm behavior. Stopping playback freezes command targets;
+  it is not a physical emergency-stop guarantee.
+- [ ] Authenticated controller sessions, exclusive ownership, replay protection,
+  sequence/expiry fields, and confirmed delivery for critical commands.
+- [ ] WebSocket origin checks and session authentication; binding localhost alone
+  does not authenticate a browser client.
+- [ ] Operator-disconnect/input leases and stale-sensor interlocks.
+- [ ] Loaded-arm mechanical limits, calibrated pulse ranges, power-budget checks,
+  and physical emergency-stop validation.
+
+## TODO: remaining framework and hardware work
+
+- [ ] Board compile matrix and hardware verification for ESP32/S2/S3/C3, Nano RP2040
+  Connect, Pico W, UNO R4 WiFi, UNO WiFi Rev2, and Nano 33 IoT. The S2/C3 UART reference
+  is now guarded but those targets have not been built in this iteration.
+- [ ] Timer-driven servo output on UNO/Nano and servo-library fallback paths;
+  explicit rejection when ESP32/RP2040 servo slots are exhausted.
+- [ ] Complete UNO/Nano UART implementation and encoder slots beyond two; deduplicate
+  common HAL driver code after the board compilation matrix is established.
+- [ ] Real VL53L0X initialization/ranging and INA219 shunt calibration; sensor-specific
+  polling periods and explicit hardware read failures instead of plausible fallback values.
+- [ ] Correct multi-interface/subnet discovery on Linux and reconnection across address
+  changes; negotiate protocol capabilities and complete telemetry/metadata capacity reporting.
+- [ ] Joint-position feedback/calibration, synchronized multi-node trajectories, and
+  real localization before physical autonomous fleet operation.
+- [ ] Complete arm emulator state/STOP/watchdog behavior and browser interaction testing.
+- [ ] Vendor browser assets for offline use and extract embedded UI code into packaged assets.
+- [ ] Version CAD source deliberately (`3Dmodels/` is currently ignored), avoid deleting
+  unrelated STL files, and verify solid geometry, fit, and slicer-derived print times.
 
 ## Project Roadmap
 

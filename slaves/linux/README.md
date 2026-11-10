@@ -61,6 +61,18 @@ node.start()
 ---
 
 ## 4. Supported Linux Hardware Backends
+
+Install `pip install "openswarm-slave[hardware]"` for the optional bus libraries and
+native `lgpio` backend. System packages can also provide those dependencies.
+The implementation uses `lgpio`, `RPi.GPIO`, sysfs, or simulation; it does not implement
+a `gpiod` Python backend. Check `node.hal.capabilities` before relying on PWM/servo
+support: sysfs supports digital access only. Linux stepper scheduling and SPI
+registration are not implemented. Use `LinuxHAL(backend="sim")` with the node's `hal=`
+argument to explicitly select simulation for development.
+
+Sensor callback exceptions and nonfinite values are omitted from the next complete
+sample and reported in `sensor_errors`. Some built-in hardware readers still return
+fallback values on hardware failure; replacing those is tracked in the root README.
 * **GPIO & PWM:** Automatically uses `RPi.GPIO` (on Raspberry Pi), Linux kernel `/sys/class/gpio` (on **Portenta X8**, **Arduino UNO Q**, **Jetson**), or **Virtual GPIO Simulation Mode** when testing on a standard Linux/Windows laptop.
-* **Buses (`I2C`, `SPI`, `UART`):** Supports `/dev/i2c-*` (`register_mpu6050`, `register_lsm6dsox`, `register_generic_i2c`, `register_i2c_actuator`) and `/dev/tty*` (`register_uart_sensor`, `register_uart_actuator`).
+* **Buses (`I2C`, `UART`):** Supports `/dev/i2c-*` (`register_mpu6050`, `register_lsm6dsox`, `register_generic_i2c`, `register_i2c_actuator`) and `/dev/tty*` (`register_uart_sensor`, `register_uart_actuator`).
 * **Linux System Telemetry:** `register_cpu_temp()` (`°C`), `register_system_load()` (`[load_1m, ram_%]`), and `register_wifi_rssi()` (`dBm`).

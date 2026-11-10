@@ -1,15 +1,40 @@
-name: Sync SwarmNode Branch & Auto-Release
+name: Test, Sync & Release
 
 on:
   push:
     branches:
       - main
+    tags:
+      - 'master-v*'
+      - 'slave-v*'
+  pull_request:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python: ['3.8', '3.12']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: python -m pip install -e "master[demo]" -e slaves/linux build twine
+      - run: python -m unittest discover -s tests -t . -v
+      - run: python -m build master
+      - run: python -m build slaves/linux
+      - run: python -m twine check master/dist/* slaves/linux/dist/*
+
   sync-arduino-branch:
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: write
     name: Sync slaves/arduino/SwarmNode -> SwarmNode branch
     runs-on: ubuntu-latest
     steps:
@@ -34,12 +59,21 @@ jobs:
           # Update SwarmNode branch
           git push origin "$COMMIT:refs/heads/SwarmNode" --force
 
-          # Create/update tag v<VERSION> pointing to the Arduino library tree for Arduino Library Manager
-          git tag -f "v${VERSION}" "$COMMIT"
-          git push origin "refs/tags/v${VERSION}" --force
+          # Published versions are immutable. Main can continue changing without
+          # silently replacing an installed Arduino release.
+          if git rev-parse "refs/tags/v${VERSION}" >/dev/null 2>&1; then
+            if [ "$(git rev-parse "v${VERSION}^{tree}")" != "$TREE" ]; then
+              echo "::notice::Arduino source changed; bump library version to publish a new release."
+            fi
+          else
+            git tag "v${VERSION}" "$COMMIT"
+            git push origin "refs/tags/v${VERSION}"
+          fi
 
   publish-pypi:
-    name: Publish Master SDK to PyPI
+    needs: test
+    if: startsWith(github.ref, 'refs/tags/master-v') || startsWith(github.ref, 'refs/tags/slave-v')
+    name: Publish versioned Python package to PyPI
     runs-on: ubuntu-latest
     steps:
       - name: Checkout main
@@ -50,16 +84,26 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Build and publish Master & Linux Slave to PyPI (if PYPI_API_TOKEN secret is set)
+      - name: Build and publish the explicitly tagged package
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+          RELEASE_TAG: ${{ github.ref_name }}
         run: |
           if [ -z "$TWINE_PASSWORD" ]; then
             echo "PYPI_API_TOKEN secret not set yet; skipping PyPI upload."
             exit 0
           fi
           pip install build twine
-          python -m build master
-          python -m build slaves/linux
-          twine upload --skip-existing master/dist/* slaves/linux/dist/*
+          if [[ "$RELEASE_TAG" == master-v* ]]; then
+            PACKAGE=master
+            VERSION="${RELEASE_TAG#master-v}"
+          else
+            PACKAGE=slaves/linux
+            VERSION="${RELEASE_TAG#slave-v}"
+          fi
+          export PACKAGE VERSION
+          python -c 'import os, pathlib, tomllib; p = pathlib.Path(os.environ["PACKAGE"]) / "pyproject.toml"; assert tomllib.loads(p.read_text())["project"]["version"] == os.environ["VERSION"], "Release tag must match package version"'
+          python -m build "$PACKAGE"
+          twine check "$PACKAGE"/dist/*
+          twine upload "$PACKAGE"/dist/*

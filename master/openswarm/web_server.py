@@ -8,6 +8,7 @@ Serves a high-tech Three.js 3D Open-World Swarm Arena in the browser:
 """
 
 import asyncio
+import argparse
 import json
 import logging
 import math
@@ -44,7 +45,7 @@ class SwarmWorld:
                 "motor_l": 0,
                 "motor_r": 0,
                 "battery": 11.8,
-                "online": True
+                "online": False
             },
             "tug_rp2040": {
                 "id": "tug_rp2040",
@@ -60,7 +61,7 @@ class SwarmWorld:
                 "motor_l": 0,
                 "motor_r": 0,
                 "battery": 12.1,
-                "online": True
+                "online": False
             }
         }
 
@@ -88,7 +89,7 @@ class SwarmWorld:
         self.stats = {
             "packets_sent": 0,
             "fps": 60,
-            "latency_ms": 1.6
+            "latency_ms": None
         }
 
     def update_physics(self, dt: float):
@@ -135,12 +136,14 @@ class SwarmWorld:
                 push_dir_y = math.sin(bot["theta"])
                 throttle = max(0, (bot["motor_l"] + bot["motor_r"]) / 510.0)
 
-                push_fx += push_dir_x * throttle * 1.5
-                push_fy += push_dir_y * throttle * 1.5
+                fx = push_dir_x * throttle * 1.5
+                fy = push_dir_y * throttle * 1.5
+                push_fx += fx
+                push_fy += fy
 
                 # Relative torque (off-center pushing causes rotation)
                 rel_y = bot["y"] - self.box["y"]
-                torque += rel_y * push_fx * 0.4
+                torque += (dx * fy - rel_y * fx) * 0.4
 
                 # Repel robot slightly so it doesn't clip through box
                 overlap = contact_dist - dist
@@ -342,7 +345,7 @@ HTML_PAGE = """<!DOCTYPE html>
     </div>
     <div class="hud-metrics">
       <div class="metric">
-        <span class="metric-val" id="metric-ping">1.6 ms</span>
+        <span class="metric-val" id="metric-ping">—</span>
         <span class="metric-label">UDP Latency</span>
       </div>
       <div class="metric">
@@ -373,7 +376,7 @@ HTML_PAGE = """<!DOCTYPE html>
         </div>
         <div class="card-meta">
           <span>Motors: <strong id="m-esp32">L:0 R:0</strong></span>
-          <span style="color: #4ade80;">ONLINE</span>
+          <span id="status-esp32">OFFLINE</span>
         </div>
       </div>
 
@@ -387,7 +390,7 @@ HTML_PAGE = """<!DOCTYPE html>
         </div>
         <div class="card-meta">
           <span>Motors: <strong id="m-rp2040">L:0 R:0</strong></span>
-          <span style="color: #4ade80;">ONLINE</span>
+          <span id="status-rp2040">OFFLINE</span>
         </div>
       </div>
       
@@ -591,6 +594,8 @@ HTML_PAGE = """<!DOCTYPE html>
         // Update HUD motor indicators
         const el = document.getElementById(id === "tug_esp32" ? "m-esp32" : "m-rp2040");
         if (el) el.innerText = `L:${bot.motor_l} R:${bot.motor_r}`;
+        const status = document.getElementById(id === "tug_esp32" ? "status-esp32" : "status-rp2040");
+        if (status) status.innerText = bot.online ? "ONLINE" : "OFFLINE";
       }
 
       // Sync Box
@@ -600,7 +605,7 @@ HTML_PAGE = """<!DOCTYPE html>
 
       // Update HUD stats
       document.getElementById('metric-pkts').innerText = world.stats.packets_sent;
-      document.getElementById('metric-ping').innerText = `${world.stats.latency_ms.toFixed(1)} ms`;
+      document.getElementById('metric-ping').innerText = Number.isFinite(world.stats.latency_ms) ? `${world.stats.latency_ms.toFixed(1)} ms` : "—";
       
       aiActive = world.ai_active;
       const btn = document.getElementById('btn-ai');
@@ -685,8 +690,9 @@ HTML_PAGE = """<!DOCTYPE html>
 # ============================================================================
 
 class OpenSwarmServer:
-    def __init__(self, port: int = 8080):
+    def __init__(self, port: int = 8080, hardware: bool = False):
         self.port = port
+        self.hardware = hardware
         self.world = SwarmWorld()
         self.master = SwarmMaster()
         self.app = web.Application()
@@ -695,11 +701,11 @@ class OpenSwarmServer:
 
         self.app.router.add_get('/', self.handle_index)
         self.app.router.add_get('/ws', self.handle_ws)
-        self.app.on_cleanup.append(self._cleanup)
+        self.app.cleanup_ctx.append(self._runtime)
 
     def _send_drive(self, bot_id: str, left: int, right: int) -> bool:
         node = self.master.get(bot_id)
-        if node is None:
+        if node is None or not node.is_online or (not self.hardware and not node.is_virtual):
             if bot_id not in self._missing_nodes:
                 logger.warning("Slave '%s' has not been discovered; drive command was not sent", bot_id)
                 self._missing_nodes.add(bot_id)
@@ -719,6 +725,17 @@ class OpenSwarmServer:
     async def _cleanup(self, app):
         self.world.ai_active = False
         self.master.close()
+
+    async def _runtime(self, app):
+        task = asyncio.create_task(self.simulation_loop())
+        try:
+            yield
+        finally:
+            task.cancel()
+            await asyncio.gather(task, return_exceptions=True)
+            for ws in list(self.websockets):
+                await ws.close()
+            self.master.close()
 
     async def handle_index(self, request):
         return web.Response(text=HTML_PAGE, content_type='text/html')
@@ -762,7 +779,12 @@ class OpenSwarmServer:
                                 self.world.stats["packets_sent"] += 1
 
                     elif op == "TOGGLE_AI":
-                        self.world.ai_active = not self.world.ai_active
+                        # The planner consumes simulated poses, never hardware localization.
+                        if not self.hardware:
+                            if self.world.ai_active:
+                                self._stop_all()
+                            else:
+                                self.world.ai_active = True
                     
                     elif op == "STOP_ALL":
                         self._stop_all()
@@ -777,8 +799,17 @@ class OpenSwarmServer:
         """60 Hz Physics + AI Loop + 20 Hz WebSocket state broadcast."""
         dt = 0.016
         tick = 0
+        previous = time.monotonic()
         while True:
-            t0 = time.time()
+            t0 = time.monotonic()
+            elapsed_dt = min(0.1, max(0.0, t0 - previous))
+            previous = t0
+            for bot_id, bot in self.world.robots.items():
+                node = self.master.get(bot_id)
+                usable = node is not None and (self.hardware or node.is_virtual)
+                bot["online"] = bool(usable and node.is_online)
+                if usable:
+                    self.master.subscribe(bot_id)
             if self.world.ai_active:
                 self.world.step_ai_swarm()
                 # Dispatch commands from AI to physical/virtual nodes
@@ -787,7 +818,7 @@ class OpenSwarmServer:
                     if self._send_drive(bot_id, bot["motor_l"], bot["motor_r"]):
                         self.world.stats["packets_sent"] += 1
 
-            self.world.update_physics(dt)
+            self.world.update_physics(elapsed_dt)
 
             # Broadcast state to Three.js web clients at 30 Hz
             tick += 1
@@ -805,18 +836,19 @@ class OpenSwarmServer:
                         logger.warning("Removing disconnected web client: %s", exc)
                         self.websockets.discard(ws)
 
-            elapsed = time.time() - t0
+            elapsed = time.monotonic() - t0
             sleep_time = max(0.001, dt - elapsed)
             await asyncio.sleep(sleep_time)
 
     def run(self):
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        loop.create_task(self.simulation_loop())
         print(f"\n[OpenSwarm Master] 3D Fleet Command Center running at: http://localhost:{self.port}")
-        web.run_app(self.app, host="127.0.0.1", port=self.port, loop=loop)
+        web.run_app(self.app, host="127.0.0.1", port=self.port)
 
 
 if __name__ == "__main__":
-    server = OpenSwarmServer(port=8080)
+    parser = argparse.ArgumentParser(description="OpenSwarm fleet simulator / manual hardware console")
+    parser.add_argument("--port", type=int, default=8080)
+    parser.add_argument("--hardware", action="store_true", help="Enable manual hardware commands; simulated AI is disabled")
+    args = parser.parse_args()
+    server = OpenSwarmServer(port=args.port, hardware=args.hardware)
     server.run()

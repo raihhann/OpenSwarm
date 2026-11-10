@@ -50,6 +50,8 @@ class VirtualServoSlave:
         while self.running:
             pkt = {
                 "type": "HELLO",
+                "virtual": True,
+                "max_command_bytes": 2048,
                 "node": self.node_id,
                 "board": self.board,
                 "ip": "127.0.0.1",

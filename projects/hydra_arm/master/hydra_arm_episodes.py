@@ -21,6 +21,7 @@ Usage Examples:
 
 import argparse
 import json
+import math
 import os
 import sys
 import time
@@ -34,12 +35,8 @@ if MASTER_PKG_DIR not in sys.path:
 
 from openswarm.master import SwarmMaster
 
-JOINTS = {
-    "base":     {"node_id": "arm_base_esp32",           "act": "servo",          "home": 90},
-    "shoulder": {"node_id": "arm_shoulder_gripper_rpi", "act": "shoulder_servo", "home": 140},
-    "elbow":    {"node_id": "arm_elbow_rp2040",         "act": "servo",          "home": 90},
-    "gripper":  {"node_id": "arm_shoulder_gripper_rpi", "act": "gripper_servo",  "home": 45},
-}
+from hydra_arm_model import JOINTS, validate_episode, step_toward
+
 
 
 class EpisodePlayer:
@@ -58,10 +55,11 @@ class EpisodePlayer:
                     diff = tgt - curr
                     step = 2 if abs(diff) > 15 else 1
                     nxt = curr + (step if diff > 0 else -step)
+                    node = self.master.subscribe(cfg["node_id"])
+                    if node is None or not node.is_online:
+                        raise ConnectionError("Joint controller is offline: " + k)
+                    node.servo(cfg["act"], nxt)
                     self.current_angles[k] = nxt
-                    node = self.master.get(cfg["node_id"])
-                    if node is not None:
-                        node.servo(cfg["act"], nxt)
             time.sleep(self.step_delay_sec)
 
     def send_pose_direct(self, target_pose: Dict[str, int]) -> None:
@@ -69,13 +67,21 @@ class EpisodePlayer:
         for k, cfg in JOINTS.items():
             if k in target_pose:
                 ang = int(target_pose[k])
-                if self.current_angles.get(k) != ang:
-                    self.current_angles[k] = ang
-                    node = self.master.get(cfg["node_id"])
-                    if node is not None:
-                        node.servo(cfg["act"], ang)
+                node = self.master.subscribe(cfg["node_id"])
+                if node is None or not node.is_online:
+                    raise ConnectionError("Joint controller is offline: " + k)
+                node.servo(cfg["act"], ang)
+                self.current_angles[k] = ang
 
     def play_file(self, filename: str, loop: bool = False, speed: float = 1.0) -> None:
+        try:
+            self._play_file(filename, loop, speed)
+        finally:
+            self.master.close()
+
+    def _play_file(self, filename: str, loop: bool, speed: float) -> None:
+        if not math.isfinite(speed) or speed <= 0:
+            raise ValueError("Playback speed must be finite and positive")
         fpath = filename if os.path.isfile(filename) else os.path.join(EPISODES_DIR, filename)
         if not fpath.endswith(".json") and not os.path.isfile(fpath):
             fpath += ".json"
@@ -84,7 +90,7 @@ class EpisodePlayer:
             return
 
         with open(fpath, "r", encoding="utf-8") as f:
-            data = json.load(f)
+            data = validate_episode(json.load(f))
 
         frames = data.get("frames", [])
         if not frames:
@@ -101,24 +107,33 @@ class EpisodePlayer:
         try:
             iteration = 1
             while True:
-                print(f"\n▶ Playing '{data.get('name', os.path.basename(fpath))}' (Run #{iteration})...")
-                # Smoothly glide to the starting pose of the episode first
-                first_pose = frames[0].get("joints", {})
-                self.step_smoothly_to_pose(first_pose)
-
+                print(f"\n[PLAY] Playing '{data.get('name', os.path.basename(fpath))}' (Run #{iteration})...")
                 start_t = time.monotonic()
-                for idx, frame in enumerate(frames):
-                    target_t = float(frame.get("t", 0.0)) / max(0.1, speed)
-                    wait_s = target_t - (time.monotonic() - start_t)
-                    if wait_s > 0:
-                        time.sleep(wait_s)
-                    pose = frame.get("joints", {})
-                    self.step_smoothly_to_pose(pose)
-                    print(
-                        f"  [{idx + 1:3d}/{len(frames):3d} | t={target_t:5.2f}s] "
-                        f"Base={pose.get('base')}° Shoulder={pose.get('shoulder')}° "
-                        f"Elbow={pose.get('elbow')}° Gripper={pose.get('gripper')}°"
-                    )
+                targets = dict(self.current_angles)
+                pending = set()
+                idx = 0
+                # Target changes follow the same clock as Studio; interpolation
+                # runs between frames instead of delaying subsequent timestamps.
+                while True:
+                    elapsed = time.monotonic() - start_t
+                    while idx < len(frames) and frames[idx]["t"] / speed <= elapsed:
+                        targets.update(frames[idx]["joints"])
+                        pending.update(frames[idx]["joints"])
+                        idx += 1
+                    for joint, cfg in JOINTS.items():
+                        if joint not in pending:
+                            continue
+                        node = self.master.subscribe(cfg["node_id"])
+                        if node is None or not node.is_online:
+                            raise ConnectionError("Joint controller is offline: " + joint)
+                        angle = step_toward(self.current_angles[joint], targets[joint])
+                        node.servo(cfg["act"], angle)
+                        self.current_angles[joint] = angle
+                        if angle == targets[joint]:
+                            pending.discard(joint)
+                    if idx == len(frames) and elapsed >= data["duration_sec"] / speed and self.current_angles == targets:
+                        break
+                    time.sleep(self.step_delay_sec)
 
                 if not loop:
                     print("\n[DONE] Episode playback finished.")
@@ -127,8 +142,6 @@ class EpisodePlayer:
                 time.sleep(0.5)
         except KeyboardInterrupt:
             print("\n[STOPPED] Playback interrupted by user.")
-        finally:
-            self.master.close()
 
 
 def list_saved_episodes() -> None:
@@ -138,7 +151,7 @@ def list_saved_episodes() -> None:
     print(f"  Saved HydraArm Episodes in: {EPISODES_DIR}")
     print("=" * 74)
     if not files:
-        print("  (No episodes recorded yet. Use the '● Record' button in HydraArm Studio!)")
+        print("  (No episodes recorded yet. Use the 'Record' button in HydraArm Studio!)")
         return
     for fn in files:
         fpath = os.path.join(EPISODES_DIR, fn)

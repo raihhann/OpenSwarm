@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 """
 ===============================================================================
-OpenSwarm HydraArm CLI — Interactive Terminal Controller for the 4-Node Arm
+OpenSwarm HydraArm CLI — Interactive Terminal Controller for the 4-Joint / 3-Controller Arm
 ===============================================================================
 Allows typing joint angles directly in the terminal on your Linux Master PC:
   hydra> base 120          # Rotate ESP32 Base Yaw to 120 deg
   hydra> shoulder 110      # Tilt Raspberry Pi Shoulder Pitch (GPIO 14 / Pin 8) to 110 deg
   hydra> elbow 75          # Move RP2040 Elbow Pitch to 75 deg
   hydra> gripper 20        # Open Raspberry Pi Gripper Claw (GPIO 18 / Pin 12) to 20 deg
-  hydra> pose 90 120 70 85 # Command all 4 controllers at once!
+  hydra> pose 90 120 70 85 # Command all 3 controllers at once!
   hydra> home              # Return all 4 joints to [90, 90, 90, 45]
-  hydra> demo              # Run a coordinated 4-controller pick & place wave
-  hydra> status            # Print live 20 Hz telemetry from all 4 controllers
+  hydra> demo              # Run a coordinated 3-controller pick & place wave
+  hydra> status            # Print live 20 Hz telemetry from all 3 controllers
 ===============================================================================
 """
 
@@ -28,12 +28,8 @@ if MASTER_PKG_DIR not in sys.path:
 
 from openswarm.master import SwarmMaster
 
-JOINTS = {
-    "base":     {"node_id": "arm_base_esp32",           "act": "servo",          "ctrl": "ESP32 (GPIO 13)",                 "min": 0,  "max": 180, "home": 90},
-    "shoulder": {"node_id": "arm_shoulder_gripper_rpi", "act": "shoulder_servo", "ctrl": "Raspberry Pi (BCM 14 / Pin 8)",   "min": 20, "max": 160, "home": 140},
-    "elbow":    {"node_id": "arm_elbow_rp2040",         "act": "servo",          "ctrl": "RP2040 (Pin D6 / GP6)",           "min": 20, "max": 160, "home": 90},
-    "gripper":  {"node_id": "arm_shoulder_gripper_rpi", "act": "gripper_servo",  "ctrl": "Raspberry Pi (BCM 18 / Pin 12)",  "min": 10, "max": 95,  "home": 45},
-}
+from hydra_arm_model import JOINTS, controller_addresses
+
 
 ALIASES = {
     "b": "base", "j1": "base", "1": "base",
@@ -45,27 +41,30 @@ ALIASES = {
 
 class HydraArmCLI:
     def __init__(self, ip_overrides: Dict[str, Optional[str]], step_delay_ms: int = 12):
+        addresses = controller_addresses(ip_overrides)
         self.master = SwarmMaster()
         self.step_delay_sec = max(0.004, step_delay_ms / 1000.0)
         self.angles = {k: v["home"] for k, v in JOINTS.items()}
 
-        for jname, ip in ip_overrides.items():
-            if ip and jname in JOINTS:
-                self.master.connect(JOINTS[jname]["node_id"], ip=ip)
+        try:
+            for node_id, ip in addresses.items():
+                self.master.connect(node_id, ip=ip)
+        except Exception:
+            self.master.close()
+            raise
 
     def set_joint(self, joint: str, angle: int) -> None:
         cfg = JOINTS[joint]
         target = max(cfg["min"], min(cfg["max"], int(angle)))
         current = int(self.angles[joint])
-        node = self.master.get(cfg["node_id"])
+        node = self.master.subscribe(cfg["node_id"])
         act_name = cfg.get("act", "servo")
 
-        if node is None:
-            self.angles[joint] = target
-            print(f"  [QUEUED (Node '{cfg['node_id']}' not discovered yet)] {joint.upper()} = {target}°")
+        if node is None or not node.is_online:
+            print(f"  [NOT SENT: controller offline] {joint.upper()} = {target} deg")
             return
 
-        print(f"  [SMOOTH MOVE -> {cfg['node_id']}.{act_name}] {joint.upper()}: {current}° -> {target}°")
+        print(f"  [SMOOTH MOVE -> {cfg['node_id']}.{act_name}] {joint.upper()}: {current} deg -> {target} deg")
         if current < target:
             for p in range(current + 1, target + 1):
                 node.servo(act_name, p)
@@ -87,16 +86,22 @@ class HydraArmCLI:
             "gripper": max(JOINTS["gripper"]["min"], min(JOINTS["gripper"]["max"], int(g))),
         }
         print(f"  [SMOOTH POSE] {self.angles} -> {targets}")
+        nodes = {k: self.master.subscribe(cfg["node_id"]) for k, cfg in JOINTS.items()}
+        if any(node is None or not node.is_online for node in nodes.values()):
+            print("  [NOT SENT: all three controllers must be online]")
+            return
         while any(self.angles[k] != targets[k] for k in JOINTS):
             for k, cfg in JOINTS.items():
                 curr = self.angles[k]
                 tgt = targets[k]
                 if curr != tgt:
                     nxt = curr + (1 if tgt > curr else -1)
+                    node = nodes[k]
+                    if not node.is_online:
+                        print("  [INTERRUPTED: controller went offline]")
+                        return
+                    node.servo(cfg["act"], nxt)
                     self.angles[k] = nxt
-                    node = self.master.get(cfg["node_id"])
-                    if node is not None:
-                        node.servo(cfg.get("act", "servo"), nxt)
             time.sleep(self.step_delay_sec)
 
     def print_status(self) -> None:
@@ -105,7 +110,7 @@ class HydraArmCLI:
         print("-" * 78)
         for jname, cfg in JOINTS.items():
             node = self.master.get(cfg["node_id"])
-            ang = f"{self.angles[jname]}°"
+            ang = f"{self.angles[jname]} deg"
             if node and node.is_online:
                 state_str = f"ONLINE ({node.ip}) {node.sensors}"
             else:
@@ -114,7 +119,7 @@ class HydraArmCLI:
         print("-" * 78 + "\n")
 
     def run_demo_wave(self) -> None:
-        print("Running coordinated 4-controller pick-and-place sequence...")
+        print("Running coordinated 3-controller pick-and-place sequence...")
         waypoints = [
             ("Home Pose",        (90,  90,  90, 25)),
             ("Reach Object",     (90, 125,  65, 25)),
@@ -134,7 +139,7 @@ class HydraArmCLI:
         print("=" * 78)
         print("  OpenSwarm HydraArm — Interactive Terminal Controller")
         print("=" * 78)
-        print("  Scanning for the 4 arm Slave nodes on Wi-Fi (2.0s)...")
+        print("  Scanning for the 3 arm controllers on Wi-Fi (2.0s)...")
         time.sleep(2.0)
         self.print_status()
         print("Commands:")
@@ -153,6 +158,13 @@ class HydraArmCLI:
                     continue
                 parts = raw.split()
                 cmd = parts[0].lower()
+                if cmd == "pose" or cmd in JOINTS or cmd in ALIASES:
+                    try:
+                        for value in parts[1:]:
+                            int(value)
+                    except ValueError:
+                        print("Joint angles must be integers.")
+                        continue
 
                 if cmd in ("quit", "exit", "q"):
                     break

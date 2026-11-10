@@ -8,6 +8,7 @@ SwarmMaster — Central Linux/Cross-Platform Master Engine for OpenSwarm.
 
 import json
 import logging
+import math
 import select
 import socket
 import sys
@@ -16,6 +17,7 @@ import time
 from typing import Any, Dict, Optional
 
 from .node import RemoteSwarmNode
+from .protocol import decode_packet, integer, sensor_values, source_ip
 
 logger = logging.getLogger(__name__)
 
@@ -42,8 +44,13 @@ class SwarmMaster:
         self.discovery_port = discovery_port
         self.heartbeat_sec = heartbeat_sec
         self._nodes: Dict[str, RemoteSwarmNode] = {}
+        self._active_nodes = set()
         self._lock = threading.Lock()
         self._running = True
+        self._closed = False
+        self._stop_event = threading.Event()
+        if not math.isfinite(heartbeat_sec) or heartbeat_sec <= 0:
+            raise ValueError("heartbeat_sec must be positive")
 
         # 1. Command & Telemetry Socket (ephemeral port; Slaves reply with STATE to this socket)
         self._cmd_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -68,6 +75,8 @@ class SwarmMaster:
             self._disc_sock.setblocking(False)
         except OSError:
             # If another process is already bound to 4211, direct IP connect still works
+            if self._disc_sock is not None:
+                self._disc_sock.close()
             self._disc_sock = None
 
         # Start background network & heartbeat daemon threads
@@ -91,44 +100,86 @@ class SwarmMaster:
         - If `ip` is provided (e.g. ip='192.168.0.118'), connects immediately and verifies telemetry.
         - Otherwise, waits up to `timeout` seconds for the Slave's UDP auto-discovery broadcast.
         """
+        if not math.isfinite(timeout) or timeout <= 0:
+            raise ValueError("timeout must be positive")
+        if self._closed:
+            raise RuntimeError("Master is closed")
+        deadline = time.monotonic() + timeout
         if ip is not None:
+            ip = source_ip(ip)
+            port = integer(port, 1, 65535)
             with self._lock:
                 if node_id not in self._nodes:
                     self._nodes[node_id] = RemoteSwarmNode(
                         node_id=node_id,
                         ip=ip,
                         port=port,
-                        send_fn=self._send_json,
+                        send_fn=self._sender(node_id),
                     )
                 else:
                     self._nodes[node_id].ip = ip
                     self._nodes[node_id].port = port
                 node = self._nodes[node_id]
-
-            # Immediately send a PING so the Slave starts streaming 20Hz telemetry to us
-            node.ping()
-            time.sleep(0.1)
-            return node
-
-        print(f"[OpenSwarm Master] Waiting for Slave '{node_id}' on UDP port {self.discovery_port}...")
-        start = time.time()
-        while (time.time() - start) < timeout:
+                node._state_received.clear()
+        else:
+            node = None
+        awaiting = None
+        while time.monotonic() < deadline and not self._closed:
             with self._lock:
-                if node_id in self._nodes:
-                    node = self._nodes[node_id]
-                    node.ping()
-                    print(
-                        f"[OpenSwarm Master] Discovered '{node.node_id}' ({node.board}) "
-                        f"at {node.ip}:{node.port} | Actuators: {node.declared_actuators} | Sensors: {node.declared_sensors}"
-                    )
+                node = self._nodes.get(node_id)
+            if node is not None:
+                if node is not awaiting:
+                    node._state_received.clear()
+                    awaiting = node
+                node.ping()
+                if node._state_received.wait(min(self.heartbeat_sec, max(0, deadline - time.monotonic()))):
                     return node
-            time.sleep(0.05)
-
+            else:
+                self._stop_event.wait(min(0.05, max(0, deadline - time.monotonic())))
+        with self._lock:
+            self._active_nodes.discard(node_id)
         raise TimeoutError(
-            f"Could not auto-discover Slave '{node_id}' within {timeout}s. "
-            f"Make sure your laptop and ESP32 are on the same Wi-Fi network, or pass ip='192.168.x.x' directly: "
-            f"master.connect('{node_id}', ip='192.168.0.118')"
+            f"No telemetry from Slave '{node_id}' within {timeout}s. "
+            "Check the node ID, address, command port, and network connectivity."
         )
+
+    def _sender(self, node_id):
+        def send(ip, port, payload):
+            if self._closed:
+                raise RuntimeError("Master is closed")
+            if payload.get("cmd") in ("PING", "ACT", "PIN"):
+                with self._lock:
+                    node = self._nodes[node_id]
+                    encoded = json.dumps(payload, separators=(",", ":"), ensure_ascii=False, allow_nan=False).encode("utf-8")
+                    if len(encoded) > node.max_command_bytes:
+                        raise ValueError("Command exceeds node's advertised datagram limit")
+                    self._active_nodes.add(node_id)
+            self._send_json(ip, port, payload)
+        return send
+
+    def subscribe(self, node_id: str) -> Optional[RemoteSwarmNode]:
+        """Request telemetry/keepalive for a discovered node without blocking.
+
+        Discovery and get() are passive. connect(), subscribe(), or the first
+        actuator command opt a node into this master's active session.
+        """
+        if self._closed:
+            raise RuntimeError("Master is closed")
+        with self._lock:
+            node = self._nodes.get(node_id)
+            active = node_id in self._active_nodes
+        if node is not None and not active:
+            node.ping()
+        return node
+
+    def disconnect(self, node_id: str) -> None:
+        """Stop an active node and stop renewing its keepalive."""
+        with self._lock:
+            active = node_id in self._active_nodes
+            self._active_nodes.discard(node_id)
+            node = self._nodes.get(node_id)
+        if active and node is not None:
+            node.stop()
 
     def discover_all(self, wait_seconds: float = 2.5) -> Dict[str, RemoteSwarmNode]:
         """Listens for `wait_seconds` and returns all discovered Slave nodes on the network."""
@@ -146,22 +197,32 @@ class SwarmMaster:
         with self._lock:
             return self._nodes.get(node_id)
 
-    def stop_all(self) -> None:
-        """Immediately sends STOP to every known Slave node (emergency stop)."""
+    def stop_all(self, include_discovered: bool = False) -> None:
+        """Send STOP to active nodes, optionally including passive discoveries."""
         with self._lock:
-            nodes_list = list(self._nodes.values())
+            nodes_list = [node for key, node in self._nodes.items()
+                          if include_discovered or key in self._active_nodes]
         for node in nodes_list:
             node.stop()
 
     def close(self) -> None:
         """Stops all connected Slave motors and closes Master sockets."""
+        if self._closed:
+            return
         self._running = False
+        self._stop_event.set()
+        # Join heartbeat before STOP so shutdown cannot renew a stopped node.
+        if self._hb_thread is not threading.current_thread():
+            self._hb_thread.join(timeout=1.0)
         with self._lock:
-            for node in self._nodes.values():
+            for node_id in self._active_nodes:
+                node = self._nodes[node_id]
                 try:
                     node.stop()
                 except Exception:
                     pass
+            self._active_nodes.clear()
+        self._closed = True
         try:
             self._cmd_sock.close()
         except Exception:
@@ -171,16 +232,24 @@ class SwarmMaster:
                 self._disc_sock.close()
             except Exception:
                 pass
+        if self._rx_thread is not threading.current_thread():
+            self._rx_thread.join(timeout=1.0)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc, traceback):
+        self.close()
 
     # -------------------------------------------------------------------------
     # Internal UDP Transport & Background Threads
     # -------------------------------------------------------------------------
     def _send_json(self, ip: str, port: int, payload: Dict[str, Any]) -> None:
-        raw = json.dumps(payload, separators=(",", ":")).encode("utf-8")
+        raw = json.dumps(payload, separators=(",", ":"), allow_nan=False, ensure_ascii=False).encode("utf-8")
         try:
             self._cmd_sock.sendto(raw, (ip, port))
-        except OSError:
-            pass
+        except OSError as exc:
+            logger.debug("UDP send to %s:%s failed: %s", ip, port, exc)
 
     def _network_loop(self) -> None:
         """
@@ -218,12 +287,15 @@ class SwarmMaster:
                 if not self._running:
                     return
                 continue
-            self._handle_packet(data, addr)
+            try:
+                self._handle_packet(data, addr)
+            except Exception:
+                logger.exception("Unexpected packet processing failure from %s", addr)
 
     def _handle_packet(self, data: bytes, addr: tuple) -> None:
         try:
-            msg = json.loads(data.decode("utf-8"))
-        except (UnicodeDecodeError, json.JSONDecodeError):
+            msg = decode_packet(data)
+        except (UnicodeDecodeError, ValueError, RecursionError):
             logger.debug("Ignoring malformed UDP packet from %s", addr)
             return
 
@@ -236,17 +308,10 @@ class SwarmMaster:
         if pkt_type not in ("HELLO", "STATE") or not isinstance(node_id, str) or not node_id:
             return
 
-        raw_ip = msg.get("ip")
-        if isinstance(raw_ip, str) and raw_ip and not raw_ip.startswith("127.") and raw_ip != "0.0.0.0":
-            sender_ip = raw_ip
-        else:
-            sender_ip = addr[0]
-        if not isinstance(sender_ip, str):
-            logger.debug("Ignoring packet with invalid IP from %s", addr)
-            return
         try:
-            sender_port = int(msg.get("port") or SWARM_DEFAULT_SLAVE_PORT)
-        except (TypeError, ValueError):
+            sender_ip = source_ip(addr[0])
+            sender_port = integer(msg.get("port", SWARM_DEFAULT_SLAVE_PORT), 1, 65535)
+        except (TypeError, ValueError, OverflowError):
             logger.debug("Ignoring packet with invalid port from %s", addr)
             return
         if not 1 <= sender_port <= 65535:
@@ -255,6 +320,10 @@ class SwarmMaster:
 
         with self._lock:
             if pkt_type == "HELLO":
+                try:
+                    command_limit = integer(msg.get("max_command_bytes", 159), 14, 4096)
+                except ValueError:
+                    return
                 board = msg.get("board", "UNKNOWN")
                 actuators = msg.get("actuators", [])
                 sensors = msg.get("sensors", [])
@@ -272,21 +341,26 @@ class SwarmMaster:
                         node_id=node_id,
                         ip=sender_ip,
                         port=sender_port,
-                        send_fn=self._send_json,
+                        send_fn=self._sender(node_id),
                         board=board,
                         actuators=actuators,
                         sensors=sensors,
                     )
                     self._nodes[node_id] = node
-                    # Trigger initial PING so Slave starts streaming STATE
-                    node.ping()
+                    node._update_hello(sender_ip, sender_port, board, actuators, sensors)
                 else:
                     self._nodes[node_id]._update_hello(sender_ip, sender_port, board, actuators, sensors)
+                self._nodes[node_id].is_virtual = msg.get("virtual") is True
+                self._nodes[node_id].max_command_bytes = command_limit
+                capabilities = msg.get("capabilities", {})
+                if isinstance(capabilities, dict):
+                    self._nodes[node_id].capabilities = dict(capabilities)
 
             elif pkt_type == "STATE":
                 try:
-                    uptime_ms = int(msg.get("uptime_ms", 0))
-                except (TypeError, ValueError):
+                    uptime_ms = integer(msg.get("uptime_ms", 0))
+                    sensors_dict = sensor_values(msg.get("sensors", {}))
+                except (TypeError, ValueError, OverflowError):
                     logger.debug("Ignoring STATE with invalid uptime from %s", addr)
                     return
                 sensors_dict = msg.get("sensors", {})
@@ -298,15 +372,21 @@ class SwarmMaster:
                         node_id=node_id,
                         ip=addr[0],
                         port=addr[1],
-                        send_fn=self._send_json,
+                        send_fn=self._sender(node_id),
                         sensors=list(sensors_dict.keys()),
                     )
-                self._nodes[node_id]._update_state(uptime_ms, sensors_dict)
+                node = self._nodes[node_id]
+                if node.ip != addr[0] or node.port != addr[1]:
+                    return
+                node._update_state(uptime_ms, sensors_dict)
+                errors = msg.get("sensor_errors", {})
+                if isinstance(errors, dict) and all(isinstance(k, str) and isinstance(v, str) for k, v in errors.items()):
+                    node.sensor_errors = dict(errors)
 
     def _heartbeat_loop(self) -> None:
         while self._running:
             with self._lock:
-                nodes_list = list(self._nodes.values())
+                nodes_list = [self._nodes[k] for k in self._active_nodes]
             for node in nodes_list:
                 node.ping()
-            time.sleep(self.heartbeat_sec)
+            self._stop_event.wait(self.heartbeat_sec)

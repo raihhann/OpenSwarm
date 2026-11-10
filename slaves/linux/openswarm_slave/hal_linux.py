@@ -9,15 +9,20 @@ Supports:
 """
 
 import os
+import logging
 import platform
 import socket
 import struct
 import time
 from typing import Any, Dict, List, Optional, Tuple
 
+logger = logging.getLogger(__name__)
+
 
 class LinuxHAL:
-    def __init__(self, verbose_sim: bool = True):
+    def __init__(self, verbose_sim: bool = True, backend: str = "auto"):
+        if backend not in ("auto", "sim"):
+            raise ValueError("backend must be 'auto' or 'sim'")
         self.verbose_sim = verbose_sim
         self.board_name = self._detect_board()
         self._gpio_backend = "sim"
@@ -31,7 +36,40 @@ class LinuxHAL:
         self._spi_devs: Dict[Tuple[int, int], Any] = {}
         self._uart_ports: Dict[str, Any] = {}
 
-        self._init_gpio_backend()
+        if backend == "auto":
+            self._init_gpio_backend()
+
+    @property
+    def capabilities(self):
+        return {"backend": self._gpio_backend,
+                "pwm": self._gpio_backend in ("sim", "lgpio", "rpi_gpio"),
+                "servo": self._gpio_backend in ("sim", "lgpio", "rpi_gpio"),
+                "stepper": False}
+
+    def close(self) -> None:
+        """Release GPIO waveforms and open bus handles; safe to call repeatedly."""
+        def release(callback):
+            try:
+                callback()
+            except Exception:
+                logger.exception("Hardware resource cleanup failed")
+
+        for pwm in list(self._pwm_instances.values()) + list(self._servo_instances.values()):
+            release(pwm.stop)
+        self._pwm_instances.clear()
+        self._servo_instances.clear()
+        for bus in list(self._i2c_buses.values()) + list(self._uart_ports.values()) + list(self._spi_devs.values()):
+            if bus is not None:
+                release(bus.close)
+        self._i2c_buses.clear()
+        self._uart_ports.clear()
+        self._spi_devs.clear()
+        if self._lgpio_handle is not None:
+            release(lambda: self._lgpio.gpiochip_close(self._lgpio_handle))
+            self._lgpio_handle = None
+        if self._rpi_gpio is not None:
+            release(self._rpi_gpio.cleanup)
+            self._rpi_gpio = None
 
     # -------------------------------------------------------------------------
     # Board & Network Detection
@@ -203,6 +241,8 @@ class LinuxHAL:
         return float(self._sim_pins.get(pin, 0))
 
     def pwm_write(self, pin: int, duty_255: int) -> None:
+        if not self.capabilities["pwm"]:
+            raise NotImplementedError("PWM is unavailable with the sysfs GPIO backend")
         if pin < 0 or pin == 255:
             return
         d = max(0, min(255, int(duty_255)))
@@ -226,6 +266,8 @@ class LinuxHAL:
         Writes a standard 50 Hz hobby servo angle (0..180 deg -> 500..2400 us pulse width).
         Works on Raspberry Pi running Ubuntu 24.04 Server (via rpi-lgpio or lgpio).
         """
+        if not self.capabilities["servo"]:
+            raise NotImplementedError("Servo output is unavailable with the sysfs GPIO backend")
         if pin < 0 or pin == 255:
             return
         ang = max(0, min(180, int(angle)))

@@ -9,45 +9,33 @@ from .master import SwarmMaster
 
 
 def cmd_scan(args: argparse.Namespace) -> None:
-    master = SwarmMaster()
-    print(f"Scanning local network for OpenSwarm Slave nodes ({args.wait:.1f}s)...")
-    nodes = master.discover_all(wait_seconds=args.wait)
-    if not nodes:
-        print("No Slave nodes discovered via UDP broadcast.")
-        print("Tip: If your Wi-Fi router blocks UDP broadcast, use `--ip <SLAVE_IP>` in commands.")
-    else:
-        print(f"\nDiscovered {len(nodes)} Slave Node(s):")
-        print("-" * 78)
+    with SwarmMaster() as master:
+        print(f"Scanning local network for OpenSwarm nodes ({args.wait:.1f}s)...")
+        nodes = master.discover_all(wait_seconds=args.wait)
+        if not nodes:
+            print("No nodes discovered. Use --ip if your router blocks discovery.")
         for node in nodes.values():
-            print(f"  Node ID   : {node.node_id} ({node.board})")
-            print(f"  Address   : {node.ip}:{node.port}")
-            print(f"  Actuators : {node.declared_actuators}")
-            print(f"  Sensors   : {node.sensors}")
-            print("-" * 78)
-    master.close()
+            print(f"  {node.node_id} ({node.board}) at {node.ip}:{node.port}")
+            print(f"    Actuators: {node.declared_actuators} | Sensors: {node.declared_sensors}")
 
 
 def cmd_blink(args: argparse.Namespace) -> None:
-    master = SwarmMaster()
-    node = master.connect(args.node, ip=args.ip, timeout=args.timeout)
-    print(f"\nConnected to '{node.node_id}' at {node.ip}:{node.port}!")
-    print(f"Blinking '{args.actuator}' (Ctrl+C to stop)...\n")
-
-    state = False
-    try:
-        while True:
-            state = not state
-            node.digital_write(args.actuator, state)
-            print(
-                f"  -> LED={'ON ' if state else 'OFF'} | "
-                f"Uptime={node.uptime_ms / 1000.0:.1f}s | "
-                f"Sensors={node.sensors}"
-            )
-            time.sleep(args.interval)
-    except KeyboardInterrupt:
-        print("\nTurning LED OFF and closing Master connection...")
-        node.digital_write(args.actuator, 0)
-        master.close()
+    if args.interval <= 0:
+        raise ValueError("Blink interval must be positive")
+    with SwarmMaster() as master:
+        node = master.connect(args.node, ip=args.ip, timeout=args.timeout)
+        print(f"Connected to '{node.node_id}' at {node.ip}:{node.port}")
+        state = False
+        try:
+            while True:
+                state = not state
+                node.digital_write(args.actuator, state)
+                print(f"LED={'ON' if state else 'OFF'} | Sensors={node.sensors}")
+                time.sleep(args.interval)
+        except KeyboardInterrupt:
+            print("Turning LED off and closing connection...")
+        finally:
+            node.digital_write(args.actuator, 0)
 
 
 def main() -> None:
@@ -69,7 +57,10 @@ def main() -> None:
     p_blink.set_defaults(func=cmd_blink)
 
     args = parser.parse_args()
-    args.func(args)
+    try:
+        args.func(args)
+    except (ValueError, TimeoutError) as exc:
+        parser.exit(1, f"{exc}\n")
 
 
 if __name__ == "__main__":

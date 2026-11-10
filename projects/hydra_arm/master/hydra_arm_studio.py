@@ -25,9 +25,11 @@ import argparse
 import asyncio
 import json
 import logging
+import math
 import os
 import sys
 import time
+import tempfile
 from datetime import datetime
 from typing import Dict, Any, List, Optional
 
@@ -37,7 +39,6 @@ from aiohttp import web
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 MASTER_PKG_DIR = os.path.join(REPO_ROOT, "master")
 EPISODES_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "episodes"))
-os.makedirs(EPISODES_DIR, exist_ok=True)
 if MASTER_PKG_DIR not in sys.path:
     sys.path.insert(0, MASTER_PKG_DIR)
 
@@ -46,68 +47,7 @@ from openswarm.master import SwarmMaster
 logger = logging.getLogger("hydra_arm_studio")
 
 
-JOINT_CONFIG: Dict[str, Dict[str, Any]] = {
-    "base": {
-        "joint_id": "base",
-        "code": "J1",
-        "label": "Base Yaw",
-        "node_id": "arm_base_esp32",
-        "actuator_name": "servo",
-        "controller": "ESP32",
-        "pin_label": "GPIO 13",
-        "color": "#2563eb",
-        "min_angle": 0,
-        "max_angle": 180,
-        "home_angle": 90,
-        "angle": 90,
-        "description": "Rotates the upper arm assembly left/right on the circular base.",
-    },
-    "shoulder": {
-        "joint_id": "shoulder",
-        "code": "J2",
-        "label": "Shoulder Pitch",
-        "node_id": "arm_shoulder_gripper_rpi",
-        "actuator_name": "shoulder_servo",
-        "controller": "Raspberry Pi",
-        "pin_label": "BCM 14 (Pin 8)",
-        "color": "#0284c7",
-        "min_angle": 20,
-        "max_angle": 160,
-        "home_angle": 140,
-        "angle": 140,
-        "description": "Drives the twin vertical linkage bars forward and backward.",
-    },
-    "elbow": {
-        "joint_id": "elbow",
-        "code": "J3",
-        "label": "Elbow Pitch",
-        "node_id": "arm_elbow_rp2040",
-        "actuator_name": "servo",
-        "controller": "RP2040",
-        "pin_label": "GP6 (Pin D6)",
-        "color": "#4f46e5",
-        "min_angle": 20,
-        "max_angle": 160,
-        "home_angle": 90,
-        "angle": 90,
-        "description": "Raises and lowers the grey skeletal forearm link.",
-    },
-    "gripper": {
-        "joint_id": "gripper",
-        "code": "J4",
-        "label": "Gripper Claw",
-        "node_id": "arm_shoulder_gripper_rpi",
-        "actuator_name": "gripper_servo",
-        "controller": "Raspberry Pi",
-        "pin_label": "BCM 18 (Pin 12)",
-        "color": "#0d9488",
-        "min_angle": 10,
-        "max_angle": 95,
-        "home_angle": 45,
-        "angle": 45,
-        "description": "Opens (10°) and closes (95°) the geared parallel gripper fingers.",
-    },
-}
+from hydra_arm_model import JOINT_CONFIG, validate_episode, step_toward, controller_addresses
 
 
 HTML_PAGE = r"""<!DOCTYPE html>
@@ -822,23 +762,13 @@ HTML_PAGE = r"""<!DOCTYPE html>
 </div>
 
 <script>
-const JOINTS_META = {
-  base:     { id: "base",     code: "J1", name: "Base Yaw",       hw: "ESP32 · GPIO 13",      color: "#2563eb", min: 0,  max: 180, home: 90 },
-  shoulder: { id: "shoulder", code: "J2", name: "Shoulder Pitch", hw: "RPi · BCM 14 (Pin 8)", color: "#0284c7", min: 20, max: 160, home: 140 },
-  elbow:    { id: "elbow",    code: "J3", name: "Elbow Pitch",    hw: "RP2040 · GP6 (D6)",    color: "#4f46e5", min: 20, max: 160, home: 90 },
-  gripper:  { id: "gripper",  code: "J4", name: "Gripper Claw",   hw: "RPi · BCM 18 (Pin 12)",color: "#0d9488", min: 10, max: 95,  home: 45 }
-};
+const JOINTS_META = __JOINTS_META__;
 
 function angleToPulseUs(deg) {
   return Math.round(500 + (deg / 180.0) * 1900);
 }
 
-let armState = {
-  base: 90,
-  shoulder: 140,
-  elbow: 90,
-  gripper: 45
-};
+let armState = Object.fromEntries(Object.entries(JOINTS_META).map(([id, meta]) => [id, meta.home]));
 let targetAngles = { ...armState };
 let selectedJoint = null;
 let serverJointsData = {};
@@ -1506,9 +1436,10 @@ class HydraArmStudioServer:
     ):
         self.port = port
         self.step_delay_sec = max(0.004, step_delay_ms / 1000.0)
+        addresses = controller_addresses(ip_overrides)
         self.master = SwarmMaster()
         self.joints: Dict[str, Dict[str, Any]] = {
-            k: {**v, "target_angle": v["home_angle"]} for k, v in JOINT_CONFIG.items()
+            k: {**v, "target_angle": v["home_angle"], "pending": False} for k, v in JOINT_CONFIG.items()
         }
         self.websockets = set()
 
@@ -1525,23 +1456,27 @@ class HydraArmStudioServer:
         self.play_loop: bool = False
         self.play_progress: str = ""
         self._play_task: Optional[asyncio.Task] = None
+        self._retired_playbacks = set()
+        self._episodes_cache = []
+        self._episodes_checked_at = 0.0
 
         # Pre-register any explicit IP overrides passed via CLI flags
-        if ip_overrides:
-            for jid, ip_str in ip_overrides.items():
-                if ip_str and jid in self.joints:
-                    node_id = self.joints[jid]["node_id"]
-                    self.master.connect(node_id, ip=ip_str)
+        try:
+            for node_id, ip_str in addresses.items():
+                self.master.connect(node_id, ip=ip_str)
+        except Exception:
+            self.master.close()
+            raise
 
         self.app = web.Application()
         self.app.router.add_get("/", self.handle_index)
         self.app.router.add_get("/ws", self.handle_ws)
-        self.app.on_cleanup.append(self._cleanup)
+        self.app.cleanup_ctx.append(self._runtime)
 
     def _get_node(self, node_id: str):
-        node = self.master.get(node_id)
+        node = self.master.subscribe(node_id)
         if node is None and node_id == "arm_shoulder_gripper_rpi":
-            node = self.master.get("arm_gripper_rpi")
+            node = self.master.subscribe("arm_gripper_rpi")
         return node
 
     def command_joint(self, joint_id: str, angle: int, from_playback: bool = False) -> bool:
@@ -1551,6 +1486,7 @@ class HydraArmStudioServer:
         cfg = self.joints[joint_id]
         clamped = max(cfg["min_angle"], min(cfg["max_angle"], int(angle)))
         cfg["target_angle"] = clamped
+        cfg["pending"] = True
 
         if self.recording and not from_playback:
             t_rel = round(time.monotonic() - self.record_start_time, 3)
@@ -1576,10 +1512,10 @@ class HydraArmStudioServer:
         if not self.recording:
             return None
         self.recording = False
-        duration = round(time.monotonic() - self.record_start_time, 2)
+        duration = round(time.monotonic() - self.record_start_time, 3)
         # Ensure final pose at stop time is captured
         final_pose = {jid: int(jcfg["target_angle"]) for jid, jcfg in self.joints.items()}
-        if not self.recorded_frames or self.recorded_frames[-1]["joints"] != final_pose:
+        if not self.recorded_frames or self.recorded_frames[-1]["t"] < duration:
             self.recorded_frames.append({"t": duration, "joints": final_pose})
 
         fname = f"{self.record_name}.json"
@@ -1591,8 +1527,16 @@ class HydraArmStudioServer:
             "steps": len(self.recorded_frames),
             "frames": self.recorded_frames,
         }
-        with open(fpath, "w", encoding="utf-8") as f:
-            json.dump(payload, f, indent=2)
+        os.makedirs(EPISODES_DIR, exist_ok=True)
+        fd, temporary = tempfile.mkstemp(dir=EPISODES_DIR, suffix=".tmp")
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as f:
+                json.dump(validate_episode(payload), f, indent=2, allow_nan=False)
+            os.replace(temporary, fpath)
+        finally:
+            if os.path.exists(temporary):
+                os.unlink(temporary)
+        self._episodes_checked_at = 0.0
 
         self.last_saved_file = fname
         self.last_rec_message = f"Saved '{fname}' ({len(self.recorded_frames)} steps, {duration}s)"
@@ -1600,6 +1544,10 @@ class HydraArmStudioServer:
         return fname
 
     def list_episodes(self) -> List[Dict[str, Any]]:
+        now = time.monotonic()
+        if now - self._episodes_checked_at < 1.0:
+            return list(self._episodes_cache)
+        self._episodes_checked_at = now
         out: List[Dict[str, Any]] = []
         if not os.path.isdir(EPISODES_DIR):
             return out
@@ -1609,7 +1557,7 @@ class HydraArmStudioServer:
             fpath = os.path.join(EPISODES_DIR, fn)
             try:
                 with open(fpath, "r", encoding="utf-8") as f:
-                    data = json.load(f)
+                    data = validate_episode(json.load(f))
                 out.append({
                     "filename": fn,
                     "name": data.get("name", fn[:-5]),
@@ -1618,14 +1566,20 @@ class HydraArmStudioServer:
                 })
             except Exception:
                 continue
-        return out
+        self._episodes_cache = out
+        return list(out)
 
     def stop_playback(self) -> None:
         self.playing = False
         self.play_loop = False
         if self._play_task is not None and not self._play_task.done():
             self._play_task.cancel()
+            self._retired_playbacks.add(self._play_task)
+            self._play_task.add_done_callback(self._retired_playbacks.discard)
         self._play_task = None
+        for cfg in self.joints.values():
+            cfg["target_angle"] = cfg["angle"]
+            cfg["pending"] = False
         self.last_rec_message = "Playback stopped"
 
     def start_playback(self, filename: str, loop_mode: bool = False) -> None:
@@ -1645,7 +1599,7 @@ class HydraArmStudioServer:
     async def _playback_runner(self, fpath: str, safe_fn: str, loop_mode: bool) -> None:
         try:
             with open(fpath, "r", encoding="utf-8") as f:
-                data = json.load(f)
+                data = validate_episode(json.load(f))
             frames = data.get("frames", [])
             if not frames:
                 self.last_rec_message = f"Episode '{safe_fn}' has 0 frames"
@@ -1671,8 +1625,12 @@ class HydraArmStudioServer:
                         self.command_joint(jid, int(ang), from_playback=True)
                     self.play_progress = f"Step {idx + 1}/{len(frames)} ({target_t:.1f}s)"
 
-                # Wait briefly at end of episode for smooth interpolator to finish reaching final pose
-                await asyncio.sleep(0.5)
+                dwell = data["duration_sec"] - (time.monotonic() - start_t)
+                if dwell > 0:
+                    await asyncio.sleep(dwell)
+                # Finish the final interpolation rather than assuming 500ms is enough.
+                while any(cfg["pending"] for cfg in self.joints.values()):
+                    await asyncio.sleep(self.step_delay_sec)
                 if not loop_mode:
                     break
 
@@ -1682,8 +1640,23 @@ class HydraArmStudioServer:
         except Exception as exc:
             self.last_rec_message = f"Playback error: {exc}"
         finally:
-            self.playing = False
-            self.play_progress = ""
+            if asyncio.current_task() is self._play_task:
+                self.playing = False
+                self.play_progress = ""
+                self._play_task = None
+
+    def motion_tick(self) -> None:
+        """Advance command estimates only when a live node can receive them."""
+        for cfg in self.joints.values():
+            if not cfg["pending"]:
+                continue
+            node = self._get_node(cfg["node_id"])
+            if node is None or not node.is_online:
+                continue
+            angle = step_toward(int(cfg["angle"]), int(cfg["target_angle"]))
+            node.servo(cfg["actuator_name"], angle)
+            cfg["angle"] = angle
+            cfg["pending"] = angle != cfg["target_angle"]
 
     async def smooth_motion_loop(self) -> None:
         """
@@ -1692,20 +1665,7 @@ class HydraArmStudioServer:
         glide smoothly instead of snapping violently.
         """
         while True:
-            for jid, cfg in self.joints.items():
-                curr = int(cfg["angle"])
-                target = int(cfg.get("target_angle", curr))
-                if curr != target:
-                    diff = target - curr
-                    # Step 1 degree (or 2 degrees for large jumps) per tick for fast, silky motion
-                    step = 2 if abs(diff) > 15 else 1
-                    new_angle = curr + (step if diff > 0 else -step)
-                    cfg["angle"] = new_angle
-
-                    node = self._get_node(cfg["node_id"])
-                    if node is not None:
-                        node.servo(cfg.get("actuator_name", "servo"), new_angle)
-
+            self.motion_tick()
             await asyncio.sleep(self.step_delay_sec)
 
     def _build_status_payload(self) -> Dict[str, Any]:
@@ -1736,7 +1696,11 @@ class HydraArmStudioServer:
         return {"joints": joints_out, "recorder": rec_out}
 
     async def handle_index(self, request: web.Request) -> web.Response:
-        return web.Response(text=HTML_PAGE, content_type="text/html")
+        metadata = {k: {"id": k, "code": v["code"], "name": v["label"],
+                        "hw": v["controller"] + " · " + v["pin_label"], "color": v["color"],
+                        "min": v["min_angle"], "max": v["max_angle"], "home": v["home_angle"]}
+                    for k, v in JOINT_CONFIG.items()}
+        return web.Response(text=HTML_PAGE.replace("__JOINTS_META__", json.dumps(metadata)), content_type="text/html")
 
     async def handle_ws(self, request: web.Request) -> web.WebSocketResponse:
         ws = web.WebSocketResponse()
@@ -1757,7 +1721,7 @@ class HydraArmStudioServer:
                     if op == "SET_JOINT":
                         joint_id = str(data.get("joint", ""))
                         angle = data.get("angle", 90)
-                        if isinstance(angle, (int, float)) and not isinstance(angle, bool):
+                        if isinstance(angle, (int, float)) and not isinstance(angle, bool) and math.isfinite(angle):
                             self.command_joint(joint_id, int(angle))
                     elif op == "START_RECORD":
                         self.start_recording(str(data.get("name", "episode_1")))
@@ -1788,20 +1752,30 @@ class HydraArmStudioServer:
     async def _cleanup(self, app: web.Application) -> None:
         self.master.close()
 
+    async def _runtime(self, app):
+        tasks = [asyncio.create_task(self.smooth_motion_loop()),
+                 asyncio.create_task(self.telemetry_broadcast_loop())]
+        try:
+            yield
+        finally:
+            self.stop_playback()
+            for task in tasks:
+                task.cancel()
+            await asyncio.gather(*tasks, *self._retired_playbacks, return_exceptions=True)
+            for ws in list(self.websockets):
+                await ws.close()
+            self.master.close()
+
     def run(self) -> None:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        loop.create_task(self.smooth_motion_loop())
-        loop.create_task(self.telemetry_broadcast_loop())
         print("=" * 74)
-        print("  OpenSwarm HydraArm Studio — 4-Controller Distributed Robotic Arm")
+        print("  OpenSwarm HydraArm Studio — 4-Joint / 3-Controller Distributed Robotic Arm")
         print("=" * 74)
         print(f"  3D Interactive Studio URL : http://localhost:{self.port}")
         print("  Expected Slave Nodes on Wi-Fi (UDP 4210 / 4211):")
         for jid, cfg in self.joints.items():
             print(f"    - {cfg['label']:24s} -> {cfg['node_id']:20s} ({cfg['controller']}, {cfg['pin_label']})")
         print("=" * 74)
-        web.run_app(self.app, host="127.0.0.1", port=self.port, loop=loop)
+        web.run_app(self.app, host="127.0.0.1", port=self.port)
 
 
 def main() -> None:

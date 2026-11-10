@@ -119,7 +119,11 @@ namespace SwarmHAL {
 
     inline HardwareSerial* getUART(uint8_t uartNum) {
         if (uartNum == 1) return &Serial1;
+        #if SOC_UART_NUM > 2
         return &Serial2;
+        #else
+        return &Serial1;
+        #endif
     }
 
     inline bool connectNetwork(const char* ssid, const char* password, uint32_t timeout_ms = 15000) {

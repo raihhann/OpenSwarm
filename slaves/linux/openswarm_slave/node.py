@@ -6,12 +6,17 @@ Supports both Pythonic `snake_case` and Arduino `camelCase` registration methods
 """
 
 import json
+import logging
+import math
 import socket
 import threading
 import time
 from typing import Any, Callable, Dict, List, Optional, Union
 
 from .hal_linux import LinuxHAL
+from .protocol import decode_command, PROTOCOL_VERSION
+
+logger = logging.getLogger(__name__)
 
 SWARM_DEFAULT_PORT = 4210
 SWARM_DISCOVERY_PORT = 4211
@@ -21,10 +26,11 @@ SWARM_HELLO_SEC = 1.00      # 1 Hz discovery broadcast
 
 
 class SwarmNode:
-    def __init__(self, node_id: str, udp_port: int = SWARM_DEFAULT_PORT, verbose_sim: bool = True):
+    def __init__(self, node_id: str, udp_port: int = SWARM_DEFAULT_PORT, verbose_sim: bool = True,
+                 hal: Optional[LinuxHAL] = None):
         self.node_id = node_id
         self.udp_port = udp_port
-        self.hal = LinuxHAL(verbose_sim=verbose_sim)
+        self.hal = hal if hal is not None else LinuxHAL(verbose_sim=verbose_sim)
 
         self._actuators: Dict[str, Dict[str, Any]] = {}
         self._sensors: Dict[str, Dict[str, Any]] = {}
@@ -32,9 +38,12 @@ class SwarmNode:
         self._master_addr: Optional[ tuple ] = None
         self._last_master_pkt = 0.0
         self._watchdog_tripped = False
-        self._start_time = time.time()
+        self._start_time = time.monotonic()
         self._running = False
         self._sock: Optional[socket.socket] = None
+        self._thread: Optional[threading.Thread] = None
+        self._stop_event = threading.Event()
+        self.sensor_errors: Dict[str, str] = {}
 
     # -------------------------------------------------------------------------
     # 1. Standard Actuator Registration API (Motors, Servos, Steppers, GPIO)
@@ -58,17 +67,14 @@ class SwarmNode:
         return True
 
     def register_servo(self, name: str, pin: int) -> bool:
+        if not self.hal.capabilities["servo"]:
+            raise NotImplementedError("This GPIO backend cannot generate servo pulses")
         self.hal.setup_pin(pin, "OUT")
         self._actuators[name] = {"type": "SERVO", "pins": [pin]}
         return True
 
     def register_stepper(self, name: str, step_pin: int, dir_pin: int, en_pin: int = 255) -> bool:
-        self.hal.setup_pin(step_pin, "OUT")
-        self.hal.setup_pin(dir_pin, "OUT")
-        if en_pin != 255:
-            self.hal.setup_pin(en_pin, "OUT")
-        self._actuators[name] = {"type": "STEPPER", "pins": [step_pin, dir_pin, en_pin]}
-        return True
+        raise NotImplementedError("Linux stepper pulse scheduling is not implemented")
 
     def register_digital_output(self, name: str, pin: int) -> bool:
         self.hal.setup_pin(pin, "OUT")
@@ -76,6 +82,8 @@ class SwarmNode:
         return True
 
     def register_pwm_output(self, name: str, pin: int) -> bool:
+        if not self.hal.capabilities["pwm"]:
+            raise NotImplementedError("This GPIO backend cannot generate PWM")
         self.hal.setup_pin(pin, "OUT")
         self._actuators[name] = {"type": "PWM_OUT", "pins": [pin]}
         return True
@@ -190,15 +198,19 @@ class SwarmNode:
     # 4. Start Background Daemon
     # -------------------------------------------------------------------------
     def start(self, block: bool = True) -> None:
+        if self._running:
+            raise RuntimeError("Node is already running")
+        self._stop_event.clear()
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self._sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         if hasattr(socket, "SO_BROADCAST"):
             self._sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         self._sock.bind(("0.0.0.0", self.udp_port))
+        self.udp_port = self._sock.getsockname()[1]
         self._sock.settimeout(0.01)
 
         self._running = True
-        self._last_master_pkt = time.time()
+        self._last_master_pkt = time.monotonic()
 
         ip = self.hal.local_ip()
         print("==========================================================")
@@ -210,25 +222,41 @@ class SwarmNode:
         print(" Advertising to Linux Master on UDP Port 4211...")
         print("==========================================================")
 
-        daemon = threading.Thread(target=self._background_loop, daemon=True, name="SwarmLinuxSlave")
-        daemon.start()
+        self._thread = threading.Thread(target=self._run, daemon=True, name="SwarmLinuxSlave")
+        self._thread.start()
 
         if block:
             try:
                 while self._running:
-                    time.sleep(0.5)
+                    self._stop_event.wait(0.5)
             except KeyboardInterrupt:
                 print("\n[SwarmNode] Stopping motors and shutting down Linux Slave...")
+            finally:
                 self.stop()
 
     def stop(self) -> None:
         self._running = False
-        self._emergency_stop_all()
+        self._stop_event.set()
         if self._sock:
             try:
                 self._sock.close()
             except Exception:
                 pass
+        if self._thread is not None and self._thread is not threading.current_thread():
+            self._thread.join(timeout=2.0)
+        if self._thread is None or not self._thread.is_alive():
+            self._emergency_stop_all()
+            self.hal.close()
+
+    def _run(self) -> None:
+        try:
+            self._background_loop()
+        except Exception:
+            logger.exception("Node worker failed")
+        finally:
+            self._running = False
+            self._stop_event.set()
+            self._emergency_stop_all()
 
     # -------------------------------------------------------------------------
     # Core Runtime Loop (Discovery, Telemetry, Command Execution, Watchdog)
@@ -238,10 +266,9 @@ class SwarmNode:
         last_hello = 0.0
 
         while self._running:
-            now = time.time()
-
             # 1. Handle Incoming Master Commands
             self._handle_incoming()
+            now = time.monotonic()
 
             # 2. 500ms Hardware Safety Watchdog
             if self._master_addr is not None and (now - self._last_master_pkt > SWARM_WATCHDOG_SEC):
@@ -271,8 +298,8 @@ class SwarmNode:
             return
 
         try:
-            msg = json.loads(data.decode("utf-8", errors="ignore"))
-        except Exception:
+            msg = decode_command(data)
+        except (ValueError, UnicodeDecodeError, RecursionError):
             return
 
         cmd = msg.get("cmd")
@@ -280,7 +307,7 @@ class SwarmNode:
             return
 
         self._master_addr = addr
-        self._last_master_pkt = time.time()
+        self._last_master_pkt = time.monotonic()
         self._watchdog_tripped = False
 
         if cmd == "PING":
@@ -288,31 +315,21 @@ class SwarmNode:
         elif cmd == "STOP":
             self._emergency_stop_all()
         elif cmd == "PIN":
-            pin = int(msg.get("pin", -1))
-            val = int(msg.get("value", 0))
-            pwm = int(msg.get("pwm", 0))
-            if pin >= 0:
-                if pwm > 0:
-                    self.hal.pwm_write(pin, val)
+            try:
+                if msg["pwm"]:
+                    self.hal.pwm_write(msg["pin"], msg["value"])
                 else:
-                    self.hal.setup_pin(pin, "OUT")
-                    self.hal.digital_write(pin, val)
+                    self.hal.setup_pin(msg["pin"], "OUT")
+                    self.hal.digital_write(msg["pin"], msg["value"])
+            except Exception:
+                logger.exception("Pin command failed")
         elif cmd == "ACT":
             name = msg.get("name", "")
             act = self._actuators.get(name)
             if not act:
                 return
 
-            v1 = int(
-                msg.get(
-                    "value",
-                    msg.get(
-                        "state",
-                        msg.get("left", msg.get("angle", msg.get("steps", msg.get("reg", msg.get("v1", 0))))),
-                    ),
-                )
-            )
-            v2 = int(msg.get("right", msg.get("val", msg.get("v2", 0))))
+            v1, v2 = msg["v1"], msg["v2"]
             data_str = str(msg.get("data", ""))
             try:
                 self._execute_actuator(act, v1, v2, data_str)
@@ -376,6 +393,9 @@ class SwarmNode:
         if not self._sock:
             return
         payload = {
+            "protocol": PROTOCOL_VERSION,
+            "max_command_bytes": 1024,
+            "capabilities": self.hal.capabilities,
             "type": "HELLO",
             "node": self.node_id,
             "board": self.hal.board_name,
@@ -393,18 +413,30 @@ class SwarmNode:
     def _send_telemetry(self) -> None:
         if not self._sock or self._master_addr is None:
             return
-        uptime_ms = int((time.time() - self._start_time) * 1000)
+        uptime_ms = int((time.monotonic() - self._start_time) * 1000)
         sensor_readings: Dict[str, Any] = {}
         for name, sens in self._sensors.items():
-            sensor_readings[name] = self._read_sensor(sens)
+            try:
+                value = self._read_sensor(sens)
+                values = value if isinstance(value, list) else [value]
+                if not 1 <= len(values) <= 6 or any(
+                    isinstance(v, bool) or not isinstance(v, (int, float)) or not math.isfinite(v)
+                    for v in values
+                ):
+                    raise ValueError("Sensor returned invalid values")
+                sensor_readings[name] = value
+                self.sensor_errors.pop(name, None)
+            except Exception as exc:
+                self.sensor_errors[name] = str(exc)
 
         payload = {
             "type": "STATE",
             "node": self.node_id,
             "uptime_ms": uptime_ms,
             "sensors": sensor_readings,
+            "sensor_errors": dict(self.sensor_errors),
         }
-        raw = json.dumps(payload, separators=(",", ":")).encode("utf-8")
+        raw = json.dumps(payload, separators=(",", ":"), allow_nan=False).encode("utf-8")
         try:
             self._sock.sendto(raw, self._master_addr)
         except Exception:
@@ -413,4 +445,7 @@ class SwarmNode:
     def _emergency_stop_all(self) -> None:
         for act in self._actuators.values():
             if act["type"] in ("L298N", "DRV8833", "MOTOR_2PIN", "STEPPER"):
-                self._execute_actuator(act, 0, 0, "")
+                try:
+                    self._execute_actuator(act, 0, 0, "")
+                except Exception:
+                    logger.exception("Could not stop actuator")

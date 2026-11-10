@@ -25,13 +25,12 @@ def main():
     # 1. Start the Central Master
     master = SwarmMaster()
 
-    # 2. Connect to the ESP32 Slave (auto-discovers over Wi-Fi, or falls back to 192.168.0.118)
+    # 2. Connect to the requested ESP32; never guess another robot's address.
     try:
         esp32 = master.connect(args.node, ip=args.ip, timeout=4.0)
-    except TimeoutError:
-        fallback_ip = "192.168.0.118"
-        print(f"[Master] Broadcast blocked by router; connecting directly to {fallback_ip}...")
-        esp32 = master.connect(args.node, ip=fallback_ip)
+    except TimeoutError as exc:
+        master.close()
+        parser.exit(1, f"{exc}\nUse --ip with the device's actual address if discovery is blocked.\n")
 
     print("==========================================================")
     print(f" Connected to Slave : {esp32.node_id} ({esp32.board})")

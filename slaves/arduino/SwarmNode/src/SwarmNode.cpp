@@ -1,5 +1,6 @@
 #define SWARM_NODE_CPP_INTERNAL 1
 #include "SwarmNode.h"
+#include "SwarmProtocol.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -23,6 +24,7 @@ SwarmNode::SwarmNode(const char* node_id, uint16_t udp_port)
     : _udpPort(udp_port) {
     strncpy(_nodeId, node_id, sizeof(_nodeId) - 1);
     _nodeId[sizeof(_nodeId) - 1] = '\0';
+    if (!SwarmProtocol::validName(node_id, sizeof(_nodeId) - 1)) _nodeId[0] = '\0';
 }
 
 bool SwarmNode::connectWiFi(const char* ssid, const char* password, uint32_t timeout_ms) {
@@ -55,6 +57,7 @@ bool SwarmNode::connectWiFi(const char* ssid, const char* password, uint32_t tim
 bool SwarmNode::registerL298N(const char* name,
                               uint8_t ena, uint8_t in1, uint8_t in2,
                               uint8_t enb, uint8_t in3, uint8_t in4) {
+    if (!SwarmProtocol::validName(name)) return false;
     if (_actuatorCount >= SWARM_MAX_ACTUATORS) return false;
     ActuatorDescriptor& act = _actuators[_actuatorCount++];
     act.type = ACT_L298N;
@@ -68,6 +71,7 @@ bool SwarmNode::registerL298N(const char* name,
 bool SwarmNode::registerDRV8833(const char* name,
                                 uint8_t in1, uint8_t in2,
                                 uint8_t in3, uint8_t in4) {
+    if (!SwarmProtocol::validName(name)) return false;
     if (_actuatorCount >= SWARM_MAX_ACTUATORS) return false;
     ActuatorDescriptor& act = _actuators[_actuatorCount++];
     act.type = ACT_DRV8833;
@@ -79,6 +83,7 @@ bool SwarmNode::registerDRV8833(const char* name,
 }
 
 bool SwarmNode::registerMotor2Pin(const char* name, uint8_t pinA, uint8_t pinB) {
+    if (!SwarmProtocol::validName(name)) return false;
     if (_actuatorCount >= SWARM_MAX_ACTUATORS) return false;
     ActuatorDescriptor& act = _actuators[_actuatorCount++];
     act.type = ACT_MOTOR_2PIN;
@@ -90,6 +95,7 @@ bool SwarmNode::registerMotor2Pin(const char* name, uint8_t pinA, uint8_t pinB) 
 }
 
 bool SwarmNode::registerServo(const char* name, uint8_t pin) {
+    if (!SwarmProtocol::validName(name)) return false;
     if (_actuatorCount >= SWARM_MAX_ACTUATORS) return false;
     ActuatorDescriptor& act = _actuators[_actuatorCount++];
     act.type = ACT_SERVO;
@@ -102,6 +108,7 @@ bool SwarmNode::registerServo(const char* name, uint8_t pin) {
 }
 
 bool SwarmNode::registerStepper(const char* name, uint8_t stepPin, uint8_t dirPin, uint8_t enPin) {
+    if (!SwarmProtocol::validName(name)) return false;
     if (_actuatorCount >= SWARM_MAX_ACTUATORS) return false;
     ActuatorDescriptor& act = _actuators[_actuatorCount++];
     act.type = ACT_STEPPER;
@@ -114,6 +121,7 @@ bool SwarmNode::registerStepper(const char* name, uint8_t stepPin, uint8_t dirPi
 }
 
 bool SwarmNode::registerDigitalOutput(const char* name, uint8_t pin) {
+    if (!SwarmProtocol::validName(name)) return false;
     if (_actuatorCount >= SWARM_MAX_ACTUATORS) return false;
     ActuatorDescriptor& act = _actuators[_actuatorCount++];
     act.type = ACT_DIGITAL_OUT;
@@ -124,6 +132,7 @@ bool SwarmNode::registerDigitalOutput(const char* name, uint8_t pin) {
 }
 
 bool SwarmNode::registerPWMOutput(const char* name, uint8_t pin) {
+    if (!SwarmProtocol::validName(name)) return false;
     if (_actuatorCount >= SWARM_MAX_ACTUATORS) return false;
     ActuatorDescriptor& act = _actuators[_actuatorCount++];
     act.type = ACT_PWM_OUT;
@@ -134,6 +143,7 @@ bool SwarmNode::registerPWMOutput(const char* name, uint8_t pin) {
 }
 
 bool SwarmNode::registerDACOutput(const char* name, uint8_t pin) {
+    if (!SwarmProtocol::validName(name)) return false;
     if (_actuatorCount >= SWARM_MAX_ACTUATORS) return false;
     ActuatorDescriptor& act = _actuators[_actuatorCount++];
     act.type = ACT_DAC_OUT;
@@ -158,6 +168,7 @@ bool SwarmNode::registerPin(const char* name, uint8_t pin, uint8_t mode) {
 // ============================================================================
 
 bool SwarmNode::registerUltrasonic(const char* name, uint8_t trigPin, uint8_t echoPin) {
+    if (!SwarmProtocol::validName(name)) return false;
     if (_sensorCount >= SWARM_MAX_SENSORS) return false;
     SensorDescriptor& sens = _sensors[_sensorCount++];
     sens.type = SENS_ULTRASONIC;
@@ -173,6 +184,7 @@ bool SwarmNode::registerVL53L0X(const char* name, uint8_t i2cAddr, uint8_t sdaPi
 }
 
 bool SwarmNode::registerQuadratureEncoder(const char* name, uint8_t pinA, uint8_t pinB) {
+    if (!SwarmProtocol::validName(name)) return false;
     if (_sensorCount >= SWARM_MAX_SENSORS || _encoderCount >= SWARM_MAX_ENCODERS) return false;
     SensorDescriptor& sens = _sensors[_sensorCount++];
     sens.type = SENS_ENCODER_QUAD;
@@ -185,6 +197,7 @@ bool SwarmNode::registerQuadratureEncoder(const char* name, uint8_t pinA, uint8_
 }
 
 bool SwarmNode::registerTachometer(const char* name, uint8_t pin) {
+    if (!SwarmProtocol::validName(name)) return false;
     if (_sensorCount >= SWARM_MAX_SENSORS || _encoderCount >= SWARM_MAX_ENCODERS) return false;
     SensorDescriptor& sens = _sensors[_sensorCount++];
     sens.type = SENS_TACHOMETER;
@@ -197,6 +210,7 @@ bool SwarmNode::registerTachometer(const char* name, uint8_t pin) {
 }
 
 bool SwarmNode::registerMPU6050(const char* name, uint8_t i2cAddr, uint8_t sdaPin, uint8_t sclPin) {
+    if (!SwarmProtocol::validName(name)) return false;
     if (_sensorCount >= SWARM_MAX_SENSORS) return false;
     SensorDescriptor& sens = _sensors[_sensorCount++];
     sens.type = SENS_MPU6050;
@@ -210,6 +224,7 @@ bool SwarmNode::registerMPU6050(const char* name, uint8_t i2cAddr, uint8_t sdaPi
 }
 
 bool SwarmNode::registerLSM6DSOX(const char* name, uint8_t i2cAddr, uint8_t sdaPin, uint8_t sclPin) {
+    if (!SwarmProtocol::validName(name)) return false;
     if (_sensorCount >= SWARM_MAX_SENSORS) return false;
     SensorDescriptor& sens = _sensors[_sensorCount++];
     sens.type = SENS_LSM6DSOX;
@@ -227,6 +242,7 @@ bool SwarmNode::registerOnboardIMU(const char* name) {
 }
 
 bool SwarmNode::registerINA219(const char* name, uint8_t i2cAddr, uint8_t sdaPin, uint8_t sclPin) {
+    if (!SwarmProtocol::validName(name)) return false;
     if (_sensorCount >= SWARM_MAX_SENSORS) return false;
     SensorDescriptor& sens = _sensors[_sensorCount++];
     sens.type = SENS_INA219;
@@ -248,6 +264,7 @@ bool SwarmNode::registerIRSensor(const char* name, uint8_t pin, bool pullup) {
 }
 
 bool SwarmNode::registerDigitalInput(const char* name, uint8_t pin, bool pullup) {
+    if (!SwarmProtocol::validName(name)) return false;
     if (_sensorCount >= SWARM_MAX_SENSORS) return false;
     SensorDescriptor& sens = _sensors[_sensorCount++];
     sens.type = SENS_DIGITAL_IN;
@@ -259,6 +276,7 @@ bool SwarmNode::registerDigitalInput(const char* name, uint8_t pin, bool pullup)
 }
 
 bool SwarmNode::registerAnalogInput(const char* name, uint8_t pin) {
+    if (!SwarmProtocol::validName(name)) return false;
     if (_sensorCount >= SWARM_MAX_SENSORS) return false;
     SensorDescriptor& sens = _sensors[_sensorCount++];
     sens.type = SENS_ANALOG_IN;
@@ -273,6 +291,7 @@ bool SwarmNode::registerBatteryVoltage(const char* name, uint8_t adcPin) {
 }
 
 bool SwarmNode::registerTouchPin(const char* name, uint8_t touchPin) {
+    if (!SwarmProtocol::validName(name)) return false;
     if (_sensorCount >= SWARM_MAX_SENSORS) return false;
     SensorDescriptor& sens = _sensors[_sensorCount++];
     sens.type = SENS_TOUCH;
@@ -283,6 +302,7 @@ bool SwarmNode::registerTouchPin(const char* name, uint8_t touchPin) {
 }
 
 bool SwarmNode::registerDHT(const char* name, uint8_t pin, uint8_t model) {
+    if (!SwarmProtocol::validName(name)) return false;
     if (_sensorCount >= SWARM_MAX_SENSORS) return false;
     SensorDescriptor& sens = _sensors[_sensorCount++];
     sens.type = SENS_DHT;
@@ -295,6 +315,7 @@ bool SwarmNode::registerDHT(const char* name, uint8_t pin, uint8_t model) {
 }
 
 bool SwarmNode::registerWiFiRSSI(const char* name) {
+    if (!SwarmProtocol::validName(name)) return false;
     if (_sensorCount >= SWARM_MAX_SENSORS) return false;
     SensorDescriptor& sens = _sensors[_sensorCount++];
     sens.type = SENS_WIFI_RSSI;
@@ -309,6 +330,7 @@ bool SwarmNode::registerWiFiRSSI(const char* name) {
 
 bool SwarmNode::registerGenericI2C(const char* name, uint8_t i2cAddr, uint8_t regAddr, uint8_t numBytes,
                                    uint8_t sdaPin, uint8_t sclPin) {
+    if (!SwarmProtocol::validName(name)) return false;
     if (_sensorCount >= SWARM_MAX_SENSORS) return false;
     SensorDescriptor& sens = _sensors[_sensorCount++];
     sens.type = SENS_GENERIC_I2C;
@@ -323,6 +345,7 @@ bool SwarmNode::registerGenericI2C(const char* name, uint8_t i2cAddr, uint8_t re
 }
 
 bool SwarmNode::registerI2CActuator(const char* name, uint8_t i2cAddr, uint8_t sdaPin, uint8_t sclPin) {
+    if (!SwarmProtocol::validName(name)) return false;
     if (_actuatorCount >= SWARM_MAX_ACTUATORS) return false;
     ActuatorDescriptor& act = _actuators[_actuatorCount++];
     act.type = ACT_I2C_BUS;
@@ -336,6 +359,7 @@ bool SwarmNode::registerI2CActuator(const char* name, uint8_t i2cAddr, uint8_t s
 
 bool SwarmNode::registerSPISensor(const char* name, uint8_t csPin, uint8_t readReg, uint8_t numBytes,
                                   uint8_t sckPin, uint8_t misoPin, uint8_t mosiPin, uint32_t clockHz) {
+    if (!SwarmProtocol::validName(name)) return false;
     if (_sensorCount >= SWARM_MAX_SENSORS) return false;
     SensorDescriptor& sens = _sensors[_sensorCount++];
     sens.type = SENS_SPI_DEVICE;
@@ -353,6 +377,7 @@ bool SwarmNode::registerSPISensor(const char* name, uint8_t csPin, uint8_t readR
 
 bool SwarmNode::registerSPIActuator(const char* name, uint8_t csPin,
                                     uint8_t sckPin, uint8_t misoPin, uint8_t mosiPin, uint32_t clockHz) {
+    if (!SwarmProtocol::validName(name)) return false;
     if (_actuatorCount >= SWARM_MAX_ACTUATORS) return false;
     ActuatorDescriptor& act = _actuators[_actuatorCount++];
     act.type = ACT_SPI_BUS;
@@ -368,6 +393,7 @@ bool SwarmNode::registerSPIActuator(const char* name, uint8_t csPin,
 
 bool SwarmNode::registerUARTSensor(const char* name, uint8_t rxPin, uint8_t txPin,
                                    uint32_t baud, uint8_t uartNum) {
+    if (!SwarmProtocol::validName(name)) return false;
     if (_sensorCount >= SWARM_MAX_SENSORS) return false;
     SensorDescriptor& sens = _sensors[_sensorCount++];
     sens.type = SENS_UART_BUS;
@@ -382,6 +408,7 @@ bool SwarmNode::registerUARTSensor(const char* name, uint8_t rxPin, uint8_t txPi
 
 bool SwarmNode::registerUARTActuator(const char* name, uint8_t rxPin, uint8_t txPin,
                                      uint32_t baud, uint8_t uartNum) {
+    if (!SwarmProtocol::validName(name)) return false;
     if (_actuatorCount >= SWARM_MAX_ACTUATORS) return false;
     ActuatorDescriptor& act = _actuators[_actuatorCount++];
     act.type = ACT_UART_BUS;
@@ -395,6 +422,7 @@ bool SwarmNode::registerUARTActuator(const char* name, uint8_t rxPin, uint8_t tx
 }
 
 bool SwarmNode::registerCustomSensor(const char* name, SwarmCustomSensorFn readCallback) {
+    if (!SwarmProtocol::validName(name)) return false;
     if (_sensorCount >= SWARM_MAX_SENSORS || !readCallback) return false;
     SensorDescriptor& sens = _sensors[_sensorCount++];
     sens.type = SENS_CUSTOM;
@@ -405,6 +433,7 @@ bool SwarmNode::registerCustomSensor(const char* name, SwarmCustomSensorFn readC
 }
 
 bool SwarmNode::registerCustomSensorMulti(const char* name, SwarmCustomMultiSensorFn readMultiCallback) {
+    if (!SwarmProtocol::validName(name)) return false;
     if (_sensorCount >= SWARM_MAX_SENSORS || !readMultiCallback) return false;
     SensorDescriptor& sens = _sensors[_sensorCount++];
     sens.type = SENS_CUSTOM_MULTI;
@@ -415,6 +444,7 @@ bool SwarmNode::registerCustomSensorMulti(const char* name, SwarmCustomMultiSens
 }
 
 bool SwarmNode::registerCustomActuator(const char* name, SwarmCustomActuatorFn writeCallback) {
+    if (!SwarmProtocol::validName(name)) return false;
     if (_actuatorCount >= SWARM_MAX_ACTUATORS || !writeCallback) return false;
     ActuatorDescriptor& act = _actuators[_actuatorCount++];
     act.type = ACT_CUSTOM;
@@ -448,6 +478,10 @@ static void swarmRp2040MbedTask() {
 #endif
 
 void SwarmNode::start() {
+    if (!_nodeId[0]) {
+        Serial.println("[SwarmNode] Invalid node ID (use 1..19 letters, digits, '_' or '-').");
+        return;
+    }
     _udp.begin(_udpPort);
     _lastMasterPacketMs = millis();
     _activeSwarmNode = this;
@@ -480,9 +514,8 @@ void SwarmNode::start() {
 // ============================================================================
 
 void SwarmNode::_backgroundTick() {
-    uint32_t now = millis();
-
     _handleIncomingPacket();
+    uint32_t now = millis();
 
     if (_masterConnected && (now - _lastMasterPacketMs > SWARM_WATCHDOG_MS)) {
         if (!_watchdogTripped) {
@@ -510,6 +543,7 @@ void SwarmNode::_handleIncomingPacket() {
     char buf[160];
     int len = _udp.read(buf, sizeof(buf) - 1);
     if (len <= 0) return;
+    if (packetSize >= (int)sizeof(buf)) return;
     buf[len] = '\0';
 
     _processCommand(buf, _udp.remoteIP(), _udp.remotePort());
@@ -518,6 +552,13 @@ void SwarmNode::_handleIncomingPacket() {
 void SwarmNode::_processCommand(const char* json, IPAddress senderIP, uint16_t senderPort) {
     char cmd[16] = {0};
     if (!_extractString(json, "cmd", cmd, sizeof(cmd))) return;
+    const char* numericFields[] = {"value", "state", "left", "right", "angle",
+                                  "steps", "reg", "val", "v1", "v2", "pin", "pwm"};
+    for (uint8_t i = 0; i < sizeof(numericFields) / sizeof(numericFields[0]); ++i) {
+        int16_t value;
+        if (SwarmProtocol::field(json, numericFields[i]) &&
+            !_extractInt(json, numericFields[i], value)) return;
+    }
 
     _masterIP = senderIP;
     if (senderPort > 0) _masterPort = senderPort;
@@ -560,7 +601,8 @@ void SwarmNode::_processCommand(const char* json, IPAddress senderIP, uint16_t s
         }
 
         char dataPayload[32] = {0};
-        _extractString(json, "data", dataPayload, sizeof(dataPayload));
+        if (SwarmProtocol::field(json, "data") &&
+            !_extractString(json, "data", dataPayload, sizeof(dataPayload))) return;
 
         for (uint8_t i = 0; i < _actuatorCount; i++) {
             if (strcmp(_actuators[i].name, targetName) == 0) {
@@ -709,33 +751,9 @@ void SwarmNode::_emergencyStopAll() {
 }
 
 bool SwarmNode::_extractString(const char* json, const char* key, char* outBuf, size_t maxLen) {
-    char pattern[24];
-    snprintf(pattern, sizeof(pattern), "\"%s\"", key);
-    const char* p = strstr(json, pattern);
-    if (!p) return false;
-    p = strchr(p + strlen(pattern), ':');
-    if (!p) return false;
-    p = strchr(p, '\"');
-    if (!p) return false;
-    p++;
-    const char* end = strchr(p, '\"');
-    if (!end) return false;
-    size_t len = (size_t)(end - p);
-    if (len >= maxLen) len = maxLen - 1;
-    memcpy(outBuf, p, len);
-    outBuf[len] = '\0';
-    return true;
+    return SwarmProtocol::extractString(json, key, outBuf, maxLen);
 }
 
 bool SwarmNode::_extractInt(const char* json, const char* key, int16_t& outVal) {
-    char pattern[24];
-    snprintf(pattern, sizeof(pattern), "\"%s\"", key);
-    const char* p = strstr(json, pattern);
-    if (!p) return false;
-    p = strchr(p + strlen(pattern), ':');
-    if (!p) return false;
-    p++;
-    while (*p == ' ' || *p == '\t') p++;
-    outVal = (int16_t)atoi(p);
-    return true;
+    return SwarmProtocol::extractInt(json, key, outVal);
 }

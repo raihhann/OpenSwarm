@@ -3,18 +3,55 @@
 <p align="center">
   <a href="https://pypi.org/project/openswarm-master/"><img src="https://img.shields.io/pypi/v/openswarm-master?style=for-the-badge&label=PyPI%20openswarm-master&color=3775A9" alt="PyPI openswarm-master" /></a>
   <a href="https://pypi.org/project/openswarm-slave/"><img src="https://img.shields.io/pypi/v/openswarm-slave?style=for-the-badge&label=PyPI%20openswarm-slave&color=0F766E" alt="PyPI openswarm-slave" /></a>
-  <a href="https://github.com/raihhann/OpenSwarm/tree/SwarmNode"><img src="https://img.shields.io/badge/Arduino%20Library-SwarmNode%20v0.4.1-00878F?style=for-the-badge&logo=arduino" alt="Arduino Library" /></a>
+  <a href="https://github.com/raihhann/OpenSwarm/tree/SwarmNode"><img src="https://img.shields.io/badge/Arduino%20Library-SwarmNode%20v0.4.2-00878F?style=for-the-badge&logo=arduino" alt="Arduino Library" /></a>
   <img src="https://img.shields.io/badge/Architecture-Klipper--Style%20Remote%20HAL-0A66C2?style=for-the-badge" alt="Architecture" />
   <img src="https://img.shields.io/badge/Slave%20Loop-100%25%20Empty-2EA043?style=for-the-badge" alt="Zero Slave Logic" />
 </p>
 
 > **Flash Once. Declare Pins. Never Reprogram the Robot Again.**  
-> **OpenSwarm** is a lightweight, hardware-agnostic **Distributed Hardware Abstraction Layer (Remote HAL)** for multi-robot swarms. Inspired by [Klipper](https://www.klipper3d.org/), OpenSwarm strips **100% of control logic out of the slave microcontrollers** (`void loop()` is completely empty) and moves all sensor processing, state machines, kinematics, and multi-robot coordination to a central **Linux Master** over low-latency Wi-Fi UDP.
+> **OpenSwarm** is a lightweight, hardware-agnostic **Distributed Hardware Abstraction Layer (Remote HAL)** for small robots and multi-robot experiments. Inspired by [Klipper](https://www.klipper3d.org/), its current architecture puts application logic and coordination on a **Python Master**, while microcontroller and Linux nodes provide hardware access over Wi-Fi UDP. Hardware drivers and the background runtime keep the user's sketch `loop()` empty.
 
 ### Official Packages
 * **Central Master SDK (PyPI):** [`openswarm-master`](https://pypi.org/project/openswarm-master/) — install via `pip install openswarm-master`
 * **Linux SBC Slave Agent (PyPI):** [`openswarm-slave`](https://pypi.org/project/openswarm-slave/) — install via `pip install openswarm-slave` (for **Arduino UNO Q**, **Portenta X8**, **Raspberry Pi**, **Jetson**, and **Linux PCs**)
 * **Arduino / PlatformIO Slave Library:** [`SwarmNode`](https://github.com/raihhann/OpenSwarm/tree/SwarmNode) — install in Arduino IDE or PlatformIO (`raihann/SwarmNode`) for Wi-Fi boards: **ESP32**, **RP2040** (Nano RP2040 Connect / Pico W), **Arduino UNO R4 WiFi / UNO WiFi Rev2**, and **Arduino Nano 33 IoT**
+
+## The Problem: Small Controllers Can Still Make Useful Robots
+
+Small, low-cost microcontroller boards are attractive robot controllers: they can
+read sensors, drive actuators, and fit robots with tight weight, power, and cost
+budgets. Their limited memory and processing resources, however, make a full ROS 2
+software stack impractical on many of these devices. Adding a Linux computer to
+every small robot can increase the weight, cost, and power requirements of the fleet.
+
+That does not make those controllers unsuitable for robotics. It creates a need for
+a lightweight way to connect their hardware capabilities to a larger system.
+OpenSwarm's starting point is simple: **keep affordable controllers on the robots,
+and share higher-level computation and coordination through a common protocol.**
+
+ROS 2 and micro-ROS remain useful options. In particular, micro-ROS supports a range
+of microcontrollers, so the claim is not that all low-cost boards are incompatible
+with ROS. Its hardware guidance targets mid-range 32-bit MCUs and generally calls
+for tens of kilobytes of RAM. OpenSwarm explores a simpler remote-hardware interface
+for projects that do not need ROS concepts on every node.
+See the [micro-ROS hardware guidance](https://micro.vulcanexus.org/docs/overview/hardware/).
+
+## Long-Term Vision: Robots Communicating to Complete a Shared Task
+
+The longer-term goal is a common communication protocol through which **two robots,
+or a whole swarm, can exchange information and coordinate a shared task**, even when
+their controllers and attached hardware differ.
+
+For example, two small robots could share their readiness and progress while moving
+an object together. A larger swarm could exchange observations, divide work, and
+report when parts of a task are complete. The protocol should make capabilities,
+task requests, shared state, and progress understandable across different robots.
+
+**Today:** OpenSwarm implements master-to-node commands and telemetry; applications
+on the master coordinate the nodes. Direct robot-to-robot task negotiation and
+decentralized swarm coordination are future work. The intention is to build from
+this remote-HAL foundation toward peer communication and cooperative task execution,
+with a central coordinator available where the application benefits from one.
 
 ---
 
@@ -51,14 +88,17 @@ only on a trusted, isolated network. The browser demo binds to localhost only.
 
 ## Why OpenSwarm? (How It Complements ROS 2)
 
-Building a heterogeneous micro-robot swarm (mixing small Wi-Fi Arduinos, 32-bit ESP32/RP2040 boards, and Linux SBCs) with standard tools hits three major walls:
+OpenSwarm focuses on a small remote-hardware interface for heterogeneous robots.
+ROS 2 offers a broader robotics ecosystem, and micro-ROS brings ROS concepts to
+supported MCUs through an agent. The right choice depends on the hardware and the
+application; OpenSwarm does not currently provide a ROS bridge.
 
-| Challenge | Standard `micro-ROS` / `ros2_control` | **OpenSwarm (`SwarmNode` + `SwarmMaster`)** |
+| Consideration | ROS 2 / micro-ROS approaches | **OpenSwarm today** |
 | :--- | :--- | :--- |
-| **Small / Low-RAM Boards** | Struggles on small Arduinos (requires a micro-ROS agent, RTOS and plenty of RAM) | **Runs on small Wi-Fi boards** — from a 6 KB RAM UNO WiFi Rev2 to ESP32/RP2040 and Linux SBCs |
-| **Where Does Logic Live?** | Distributed across C/C++ firmware on every robot (requires recompiling & reflashing to change behavior) | **0% control logic on Slaves.** `void loop()` is empty; 100% of logic runs in Python on the Linux Master |
-| **Adding Sensors / Buses** | Requires custom C++ `hardware_interface` plugins, URDFs, and firmware rebuilds | **1-line pin/bus declaration** (`L298N`, `Ultrasonic`, `MPU6050`, `SPI`, `I2C`, `UART`, or Custom Hook) |
-| **Safety** | Manual implementation per node | Built-in **500 ms software transport watchdog** on every Slave automatically stops motors if Master disconnects |
+| **Device resources** | Full ROS 2 and MCU-oriented micro-ROS have different platform and resource requirements. | Small Wi-Fi MCU nodes and Linux nodes expose hardware through a compact UDP interface; board validation remains ongoing. |
+| **Application logic** | Can be distributed between host applications and embedded nodes. | Application planning and coordination run on the Python master; drivers execute on the nodes. |
+| **Hardware integration** | Depends on the chosen ROS packages, firmware, and hardware interfaces. | Declare supported hardware by name and control it through a common Python API; custom drivers cover additional devices. |
+| **Coordination model** | ROS communication supports many possible application architectures. | Master-mediated coordination is implemented; peer-to-peer cooperative tasks are the longer-term goal. |
 
 ---
 
@@ -215,7 +255,7 @@ You can also install it manually from the [**`SwarmNode` branch**](https://githu
 #### Option B: PlatformIO (`platformio.ini`)
 ```ini
 lib_deps =
-    raihann/SwarmNode@^0.4.1
+    raihann/SwarmNode@^0.4.2
 ```
 
 ---
@@ -388,6 +428,10 @@ added in this iteration.
   unrelated STL files, and verify solid geometry, fit, and slicer-derived print times.
 
 ## Project Roadmap
+
+- [ ] **Peer communication protocol:** Define robot identities, capabilities, shared observations, task requests, progress, and completion messages.
+- [ ] **Two-robot cooperation:** Demonstrate two robots exchanging task information and coordinating one physical task.
+- [ ] **Swarm task execution:** Extend the protocol toward work allocation and coordinated execution across heterogeneous robots, including peer-to-peer communication.
 
 - [x] **Step 1 (ESP32):** ESP32 Slave Library (`hal_esp32.h` — Full Sensor, Actuator, Bus & Custom Driver Suite)
 - [x] **Master Core:** Linux Master Python SDK & CLI (`openswarm-master`) + Live Hardware Verification

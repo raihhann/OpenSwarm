@@ -7,7 +7,7 @@
 * **`void loop()` is 100% empty.**
 * **100% of robot control logic runs remotely on the Linux Master (`openswarm-master`).**
 
-### Supported Boards (`v0.4.1` — Wi-Fi boards only)
+### Supported Boards (`v0.4.2` — Wi-Fi boards only)
 * **ESP32 Family (`hal_esp32.h`):** `ESP32`, `ESP32-S2`, `ESP32-S3`, `ESP32-C3` (FreeRTOS task on Core 0)
 * **RP2040 Family (`hal_rp2040.h`):** `Arduino Nano RP2040 Connect` (`WiFiNINA` + Mbed RTOS thread + onboard `LSM6DSOX` 6-axis IMU) & `Raspberry Pi Pico W` (`WiFi.h`, daemon on Core 0 alongside the Wi-Fi driver)
 * **Arduino UNO (`hal_uno.h`):** `Arduino UNO R4 WiFi` (`WiFiS3`), `Arduino UNO WiFi Rev2` (`WiFiNINA` + onboard `LSM6DS3` IMU)

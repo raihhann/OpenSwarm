@@ -1,0 +1,55 @@
+{
+  "name": "SwarmNode",
+  "version": "0.4.1",
+  "description": "Zero-Control-Logic Hardware Declaration Slave Library for the OpenSwarm Distributed Robotics Framework. Declare Wi-Fi and hardware pins in setup(), leave loop() 100% empty, and run all control logic on a Linux Master.",
+  "keywords": [
+    "robotics",
+    "swarm",
+    "esp32",
+    "arduino",
+    "rp2040",
+    "uno",
+    "nano",
+    "hal",
+    "udp",
+    "remote-control"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/raihhann/OpenSwarm.git"
+  },
+  "authors": [
+    {
+      "name": "Mohammed Raihan Soniwala",
+      "email": "raihann.eu@gmail.com",
+      "url": "https://github.com/raihhann",
+      "maintainer": true
+    }
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/raihhann/OpenSwarm",
+  "frameworks": "arduino",
+  "platforms": [
+    "espressif32",
+    "atmelmegaavr",
+    "atmelsam",
+    "raspberrypi",
+    "renesas-ra"
+  ],
+  "dependencies": [
+    {
+      "owner": "arduino-libraries",
+      "name": "WiFiNINA",
+      "version": "^2.1.1",
+      "platforms": [
+        "atmelmegaavr",
+        "atmelsam",
+        "raspberrypi"
+      ]
+    }
+  ],
+  "headers": [
+    "SwarmNode.h",
+    "OpenSwarm.h"
+  ]
+}

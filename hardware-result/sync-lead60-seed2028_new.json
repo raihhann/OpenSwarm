@@ -1,0 +1,116 @@
+{
+  "status": "FAIL",
+  "error": "Missing execution telemetry; no missing pose may be silently discarded",
+  "targets": [
+    "probe_esp32=192.168.0.118",
+    "probe_rp2040=192.168.0.170",
+    "probe_rpi=192.168.0.234"
+  ],
+  "master_version": "0.2.1",
+  "diagnostics": {
+    "mode": "scheduled",
+    "pose": 130,
+    "nodes": [
+      {
+        "node": "probe_esp32",
+        "expected_acts": 2871.0,
+        "observed": {
+          "uptime_ms": 4655997,
+          "sensors": {
+            "value": 130.0,
+            "acts": 2870.0,
+            "stops": 98.0,
+            "hold_ms": 102.0,
+            "exec_ms": 1903.0
+          },
+          "clock": {
+            "offset_ms": 102012.01687349984,
+            "lower_ms": 102008.4571433431,
+            "upper_ms": 102015.57660365659,
+            "sample_mono_s": 4549.43062843,
+            "age_ms": 4567.842675000065,
+            "fresh": true,
+            "uncertainty_ms": 3.5597301567507182,
+            "drift_ppm_assumption": 200.0
+          },
+          "ack": 517,
+          "rtt_ms": 5.403,
+          "jitter_ms": 20.943,
+          "wd_trips": 34,
+          "lease_exp": 6,
+          "seq_drop": 12,
+          "reordered_states": 0,
+          "clock_resets": 0
+        }
+      },
+      {
+        "node": "probe_rp2040",
+        "expected_acts": 2911.0,
+        "observed": {
+          "uptime_ms": 4654361,
+          "sensors": {
+            "value": 131.0,
+            "acts": 2911.0,
+            "stops": 227.0,
+            "hold_ms": 518.0,
+            "exec_ms": 381.0
+          },
+          "clock": {
+            "offset_ms": 100380.49198099971,
+            "lower_ms": 100374.1480253559,
+            "upper_ms": 100386.83593664352,
+            "sample_mono_s": 4553.451740311,
+            "age_ms": 546.8536339994898,
+            "fresh": true,
+            "uncertainty_ms": 6.343955643804304,
+            "drift_ppm_assumption": 200.0
+          },
+          "ack": 517,
+          "rtt_ms": 103.368,
+          "jitter_ms": 26.423,
+          "wd_trips": 78,
+          "lease_exp": 11,
+          "seq_drop": 25,
+          "reordered_states": 0,
+          "clock_resets": 0
+        }
+      },
+      {
+        "node": "probe_rpi",
+        "expected_acts": 2471,
+        "observed": {
+          "uptime_ms": 1428578,
+          "sensors": {
+            "value": 131,
+            "acts": 2471,
+            "stops": 96,
+            "hold_ms": 103.424,
+            "exec_ms": 18633
+          },
+          "clock": {
+            "offset_ms": -3125407.473407,
+            "lower_ms": -3125410.089977407,
+            "upper_ms": -3125404.856836593,
+            "sample_mono_s": 4549.428175403,
+            "age_ms": 4570.468042999892,
+            "fresh": true,
+            "uncertainty_ms": 2.6165704070179565,
+            "drift_ppm_assumption": 200.0
+          },
+          "ack": 517,
+          "rtt_ms": 2.532,
+          "jitter_ms": 27.189,
+          "wd_trips": 33,
+          "lease_exp": 6,
+          "seq_drop": 12,
+          "reordered_states": 0,
+          "clock_resets": 0
+        }
+      }
+    ]
+  },
+  "seed": 2028,
+  "poses_per_mode": 200,
+  "lead_ms": 60.0,
+  "partial_records": "hardware-result/sync-lead60-seed2028_new.jsonl"
+}

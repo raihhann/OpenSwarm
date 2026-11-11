@@ -1,0 +1,1781 @@
+{
+  "name": "episode_1",
+  "created_at": "2026-11-09T18:04:35",
+  "duration_sec": 36.41,
+  "steps": 197,
+  "frames": [
+    {
+      "t": 0.0,
+      "joints": {
+        "base": 0,
+        "shoulder": 120,
+        "elbow": 160,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 1.744,
+      "joints": {
+        "base": 3,
+        "shoulder": 120,
+        "elbow": 160,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 1.841,
+      "joints": {
+        "base": 4,
+        "shoulder": 120,
+        "elbow": 160,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 1.853,
+      "joints": {
+        "base": 6,
+        "shoulder": 120,
+        "elbow": 160,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 1.87,
+      "joints": {
+        "base": 7,
+        "shoulder": 120,
+        "elbow": 160,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 1.906,
+      "joints": {
+        "base": 8,
+        "shoulder": 120,
+        "elbow": 160,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 2.155,
+      "joints": {
+        "base": 9,
+        "shoulder": 120,
+        "elbow": 160,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 2.172,
+      "joints": {
+        "base": 10,
+        "shoulder": 120,
+        "elbow": 160,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 2.19,
+      "joints": {
+        "base": 12,
+        "shoulder": 120,
+        "elbow": 160,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 2.205,
+      "joints": {
+        "base": 13,
+        "shoulder": 120,
+        "elbow": 160,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 2.221,
+      "joints": {
+        "base": 14,
+        "shoulder": 120,
+        "elbow": 160,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 2.24,
+      "joints": {
+        "base": 15,
+        "shoulder": 120,
+        "elbow": 160,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 2.306,
+      "joints": {
+        "base": 16,
+        "shoulder": 120,
+        "elbow": 160,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 2.403,
+      "joints": {
+        "base": 13,
+        "shoulder": 120,
+        "elbow": 160,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 2.42,
+      "joints": {
+        "base": 11,
+        "shoulder": 120,
+        "elbow": 160,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 2.44,
+      "joints": {
+        "base": 6,
+        "shoulder": 120,
+        "elbow": 160,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 2.455,
+      "joints": {
+        "base": 4,
+        "shoulder": 120,
+        "elbow": 160,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 2.473,
+      "joints": {
+        "base": 3,
+        "shoulder": 120,
+        "elbow": 160,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 2.487,
+      "joints": {
+        "base": 0,
+        "shoulder": 120,
+        "elbow": 160,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 6.0,
+      "joints": {
+        "base": 0,
+        "shoulder": 118,
+        "elbow": 160,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 6.073,
+      "joints": {
+        "base": 0,
+        "shoulder": 117,
+        "elbow": 160,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 6.106,
+      "joints": {
+        "base": 0,
+        "shoulder": 116,
+        "elbow": 160,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 6.123,
+      "joints": {
+        "base": 0,
+        "shoulder": 115,
+        "elbow": 160,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 6.138,
+      "joints": {
+        "base": 0,
+        "shoulder": 114,
+        "elbow": 160,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 6.153,
+      "joints": {
+        "base": 0,
+        "shoulder": 113,
+        "elbow": 160,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 6.237,
+      "joints": {
+        "base": 0,
+        "shoulder": 112,
+        "elbow": 160,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 6.254,
+      "joints": {
+        "base": 0,
+        "shoulder": 111,
+        "elbow": 160,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 6.303,
+      "joints": {
+        "base": 0,
+        "shoulder": 110,
+        "elbow": 160,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 6.772,
+      "joints": {
+        "base": 0,
+        "shoulder": 109,
+        "elbow": 160,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 6.803,
+      "joints": {
+        "base": 0,
+        "shoulder": 108,
+        "elbow": 160,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 6.819,
+      "joints": {
+        "base": 0,
+        "shoulder": 106,
+        "elbow": 160,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 6.855,
+      "joints": {
+        "base": 0,
+        "shoulder": 105,
+        "elbow": 160,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 6.869,
+      "joints": {
+        "base": 0,
+        "shoulder": 104,
+        "elbow": 160,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 6.953,
+      "joints": {
+        "base": 0,
+        "shoulder": 103,
+        "elbow": 160,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 6.968,
+      "joints": {
+        "base": 0,
+        "shoulder": 102,
+        "elbow": 160,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 7.22,
+      "joints": {
+        "base": 0,
+        "shoulder": 101,
+        "elbow": 160,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 7.252,
+      "joints": {
+        "base": 0,
+        "shoulder": 100,
+        "elbow": 160,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 7.372,
+      "joints": {
+        "base": 0,
+        "shoulder": 99,
+        "elbow": 160,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 7.387,
+      "joints": {
+        "base": 0,
+        "shoulder": 98,
+        "elbow": 160,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 9.155,
+      "joints": {
+        "base": 0,
+        "shoulder": 99,
+        "elbow": 160,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 9.169,
+      "joints": {
+        "base": 0,
+        "shoulder": 100,
+        "elbow": 160,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 9.189,
+      "joints": {
+        "base": 0,
+        "shoulder": 101,
+        "elbow": 160,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 9.204,
+      "joints": {
+        "base": 0,
+        "shoulder": 102,
+        "elbow": 160,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 14.859,
+      "joints": {
+        "base": 0,
+        "shoulder": 102,
+        "elbow": 155,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 14.917,
+      "joints": {
+        "base": 0,
+        "shoulder": 102,
+        "elbow": 153,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 14.936,
+      "joints": {
+        "base": 0,
+        "shoulder": 102,
+        "elbow": 150,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 14.951,
+      "joints": {
+        "base": 0,
+        "shoulder": 102,
+        "elbow": 148,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 14.968,
+      "joints": {
+        "base": 0,
+        "shoulder": 102,
+        "elbow": 144,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 14.984,
+      "joints": {
+        "base": 0,
+        "shoulder": 102,
+        "elbow": 141,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 15.003,
+      "joints": {
+        "base": 0,
+        "shoulder": 102,
+        "elbow": 137,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 15.016,
+      "joints": {
+        "base": 0,
+        "shoulder": 102,
+        "elbow": 135,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 15.036,
+      "joints": {
+        "base": 0,
+        "shoulder": 102,
+        "elbow": 133,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 15.05,
+      "joints": {
+        "base": 0,
+        "shoulder": 102,
+        "elbow": 132,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 15.066,
+      "joints": {
+        "base": 0,
+        "shoulder": 102,
+        "elbow": 131,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 15.084,
+      "joints": {
+        "base": 0,
+        "shoulder": 102,
+        "elbow": 130,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 15.102,
+      "joints": {
+        "base": 0,
+        "shoulder": 102,
+        "elbow": 128,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 15.116,
+      "joints": {
+        "base": 0,
+        "shoulder": 102,
+        "elbow": 126,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 15.149,
+      "joints": {
+        "base": 0,
+        "shoulder": 102,
+        "elbow": 125,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 15.165,
+      "joints": {
+        "base": 0,
+        "shoulder": 102,
+        "elbow": 124,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 15.184,
+      "joints": {
+        "base": 0,
+        "shoulder": 102,
+        "elbow": 123,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 15.201,
+      "joints": {
+        "base": 0,
+        "shoulder": 102,
+        "elbow": 122,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 15.399,
+      "joints": {
+        "base": 0,
+        "shoulder": 102,
+        "elbow": 123,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 15.418,
+      "joints": {
+        "base": 0,
+        "shoulder": 102,
+        "elbow": 126,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 15.432,
+      "joints": {
+        "base": 0,
+        "shoulder": 102,
+        "elbow": 128,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 15.45,
+      "joints": {
+        "base": 0,
+        "shoulder": 102,
+        "elbow": 129,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 15.464,
+      "joints": {
+        "base": 0,
+        "shoulder": 102,
+        "elbow": 130,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 15.482,
+      "joints": {
+        "base": 0,
+        "shoulder": 102,
+        "elbow": 131,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 15.501,
+      "joints": {
+        "base": 0,
+        "shoulder": 102,
+        "elbow": 132,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 15.517,
+      "joints": {
+        "base": 0,
+        "shoulder": 102,
+        "elbow": 133,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 15.531,
+      "joints": {
+        "base": 0,
+        "shoulder": 102,
+        "elbow": 134,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 15.549,
+      "joints": {
+        "base": 0,
+        "shoulder": 102,
+        "elbow": 135,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 15.585,
+      "joints": {
+        "base": 0,
+        "shoulder": 102,
+        "elbow": 137,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 15.598,
+      "joints": {
+        "base": 0,
+        "shoulder": 102,
+        "elbow": 138,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 15.621,
+      "joints": {
+        "base": 0,
+        "shoulder": 102,
+        "elbow": 139,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 15.65,
+      "joints": {
+        "base": 0,
+        "shoulder": 102,
+        "elbow": 140,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 15.664,
+      "joints": {
+        "base": 0,
+        "shoulder": 102,
+        "elbow": 141,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 15.749,
+      "joints": {
+        "base": 0,
+        "shoulder": 102,
+        "elbow": 142,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 15.764,
+      "joints": {
+        "base": 0,
+        "shoulder": 102,
+        "elbow": 143,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 15.9,
+      "joints": {
+        "base": 0,
+        "shoulder": 102,
+        "elbow": 144,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 15.964,
+      "joints": {
+        "base": 0,
+        "shoulder": 102,
+        "elbow": 145,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 15.982,
+      "joints": {
+        "base": 0,
+        "shoulder": 102,
+        "elbow": 146,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 16.064,
+      "joints": {
+        "base": 0,
+        "shoulder": 102,
+        "elbow": 148,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 16.136,
+      "joints": {
+        "base": 0,
+        "shoulder": 102,
+        "elbow": 149,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 16.197,
+      "joints": {
+        "base": 0,
+        "shoulder": 102,
+        "elbow": 150,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 16.297,
+      "joints": {
+        "base": 0,
+        "shoulder": 102,
+        "elbow": 151,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 16.316,
+      "joints": {
+        "base": 0,
+        "shoulder": 102,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 18.691,
+      "joints": {
+        "base": 0,
+        "shoulder": 95,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 18.731,
+      "joints": {
+        "base": 0,
+        "shoulder": 90,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 18.75,
+      "joints": {
+        "base": 0,
+        "shoulder": 85,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 18.778,
+      "joints": {
+        "base": 0,
+        "shoulder": 84,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 18.789,
+      "joints": {
+        "base": 0,
+        "shoulder": 80,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 18.812,
+      "joints": {
+        "base": 0,
+        "shoulder": 77,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 18.824,
+      "joints": {
+        "base": 0,
+        "shoulder": 76,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 19.133,
+      "joints": {
+        "base": 0,
+        "shoulder": 75,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 19.231,
+      "joints": {
+        "base": 0,
+        "shoulder": 74,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 19.384,
+      "joints": {
+        "base": 0,
+        "shoulder": 73,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 19.481,
+      "joints": {
+        "base": 0,
+        "shoulder": 71,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 19.548,
+      "joints": {
+        "base": 0,
+        "shoulder": 70,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 19.616,
+      "joints": {
+        "base": 0,
+        "shoulder": 69,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 19.649,
+      "joints": {
+        "base": 0,
+        "shoulder": 68,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 19.664,
+      "joints": {
+        "base": 0,
+        "shoulder": 67,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 19.681,
+      "joints": {
+        "base": 0,
+        "shoulder": 66,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 19.748,
+      "joints": {
+        "base": 0,
+        "shoulder": 65,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 19.781,
+      "joints": {
+        "base": 0,
+        "shoulder": 64,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 19.799,
+      "joints": {
+        "base": 0,
+        "shoulder": 63,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 19.814,
+      "joints": {
+        "base": 0,
+        "shoulder": 61,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 20.147,
+      "joints": {
+        "base": 0,
+        "shoulder": 64,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 20.164,
+      "joints": {
+        "base": 0,
+        "shoulder": 68,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 20.181,
+      "joints": {
+        "base": 0,
+        "shoulder": 74,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 20.2,
+      "joints": {
+        "base": 0,
+        "shoulder": 78,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 20.214,
+      "joints": {
+        "base": 0,
+        "shoulder": 80,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 20.23,
+      "joints": {
+        "base": 0,
+        "shoulder": 82,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 20.247,
+      "joints": {
+        "base": 0,
+        "shoulder": 84,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 20.264,
+      "joints": {
+        "base": 0,
+        "shoulder": 86,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 20.28,
+      "joints": {
+        "base": 0,
+        "shoulder": 87,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 20.302,
+      "joints": {
+        "base": 0,
+        "shoulder": 89,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 20.364,
+      "joints": {
+        "base": 0,
+        "shoulder": 91,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 20.381,
+      "joints": {
+        "base": 0,
+        "shoulder": 92,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 20.398,
+      "joints": {
+        "base": 0,
+        "shoulder": 93,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 20.431,
+      "joints": {
+        "base": 0,
+        "shoulder": 94,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 20.449,
+      "joints": {
+        "base": 0,
+        "shoulder": 95,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 20.483,
+      "joints": {
+        "base": 0,
+        "shoulder": 96,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 20.518,
+      "joints": {
+        "base": 0,
+        "shoulder": 97,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 20.53,
+      "joints": {
+        "base": 0,
+        "shoulder": 98,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 20.548,
+      "joints": {
+        "base": 0,
+        "shoulder": 99,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 20.581,
+      "joints": {
+        "base": 0,
+        "shoulder": 100,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 20.631,
+      "joints": {
+        "base": 0,
+        "shoulder": 101,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 21.848,
+      "joints": {
+        "base": 0,
+        "shoulder": 102,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 21.863,
+      "joints": {
+        "base": 0,
+        "shoulder": 103,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 21.881,
+      "joints": {
+        "base": 0,
+        "shoulder": 104,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 22.531,
+      "joints": {
+        "base": 0,
+        "shoulder": 105,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 22.579,
+      "joints": {
+        "base": 0,
+        "shoulder": 106,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 22.64,
+      "joints": {
+        "base": 0,
+        "shoulder": 107,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 22.672,
+      "joints": {
+        "base": 0,
+        "shoulder": 108,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 22.757,
+      "joints": {
+        "base": 0,
+        "shoulder": 109,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 22.88,
+      "joints": {
+        "base": 0,
+        "shoulder": 110,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 22.947,
+      "joints": {
+        "base": 0,
+        "shoulder": 111,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 22.981,
+      "joints": {
+        "base": 0,
+        "shoulder": 112,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 23.066,
+      "joints": {
+        "base": 0,
+        "shoulder": 113,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 27.498,
+      "joints": {
+        "base": 0,
+        "shoulder": 116,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 27.514,
+      "joints": {
+        "base": 0,
+        "shoulder": 120,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 27.53,
+      "joints": {
+        "base": 0,
+        "shoulder": 122,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 27.549,
+      "joints": {
+        "base": 0,
+        "shoulder": 124,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 27.563,
+      "joints": {
+        "base": 0,
+        "shoulder": 125,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 27.579,
+      "joints": {
+        "base": 0,
+        "shoulder": 126,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 27.597,
+      "joints": {
+        "base": 0,
+        "shoulder": 130,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 27.613,
+      "joints": {
+        "base": 0,
+        "shoulder": 132,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 27.63,
+      "joints": {
+        "base": 0,
+        "shoulder": 133,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 27.649,
+      "joints": {
+        "base": 0,
+        "shoulder": 135,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 27.663,
+      "joints": {
+        "base": 0,
+        "shoulder": 137,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 27.68,
+      "joints": {
+        "base": 0,
+        "shoulder": 138,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 27.696,
+      "joints": {
+        "base": 0,
+        "shoulder": 139,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 27.749,
+      "joints": {
+        "base": 0,
+        "shoulder": 140,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 27.762,
+      "joints": {
+        "base": 0,
+        "shoulder": 141,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 27.78,
+      "joints": {
+        "base": 0,
+        "shoulder": 142,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 27.795,
+      "joints": {
+        "base": 0,
+        "shoulder": 143,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 27.843,
+      "joints": {
+        "base": 0,
+        "shoulder": 144,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 27.863,
+      "joints": {
+        "base": 0,
+        "shoulder": 145,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 27.877,
+      "joints": {
+        "base": 0,
+        "shoulder": 146,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 27.914,
+      "joints": {
+        "base": 0,
+        "shoulder": 147,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 27.926,
+      "joints": {
+        "base": 0,
+        "shoulder": 148,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 27.997,
+      "joints": {
+        "base": 0,
+        "shoulder": 149,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 28.01,
+      "joints": {
+        "base": 0,
+        "shoulder": 150,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 28.047,
+      "joints": {
+        "base": 0,
+        "shoulder": 151,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 28.062,
+      "joints": {
+        "base": 0,
+        "shoulder": 152,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 28.111,
+      "joints": {
+        "base": 0,
+        "shoulder": 153,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 28.212,
+      "joints": {
+        "base": 0,
+        "shoulder": 154,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 28.243,
+      "joints": {
+        "base": 0,
+        "shoulder": 155,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 28.344,
+      "joints": {
+        "base": 0,
+        "shoulder": 156,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 31.752,
+      "joints": {
+        "base": 0,
+        "shoulder": 156,
+        "elbow": 153,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 31.878,
+      "joints": {
+        "base": 0,
+        "shoulder": 156,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 31.911,
+      "joints": {
+        "base": 0,
+        "shoulder": 156,
+        "elbow": 151,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 31.93,
+      "joints": {
+        "base": 0,
+        "shoulder": 156,
+        "elbow": 150,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 31.961,
+      "joints": {
+        "base": 0,
+        "shoulder": 156,
+        "elbow": 149,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 31.977,
+      "joints": {
+        "base": 0,
+        "shoulder": 156,
+        "elbow": 148,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 32.011,
+      "joints": {
+        "base": 0,
+        "shoulder": 156,
+        "elbow": 146,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 32.078,
+      "joints": {
+        "base": 0,
+        "shoulder": 156,
+        "elbow": 144,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 32.129,
+      "joints": {
+        "base": 0,
+        "shoulder": 156,
+        "elbow": 143,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 32.262,
+      "joints": {
+        "base": 0,
+        "shoulder": 156,
+        "elbow": 142,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 32.278,
+      "joints": {
+        "base": 0,
+        "shoulder": 156,
+        "elbow": 139,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 32.294,
+      "joints": {
+        "base": 0,
+        "shoulder": 156,
+        "elbow": 137,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 32.312,
+      "joints": {
+        "base": 0,
+        "shoulder": 156,
+        "elbow": 136,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 32.327,
+      "joints": {
+        "base": 0,
+        "shoulder": 156,
+        "elbow": 135,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 32.446,
+      "joints": {
+        "base": 0,
+        "shoulder": 156,
+        "elbow": 134,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 32.46,
+      "joints": {
+        "base": 0,
+        "shoulder": 156,
+        "elbow": 133,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 32.677,
+      "joints": {
+        "base": 0,
+        "shoulder": 156,
+        "elbow": 135,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 32.695,
+      "joints": {
+        "base": 0,
+        "shoulder": 156,
+        "elbow": 139,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 32.713,
+      "joints": {
+        "base": 0,
+        "shoulder": 156,
+        "elbow": 143,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 32.727,
+      "joints": {
+        "base": 0,
+        "shoulder": 156,
+        "elbow": 145,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 32.745,
+      "joints": {
+        "base": 0,
+        "shoulder": 156,
+        "elbow": 149,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 32.761,
+      "joints": {
+        "base": 0,
+        "shoulder": 156,
+        "elbow": 152,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 32.777,
+      "joints": {
+        "base": 0,
+        "shoulder": 156,
+        "elbow": 154,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 32.793,
+      "joints": {
+        "base": 0,
+        "shoulder": 156,
+        "elbow": 156,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 32.811,
+      "joints": {
+        "base": 0,
+        "shoulder": 156,
+        "elbow": 157,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 32.861,
+      "joints": {
+        "base": 0,
+        "shoulder": 156,
+        "elbow": 158,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 32.876,
+      "joints": {
+        "base": 0,
+        "shoulder": 156,
+        "elbow": 159,
+        "gripper": 45
+      }
+    },
+    {
+      "t": 32.894,
+      "joints": {
+        "base": 0,
+        "shoulder": 156,
+        "elbow": 160,
+        "gripper": 45
+      }
+    }
+  ]
+}

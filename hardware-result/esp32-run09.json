@@ -1,0 +1,4483 @@
+{
+  "kind": "live UDP probe; operator must record physical board and flashed source",
+  "peer": [
+    "192.168.0.118",
+    4210
+  ],
+  "host": "Linux-7.0.0-30-generic-x86_64-with-glibc2.39",
+  "revision": "63297c21ab75fc21978e40e670a39a3e1b076d4b",
+  "worktree_status": "?? hardware-result/\n?? master/myvenv/\n?? projects/hydra_arm/episodes/ep.json\n?? projects/hydra_arm/episodes/episode_1.json\n?? projects/hydra_arm/episodes/episode_2.json\n",
+  "cases": [
+    {
+      "name": "delayed_ping_and_stale_stop",
+      "status": "PASS",
+      "detail": {
+        "final_ack": 11,
+        "stale_act_applied": false,
+        "stop_honored": true,
+        "observed_state": {
+          "type": "STATE",
+          "node": "probe_esp32",
+          "uptime_ms": 404628,
+          "ack": 11,
+          "wd_trips": 17,
+          "lease_exp": 8,
+          "seq_drop": 33,
+          "sensors": {
+            "value": 110.0,
+            "acts": 74.0,
+            "stops": 134.0,
+            "hold_ms": 503.0,
+            "exec_ms": 11393.0
+          }
+        }
+      }
+    },
+    {
+      "name": "sequence_wraparound",
+      "status": "PASS",
+      "detail": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 404827,
+        "ack": 2,
+        "wd_trips": 17,
+        "lease_exp": 8,
+        "seq_drop": 35,
+        "sensors": {
+          "value": 3.0,
+          "acts": 77.0,
+          "stops": 137.0,
+          "hold_ms": 25.0,
+          "exec_ms": 11609.0
+        }
+      }
+    },
+    {
+      "name": "scheduled_preservation_and_stop_cancellation",
+      "status": "PASS",
+      "detail": {
+        "target_ms": 11919,
+        "execution_lateness_ms": 1,
+        "pending_stop_cancelled": true,
+        "final_state": {
+          "type": "STATE",
+          "node": "probe_esp32",
+          "uptime_ms": 405218,
+          "ack": 11,
+          "wd_trips": 17,
+          "lease_exp": 8,
+          "seq_drop": 36,
+          "sensors": {
+            "value": 0.0,
+            "acts": 78.0,
+            "stops": 140.0,
+            "hold_ms": 49.0,
+            "exec_ms": 11920.0
+          }
+        }
+      }
+    },
+    {
+      "name": "lease_150ms_with_5hz_ping",
+      "status": "PASS",
+      "detail": {
+        "onboard_hold_ms": 150.0,
+        "target_ms": 150,
+        "deadline_excess_ms": 0.0,
+        "final_state": {
+          "type": "STATE",
+          "node": "probe_esp32",
+          "uptime_ms": 407709,
+          "ack": 1,
+          "wd_trips": 17,
+          "lease_exp": 9,
+          "seq_drop": 36,
+          "sensors": {
+            "value": 0.0,
+            "acts": 79.0,
+            "stops": 143.0,
+            "hold_ms": 150.0,
+            "exec_ms": 12341.0
+          }
+        }
+      }
+    },
+    {
+      "name": "no_lease_with_5hz_ping",
+      "status": "PASS",
+      "detail": {
+        "energized_for_at_least_s": 2.2,
+        "right_censored": true,
+        "final_state": {
+          "type": "STATE",
+          "node": "probe_esp32",
+          "uptime_ms": 410096,
+          "ack": 1,
+          "wd_trips": 17,
+          "lease_exp": 9,
+          "seq_drop": 36,
+          "sensors": {
+            "value": 100.0,
+            "acts": 80.0,
+            "stops": 145.0,
+            "hold_ms": 150.0,
+            "exec_ms": 14658.0
+          }
+        }
+      }
+    },
+    {
+      "name": "watchdog_without_ping",
+      "status": "PASS",
+      "detail": {
+        "onboard_hold_ms": 502.0,
+        "target_ms": 500,
+        "deadline_excess_ms": 2.0,
+        "final_state": {
+          "type": "STATE",
+          "node": "probe_esp32",
+          "uptime_ms": 412389,
+          "wd_trips": 18,
+          "lease_exp": 9,
+          "seq_drop": 36,
+          "sensors": {
+            "value": 0.0,
+            "acts": 81.0,
+            "stops": 148.0,
+            "hold_ms": 502.0,
+            "exec_ms": 16997.0
+          }
+        }
+      }
+    }
+  ],
+  "packet_log": [
+    {
+      "direction": "tx",
+      "host_mono_s": 308.868998122,
+      "packet": {
+        "cmd": "STOP"
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 308.869104909,
+      "packet": {
+        "cmd": "PING"
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 308.878629007,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 404591,
+        "wd_trips": 17,
+        "lease_exp": 8,
+        "seq_drop": 32,
+        "sensors": {
+          "value": 0.0,
+          "acts": 72.0,
+          "stops": 134.0,
+          "hold_ms": 503.0,
+          "exec_ms": 3817.0
+        }
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 308.878654834,
+      "packet": {
+        "cmd": "ACT",
+        "name": "probe",
+        "seq": 10,
+        "value": 100
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 308.878760636,
+      "packet": {
+        "cmd": "PING"
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 308.888464939,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 404599,
+        "ack": 10,
+        "wd_trips": 17,
+        "lease_exp": 8,
+        "seq_drop": 32,
+        "sensors": {
+          "value": 100.0,
+          "acts": 73.0,
+          "stops": 134.0,
+          "hold_ms": 503.0,
+          "exec_ms": 11381.0
+        }
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 308.888524369,
+      "packet": {
+        "cmd": "ACT",
+        "name": "probe",
+        "seq": 11,
+        "value": 110
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 308.888695488,
+      "packet": {
+        "cmd": "PING"
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 308.896582889,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 404609,
+        "ack": 11,
+        "wd_trips": 17,
+        "lease_exp": 8,
+        "seq_drop": 32,
+        "sensors": {
+          "value": 110.0,
+          "acts": 74.0,
+          "stops": 134.0,
+          "hold_ms": 503.0,
+          "exec_ms": 11393.0
+        }
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 308.896634842,
+      "packet": {
+        "cmd": "PING",
+        "seq": 9
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 308.896828273,
+      "packet": {
+        "cmd": "PING"
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 308.900994858,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 404613,
+        "ack": 11,
+        "wd_trips": 17,
+        "lease_exp": 8,
+        "seq_drop": 32,
+        "sensors": {
+          "value": 110.0,
+          "acts": 74.0,
+          "stops": 134.0,
+          "hold_ms": 503.0,
+          "exec_ms": 11393.0
+        }
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 308.901057875,
+      "packet": {
+        "cmd": "ACT",
+        "name": "probe",
+        "seq": 10,
+        "value": 100
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 308.901264417,
+      "packet": {
+        "cmd": "PING"
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 308.90586124,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 404620,
+        "ack": 11,
+        "wd_trips": 17,
+        "lease_exp": 8,
+        "seq_drop": 32,
+        "sensors": {
+          "value": 110.0,
+          "acts": 74.0,
+          "stops": 134.0,
+          "hold_ms": 503.0,
+          "exec_ms": 11393.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 308.909453826,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 404623,
+        "ack": 11,
+        "wd_trips": 17,
+        "lease_exp": 8,
+        "seq_drop": 32,
+        "sensors": {
+          "value": 110.0,
+          "acts": 74.0,
+          "stops": 134.0,
+          "hold_ms": 503.0,
+          "exec_ms": 11393.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 308.915299454,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 404628,
+        "ack": 11,
+        "wd_trips": 17,
+        "lease_exp": 8,
+        "seq_drop": 33,
+        "sensors": {
+          "value": 110.0,
+          "acts": 74.0,
+          "stops": 134.0,
+          "hold_ms": 503.0,
+          "exec_ms": 11393.0
+        }
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 308.915362409,
+      "packet": {
+        "cmd": "STOP",
+        "seq": 8
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 308.915551479,
+      "packet": {
+        "cmd": "PING"
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 308.923703633,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 404636,
+        "ack": 11,
+        "wd_trips": 17,
+        "lease_exp": 8,
+        "seq_drop": 33,
+        "sensors": {
+          "value": 0.0,
+          "acts": 74.0,
+          "stops": 135.0,
+          "hold_ms": 25.0,
+          "exec_ms": 11393.0
+        }
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 308.923748333,
+      "packet": {
+        "cmd": "ACT",
+        "name": "probe",
+        "seq": 10,
+        "value": 100
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 308.923908812,
+      "packet": {
+        "cmd": "PING"
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 308.934416173,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 404645,
+        "ack": 11,
+        "wd_trips": 17,
+        "lease_exp": 8,
+        "seq_drop": 34,
+        "sensors": {
+          "value": 0.0,
+          "acts": 74.0,
+          "stops": 135.0,
+          "hold_ms": 25.0,
+          "exec_ms": 11393.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 308.946845625,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 404660,
+        "ack": 11,
+        "wd_trips": 17,
+        "lease_exp": 8,
+        "seq_drop": 34,
+        "sensors": {
+          "value": 0.0,
+          "acts": 74.0,
+          "stops": 135.0,
+          "hold_ms": 25.0,
+          "exec_ms": 11393.0
+        }
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 308.94688186,
+      "packet": {
+        "cmd": "STOP"
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 309.047736159,
+      "packet": {
+        "cmd": "STOP"
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 309.048059188,
+      "packet": {
+        "cmd": "PING"
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 309.05572791,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 404769,
+        "wd_trips": 17,
+        "lease_exp": 8,
+        "seq_drop": 34,
+        "sensors": {
+          "value": 0.0,
+          "acts": 74.0,
+          "stops": 137.0,
+          "hold_ms": 25.0,
+          "exec_ms": 11393.0
+        }
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 309.055768154,
+      "packet": {
+        "cmd": "ACT",
+        "name": "probe",
+        "seq": 32766,
+        "value": 1
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 309.055994868,
+      "packet": {
+        "cmd": "PING"
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 309.070238697,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 404783,
+        "ack": 32766,
+        "wd_trips": 17,
+        "lease_exp": 8,
+        "seq_drop": 34,
+        "sensors": {
+          "value": 1.0,
+          "acts": 75.0,
+          "stops": 137.0,
+          "hold_ms": 25.0,
+          "exec_ms": 11565.0
+        }
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 309.070277469,
+      "packet": {
+        "cmd": "PING",
+        "seq": 32767
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 309.070440883,
+      "packet": {
+        "cmd": "PING"
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 309.07648495,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 404789,
+        "ack": 32767,
+        "wd_trips": 17,
+        "lease_exp": 8,
+        "seq_drop": 34,
+        "sensors": {
+          "value": 1.0,
+          "acts": 75.0,
+          "stops": 137.0,
+          "hold_ms": 25.0,
+          "exec_ms": 11565.0
+        }
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 309.076526454,
+      "packet": {
+        "cmd": "ACT",
+        "name": "probe",
+        "seq": 1,
+        "value": 2
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 309.076704533,
+      "packet": {
+        "cmd": "PING"
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 309.07864467,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 404793,
+        "ack": 32767,
+        "wd_trips": 17,
+        "lease_exp": 8,
+        "seq_drop": 34,
+        "sensors": {
+          "value": 1.0,
+          "acts": 75.0,
+          "stops": 137.0,
+          "hold_ms": 25.0,
+          "exec_ms": 11565.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 309.084443288,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 404798,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 8,
+        "seq_drop": 34,
+        "sensors": {
+          "value": 2.0,
+          "acts": 76.0,
+          "stops": 137.0,
+          "hold_ms": 25.0,
+          "exec_ms": 11581.0
+        }
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 309.084481839,
+      "packet": {
+        "cmd": "PING",
+        "seq": 32766
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 309.084688491,
+      "packet": {
+        "cmd": "PING"
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 309.091875666,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 404804,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 8,
+        "seq_drop": 34,
+        "sensors": {
+          "value": 2.0,
+          "acts": 76.0,
+          "stops": 137.0,
+          "hold_ms": 25.0,
+          "exec_ms": 11581.0
+        }
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 309.091966665,
+      "packet": {
+        "cmd": "ACT",
+        "name": "probe",
+        "seq": 32767,
+        "value": 99
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 309.092179251,
+      "packet": {
+        "cmd": "PING"
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 309.093664123,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 404807,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 8,
+        "seq_drop": 34,
+        "sensors": {
+          "value": 2.0,
+          "acts": 76.0,
+          "stops": 137.0,
+          "hold_ms": 25.0,
+          "exec_ms": 11581.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 309.09775201,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 404812,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 8,
+        "seq_drop": 34,
+        "sensors": {
+          "value": 2.0,
+          "acts": 76.0,
+          "stops": 137.0,
+          "hold_ms": 25.0,
+          "exec_ms": 11581.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 309.105279932,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 404817,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 8,
+        "seq_drop": 35,
+        "sensors": {
+          "value": 2.0,
+          "acts": 76.0,
+          "stops": 137.0,
+          "hold_ms": 25.0,
+          "exec_ms": 11581.0
+        }
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 309.105340999,
+      "packet": {
+        "cmd": "ACT",
+        "name": "probe",
+        "seq": 2,
+        "value": 3
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 309.105640642,
+      "packet": {
+        "cmd": "PING"
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 309.113363342,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 404827,
+        "ack": 2,
+        "wd_trips": 17,
+        "lease_exp": 8,
+        "seq_drop": 35,
+        "sensors": {
+          "value": 3.0,
+          "acts": 77.0,
+          "stops": 137.0,
+          "hold_ms": 25.0,
+          "exec_ms": 11609.0
+        }
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 309.11343091,
+      "packet": {
+        "cmd": "STOP"
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 309.214340421,
+      "packet": {
+        "cmd": "STOP"
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 309.214582209,
+      "packet": {
+        "cmd": "PING"
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 309.224361783,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 404935,
+        "wd_trips": 17,
+        "lease_exp": 8,
+        "seq_drop": 35,
+        "sensors": {
+          "value": 0.0,
+          "acts": 77.0,
+          "stops": 139.0,
+          "hold_ms": 8.0,
+          "exec_ms": 11609.0
+        }
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 309.224449259,
+      "packet": {
+        "cmd": "ACT",
+        "name": "probe",
+        "seq": 10,
+        "value": 120,
+        "at_ms": 11919
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 309.224643567,
+      "packet": {
+        "cmd": "PING"
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 309.234245261,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 404945,
+        "ack": 10,
+        "wd_trips": 17,
+        "lease_exp": 8,
+        "seq_drop": 35,
+        "sensors": {
+          "value": 0.0,
+          "acts": 77.0,
+          "stops": 139.0,
+          "hold_ms": 8.0,
+          "exec_ms": 11609.0
+        }
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 309.234304323,
+      "packet": {
+        "cmd": "PING",
+        "seq": 9
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 309.234567522,
+      "packet": {
+        "cmd": "PING"
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 309.239123947,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 404953,
+        "ack": 10,
+        "wd_trips": 17,
+        "lease_exp": 8,
+        "seq_drop": 35,
+        "sensors": {
+          "value": 0.0,
+          "acts": 77.0,
+          "stops": 139.0,
+          "hold_ms": 8.0,
+          "exec_ms": 11609.0
+        }
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 309.239194901,
+      "packet": {
+        "cmd": "ACT",
+        "name": "probe",
+        "seq": 8,
+        "value": 99
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 309.243064037,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 404956,
+        "ack": 10,
+        "wd_trips": 17,
+        "lease_exp": 8,
+        "seq_drop": 35,
+        "sensors": {
+          "value": 0.0,
+          "acts": 77.0,
+          "stops": 139.0,
+          "hold_ms": 8.0,
+          "exec_ms": 11609.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 309.25139076,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 404964,
+        "ack": 10,
+        "wd_trips": 17,
+        "lease_exp": 8,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 77.0,
+          "stops": 139.0,
+          "hold_ms": 8.0,
+          "exec_ms": 11609.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 309.302081413,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 405015,
+        "ack": 10,
+        "wd_trips": 17,
+        "lease_exp": 8,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 77.0,
+          "stops": 139.0,
+          "hold_ms": 8.0,
+          "exec_ms": 11609.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 309.352574471,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 405066,
+        "ack": 10,
+        "wd_trips": 17,
+        "lease_exp": 8,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 77.0,
+          "stops": 139.0,
+          "hold_ms": 8.0,
+          "exec_ms": 11609.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 309.406121068,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 405117,
+        "ack": 10,
+        "wd_trips": 17,
+        "lease_exp": 8,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 77.0,
+          "stops": 139.0,
+          "hold_ms": 8.0,
+          "exec_ms": 11609.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 309.454878905,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 405168,
+        "ack": 10,
+        "wd_trips": 17,
+        "lease_exp": 8,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 120.0,
+          "acts": 78.0,
+          "stops": 139.0,
+          "hold_ms": 8.0,
+          "exec_ms": 11920.0
+        }
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 309.454935658,
+      "packet": {
+        "cmd": "ACT",
+        "name": "probe",
+        "seq": 11,
+        "value": 130,
+        "at_ms": 12152
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 309.455174489,
+      "packet": {
+        "cmd": "PING"
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 309.466532878,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 405177,
+        "ack": 11,
+        "wd_trips": 17,
+        "lease_exp": 8,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 120.0,
+          "acts": 78.0,
+          "stops": 139.0,
+          "hold_ms": 8.0,
+          "exec_ms": 11920.0
+        }
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 309.466578452,
+      "packet": {
+        "cmd": "STOP",
+        "seq": 7
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 309.466780929,
+      "packet": {
+        "cmd": "PING"
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 309.478666026,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 405187,
+        "ack": 11,
+        "wd_trips": 17,
+        "lease_exp": 8,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 78.0,
+          "stops": 140.0,
+          "hold_ms": 49.0,
+          "exec_ms": 11920.0
+        }
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 309.729090792,
+      "packet": {
+        "cmd": "PING"
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 309.729425147,
+      "packet": {
+        "cmd": "PING"
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 309.729641794,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 405218,
+        "ack": 11,
+        "wd_trips": 17,
+        "lease_exp": 8,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 78.0,
+          "stops": 140.0,
+          "hold_ms": 49.0,
+          "exec_ms": 11920.0
+        }
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 309.729674261,
+      "packet": {
+        "cmd": "STOP"
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 309.830272525,
+      "packet": {
+        "cmd": "STOP"
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 309.830527191,
+      "packet": {
+        "cmd": "PING"
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 309.838085972,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 405551,
+        "wd_trips": 17,
+        "lease_exp": 8,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 78.0,
+          "stops": 142.0,
+          "hold_ms": 49.0,
+          "exec_ms": 11920.0
+        }
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 309.83821784,
+      "packet": {
+        "cmd": "ACT",
+        "name": "probe",
+        "seq": 1,
+        "value": 100,
+        "lease_ms": 150
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 309.838546131,
+      "packet": {
+        "cmd": "PING"
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 309.845888311,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 405559,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 8,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 79.0,
+          "stops": 142.0,
+          "hold_ms": 49.0,
+          "exec_ms": 12341.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 309.860166768,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 405574,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 8,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 79.0,
+          "stops": 142.0,
+          "hold_ms": 49.0,
+          "exec_ms": 12341.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 309.916251812,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 405625,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 8,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 79.0,
+          "stops": 142.0,
+          "hold_ms": 49.0,
+          "exec_ms": 12341.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 309.962564848,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 405676,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 8,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 79.0,
+          "stops": 142.0,
+          "hold_ms": 49.0,
+          "exec_ms": 12341.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 310.012827498,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 405727,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 79.0,
+          "stops": 143.0,
+          "hold_ms": 150.0,
+          "exec_ms": 12341.0
+        }
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 310.063101823,
+      "packet": {
+        "cmd": "PING"
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 310.063426839,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 405778,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 79.0,
+          "stops": 143.0,
+          "hold_ms": 150.0,
+          "exec_ms": 12341.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 310.069061022,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 405783,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 79.0,
+          "stops": 143.0,
+          "hold_ms": 150.0,
+          "exec_ms": 12341.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 310.117320497,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 405828,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 79.0,
+          "stops": 143.0,
+          "hold_ms": 150.0,
+          "exec_ms": 12341.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 310.164432814,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 405878,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 79.0,
+          "stops": 143.0,
+          "hold_ms": 150.0,
+          "exec_ms": 12341.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 310.215833577,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 405929,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 79.0,
+          "stops": 143.0,
+          "hold_ms": 150.0,
+          "exec_ms": 12341.0
+        }
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 310.266146906,
+      "packet": {
+        "cmd": "PING"
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 310.266709143,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 405980,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 79.0,
+          "stops": 143.0,
+          "hold_ms": 150.0,
+          "exec_ms": 12341.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 310.271895359,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 405985,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 79.0,
+          "stops": 143.0,
+          "hold_ms": 150.0,
+          "exec_ms": 12341.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 310.319832491,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 406030,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 79.0,
+          "stops": 143.0,
+          "hold_ms": 150.0,
+          "exec_ms": 12341.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 310.367097251,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 406081,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 79.0,
+          "stops": 143.0,
+          "hold_ms": 150.0,
+          "exec_ms": 12341.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 310.420642455,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 406132,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 79.0,
+          "stops": 143.0,
+          "hold_ms": 150.0,
+          "exec_ms": 12341.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 310.470567498,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 406183,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 79.0,
+          "stops": 143.0,
+          "hold_ms": 150.0,
+          "exec_ms": 12341.0
+        }
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 310.470586355,
+      "packet": {
+        "cmd": "PING"
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 310.474917854,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 406189,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 79.0,
+          "stops": 143.0,
+          "hold_ms": 150.0,
+          "exec_ms": 12341.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 310.521957345,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 406234,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 79.0,
+          "stops": 143.0,
+          "hold_ms": 150.0,
+          "exec_ms": 12341.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 310.571427553,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 406285,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 79.0,
+          "stops": 143.0,
+          "hold_ms": 150.0,
+          "exec_ms": 12341.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 310.622041838,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 406336,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 79.0,
+          "stops": 143.0,
+          "hold_ms": 150.0,
+          "exec_ms": 12341.0
+        }
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 310.672399458,
+      "packet": {
+        "cmd": "PING"
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 310.672715558,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 406387,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 79.0,
+          "stops": 143.0,
+          "hold_ms": 150.0,
+          "exec_ms": 12341.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 310.678581767,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 406391,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 79.0,
+          "stops": 143.0,
+          "hold_ms": 150.0,
+          "exec_ms": 12341.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 310.726578252,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 406438,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 79.0,
+          "stops": 143.0,
+          "hold_ms": 150.0,
+          "exec_ms": 12341.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 310.776496565,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 406489,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 79.0,
+          "stops": 143.0,
+          "hold_ms": 150.0,
+          "exec_ms": 12341.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 310.826474659,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 406540,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 79.0,
+          "stops": 143.0,
+          "hold_ms": 150.0,
+          "exec_ms": 12341.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 310.876794054,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 406591,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 79.0,
+          "stops": 143.0,
+          "hold_ms": 150.0,
+          "exec_ms": 12341.0
+        }
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 310.876811238,
+      "packet": {
+        "cmd": "PING"
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 310.88254708,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 406596,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 79.0,
+          "stops": 143.0,
+          "hold_ms": 150.0,
+          "exec_ms": 12341.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 310.928496445,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 406641,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 79.0,
+          "stops": 143.0,
+          "hold_ms": 150.0,
+          "exec_ms": 12341.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 310.979298487,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 406692,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 79.0,
+          "stops": 143.0,
+          "hold_ms": 150.0,
+          "exec_ms": 12341.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 311.029784813,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 406743,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 79.0,
+          "stops": 143.0,
+          "hold_ms": 150.0,
+          "exec_ms": 12341.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 311.080482331,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 406794,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 79.0,
+          "stops": 143.0,
+          "hold_ms": 150.0,
+          "exec_ms": 12341.0
+        }
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 311.080504273,
+      "packet": {
+        "cmd": "PING"
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 311.086584231,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 406800,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 79.0,
+          "stops": 143.0,
+          "hold_ms": 150.0,
+          "exec_ms": 12341.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 311.130164293,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 406844,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 79.0,
+          "stops": 143.0,
+          "hold_ms": 150.0,
+          "exec_ms": 12341.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 311.180842663,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 406895,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 79.0,
+          "stops": 143.0,
+          "hold_ms": 150.0,
+          "exec_ms": 12341.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 311.233485416,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 406946,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 79.0,
+          "stops": 143.0,
+          "hold_ms": 150.0,
+          "exec_ms": 12341.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 311.283647749,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 406997,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 79.0,
+          "stops": 143.0,
+          "hold_ms": 150.0,
+          "exec_ms": 12341.0
+        }
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 311.283667242,
+      "packet": {
+        "cmd": "PING"
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 311.290518963,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 407004,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 79.0,
+          "stops": 143.0,
+          "hold_ms": 150.0,
+          "exec_ms": 12341.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 311.333634454,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 407047,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 79.0,
+          "stops": 143.0,
+          "hold_ms": 150.0,
+          "exec_ms": 12341.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 311.384176115,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 407098,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 79.0,
+          "stops": 143.0,
+          "hold_ms": 150.0,
+          "exec_ms": 12341.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 311.436637957,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 407149,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 79.0,
+          "stops": 143.0,
+          "hold_ms": 150.0,
+          "exec_ms": 12341.0
+        }
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 311.487093634,
+      "packet": {
+        "cmd": "PING"
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 311.487680321,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 407200,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 79.0,
+          "stops": 143.0,
+          "hold_ms": 150.0,
+          "exec_ms": 12341.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 311.492257266,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 407206,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 79.0,
+          "stops": 143.0,
+          "hold_ms": 150.0,
+          "exec_ms": 12341.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 311.536663262,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 407251,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 79.0,
+          "stops": 143.0,
+          "hold_ms": 150.0,
+          "exec_ms": 12341.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 311.58737003,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 407302,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 79.0,
+          "stops": 143.0,
+          "hold_ms": 150.0,
+          "exec_ms": 12341.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 311.638570527,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 407353,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 79.0,
+          "stops": 143.0,
+          "hold_ms": 150.0,
+          "exec_ms": 12341.0
+        }
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 311.689111575,
+      "packet": {
+        "cmd": "PING"
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 311.69140093,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 407404,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 79.0,
+          "stops": 143.0,
+          "hold_ms": 150.0,
+          "exec_ms": 12341.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 311.697435955,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 407408,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 79.0,
+          "stops": 143.0,
+          "hold_ms": 150.0,
+          "exec_ms": 12341.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 311.741566404,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 407455,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 79.0,
+          "stops": 143.0,
+          "hold_ms": 150.0,
+          "exec_ms": 12341.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 311.795204129,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 407506,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 79.0,
+          "stops": 143.0,
+          "hold_ms": 150.0,
+          "exec_ms": 12341.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 311.844641496,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 407557,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 79.0,
+          "stops": 143.0,
+          "hold_ms": 150.0,
+          "exec_ms": 12341.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 311.894305497,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 407608,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 79.0,
+          "stops": 143.0,
+          "hold_ms": 150.0,
+          "exec_ms": 12341.0
+        }
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 311.894320537,
+      "packet": {
+        "cmd": "PING"
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 311.899613231,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 407613,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 79.0,
+          "stops": 143.0,
+          "hold_ms": 150.0,
+          "exec_ms": 12341.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 311.94495603,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 407658,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 79.0,
+          "stops": 143.0,
+          "hold_ms": 150.0,
+          "exec_ms": 12341.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 311.995580479,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 407709,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 79.0,
+          "stops": 143.0,
+          "hold_ms": 150.0,
+          "exec_ms": 12341.0
+        }
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 312.046123123,
+      "packet": {
+        "cmd": "STOP"
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 312.147164862,
+      "packet": {
+        "cmd": "STOP"
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 312.147412499,
+      "packet": {
+        "cmd": "PING"
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 312.153986208,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 407868,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 79.0,
+          "stops": 145.0,
+          "hold_ms": 150.0,
+          "exec_ms": 12341.0
+        }
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 312.154073894,
+      "packet": {
+        "cmd": "ACT",
+        "name": "probe",
+        "seq": 1,
+        "value": 100
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 312.154330407,
+      "packet": {
+        "cmd": "PING"
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 312.160917254,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 407875,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 80.0,
+          "stops": 145.0,
+          "hold_ms": 150.0,
+          "exec_ms": 14658.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 312.19823316,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 407912,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 80.0,
+          "stops": 145.0,
+          "hold_ms": 150.0,
+          "exec_ms": 14658.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 312.252397035,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 407963,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 80.0,
+          "stops": 145.0,
+          "hold_ms": 150.0,
+          "exec_ms": 14658.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 312.301615259,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 408014,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 80.0,
+          "stops": 145.0,
+          "hold_ms": 150.0,
+          "exec_ms": 14658.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 312.355559292,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 408065,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 80.0,
+          "stops": 145.0,
+          "hold_ms": 150.0,
+          "exec_ms": 14658.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 312.402953291,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 408116,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 80.0,
+          "stops": 145.0,
+          "hold_ms": 150.0,
+          "exec_ms": 14658.0
+        }
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 312.402970114,
+      "packet": {
+        "cmd": "PING"
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 312.411595429,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 408123,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 80.0,
+          "stops": 145.0,
+          "hold_ms": 150.0,
+          "exec_ms": 14658.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 312.457883679,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 408166,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 80.0,
+          "stops": 145.0,
+          "hold_ms": 150.0,
+          "exec_ms": 14658.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 312.504292441,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 408217,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 80.0,
+          "stops": 145.0,
+          "hold_ms": 150.0,
+          "exec_ms": 14658.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 312.561373354,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 408268,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 80.0,
+          "stops": 145.0,
+          "hold_ms": 150.0,
+          "exec_ms": 14658.0
+        }
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 312.561393977,
+      "packet": {
+        "cmd": "PING"
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 312.567604909,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 408280,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 80.0,
+          "stops": 145.0,
+          "hold_ms": 150.0,
+          "exec_ms": 14658.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 312.608525434,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 408319,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 80.0,
+          "stops": 145.0,
+          "hold_ms": 150.0,
+          "exec_ms": 14658.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 312.66574226,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 408370,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 80.0,
+          "stops": 145.0,
+          "hold_ms": 150.0,
+          "exec_ms": 14658.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 312.7073556,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 408421,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 80.0,
+          "stops": 145.0,
+          "hold_ms": 150.0,
+          "exec_ms": 14658.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 312.762567299,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 408472,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 80.0,
+          "stops": 145.0,
+          "hold_ms": 150.0,
+          "exec_ms": 14658.0
+        }
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 312.762583558,
+      "packet": {
+        "cmd": "PING"
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 312.770702505,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 408483,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 80.0,
+          "stops": 145.0,
+          "hold_ms": 150.0,
+          "exec_ms": 14658.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 312.808313178,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 408522,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 80.0,
+          "stops": 145.0,
+          "hold_ms": 150.0,
+          "exec_ms": 14658.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 312.858858568,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 408573,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 80.0,
+          "stops": 145.0,
+          "hold_ms": 150.0,
+          "exec_ms": 14658.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 312.911949445,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 408624,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 80.0,
+          "stops": 145.0,
+          "hold_ms": 150.0,
+          "exec_ms": 14658.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 312.961898507,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 408675,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 80.0,
+          "stops": 145.0,
+          "hold_ms": 150.0,
+          "exec_ms": 14658.0
+        }
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 312.961915361,
+      "packet": {
+        "cmd": "PING"
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 312.971346941,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 408684,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 80.0,
+          "stops": 145.0,
+          "hold_ms": 150.0,
+          "exec_ms": 14658.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 313.012884368,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 408725,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 80.0,
+          "stops": 145.0,
+          "hold_ms": 150.0,
+          "exec_ms": 14658.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 313.062521174,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 408777,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 80.0,
+          "stops": 145.0,
+          "hold_ms": 150.0,
+          "exec_ms": 14658.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 313.11368057,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 408828,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 80.0,
+          "stops": 145.0,
+          "hold_ms": 150.0,
+          "exec_ms": 14658.0
+        }
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 313.164075699,
+      "packet": {
+        "cmd": "PING"
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 313.164969527,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 408878,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 80.0,
+          "stops": 145.0,
+          "hold_ms": 150.0,
+          "exec_ms": 14658.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 313.176226344,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 408884,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 80.0,
+          "stops": 145.0,
+          "hold_ms": 150.0,
+          "exec_ms": 14658.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 313.217434901,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 408929,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 80.0,
+          "stops": 145.0,
+          "hold_ms": 150.0,
+          "exec_ms": 14658.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 313.26644513,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 408980,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 80.0,
+          "stops": 145.0,
+          "hold_ms": 150.0,
+          "exec_ms": 14658.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 313.315826448,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 409030,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 80.0,
+          "stops": 145.0,
+          "hold_ms": 150.0,
+          "exec_ms": 14658.0
+        }
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 313.36616834,
+      "packet": {
+        "cmd": "PING"
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 313.369744314,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 409081,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 80.0,
+          "stops": 145.0,
+          "hold_ms": 150.0,
+          "exec_ms": 14658.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 313.378970558,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 409086,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 80.0,
+          "stops": 145.0,
+          "hold_ms": 150.0,
+          "exec_ms": 14658.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 313.416424612,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 409131,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 80.0,
+          "stops": 145.0,
+          "hold_ms": 150.0,
+          "exec_ms": 14658.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 313.472534168,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 409182,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 80.0,
+          "stops": 145.0,
+          "hold_ms": 150.0,
+          "exec_ms": 14658.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 313.518997798,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 409233,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 80.0,
+          "stops": 145.0,
+          "hold_ms": 150.0,
+          "exec_ms": 14658.0
+        }
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 313.569191297,
+      "packet": {
+        "cmd": "PING"
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 313.574300452,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 409284,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 80.0,
+          "stops": 145.0,
+          "hold_ms": 150.0,
+          "exec_ms": 14658.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 313.577206701,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 409291,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 80.0,
+          "stops": 145.0,
+          "hold_ms": 150.0,
+          "exec_ms": 14658.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 313.624267191,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 409334,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 80.0,
+          "stops": 145.0,
+          "hold_ms": 150.0,
+          "exec_ms": 14658.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 313.680817883,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 409385,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 80.0,
+          "stops": 145.0,
+          "hold_ms": 150.0,
+          "exec_ms": 14658.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 313.721997817,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 409436,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 80.0,
+          "stops": 145.0,
+          "hold_ms": 150.0,
+          "exec_ms": 14658.0
+        }
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 313.77227685,
+      "packet": {
+        "cmd": "PING"
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 313.772451377,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 409487,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 80.0,
+          "stops": 145.0,
+          "hold_ms": 150.0,
+          "exec_ms": 14658.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 313.782282813,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 409496,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 80.0,
+          "stops": 145.0,
+          "hold_ms": 150.0,
+          "exec_ms": 14658.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 313.8224199,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 409537,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 80.0,
+          "stops": 145.0,
+          "hold_ms": 150.0,
+          "exec_ms": 14658.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 313.875393162,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 409588,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 80.0,
+          "stops": 145.0,
+          "hold_ms": 150.0,
+          "exec_ms": 14658.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 313.926457547,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 409639,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 80.0,
+          "stops": 145.0,
+          "hold_ms": 150.0,
+          "exec_ms": 14658.0
+        }
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 313.97661857,
+      "packet": {
+        "cmd": "PING"
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 313.980582176,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 409690,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 80.0,
+          "stops": 145.0,
+          "hold_ms": 150.0,
+          "exec_ms": 14658.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 313.986785871,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 409700,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 80.0,
+          "stops": 145.0,
+          "hold_ms": 150.0,
+          "exec_ms": 14658.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 314.028624017,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 409741,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 80.0,
+          "stops": 145.0,
+          "hold_ms": 150.0,
+          "exec_ms": 14658.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 314.08031634,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 409792,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 80.0,
+          "stops": 145.0,
+          "hold_ms": 150.0,
+          "exec_ms": 14658.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 314.129957923,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 409842,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 80.0,
+          "stops": 145.0,
+          "hold_ms": 150.0,
+          "exec_ms": 14658.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 314.179075912,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 409893,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 80.0,
+          "stops": 145.0,
+          "hold_ms": 150.0,
+          "exec_ms": 14658.0
+        }
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 314.179085741,
+      "packet": {
+        "cmd": "PING"
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 314.189197631,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 409898,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 80.0,
+          "stops": 145.0,
+          "hold_ms": 150.0,
+          "exec_ms": 14658.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 314.232127593,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 409943,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 80.0,
+          "stops": 145.0,
+          "hold_ms": 150.0,
+          "exec_ms": 14658.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 314.295391941,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 409994,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 80.0,
+          "stops": 145.0,
+          "hold_ms": 150.0,
+          "exec_ms": 14658.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 314.331864149,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 410045,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 80.0,
+          "stops": 145.0,
+          "hold_ms": 150.0,
+          "exec_ms": 14658.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 314.381807433,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 410096,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 80.0,
+          "stops": 145.0,
+          "hold_ms": 150.0,
+          "exec_ms": 14658.0
+        }
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 314.381878753,
+      "packet": {
+        "cmd": "STOP"
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 314.482355618,
+      "packet": {
+        "cmd": "STOP"
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 314.482533616,
+      "packet": {
+        "cmd": "PING"
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 314.491674789,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 410205,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 80.0,
+          "stops": 147.0,
+          "hold_ms": 2231.0,
+          "exec_ms": 14658.0
+        }
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 314.491716668,
+      "packet": {
+        "cmd": "ACT",
+        "name": "probe",
+        "seq": 1,
+        "value": 100
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 314.491936905,
+      "packet": {
+        "cmd": "PING"
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 314.505411598,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 410214,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 81.0,
+          "stops": 147.0,
+          "hold_ms": 2231.0,
+          "exec_ms": 16997.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 314.536099588,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 410249,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 81.0,
+          "stops": 147.0,
+          "hold_ms": 2231.0,
+          "exec_ms": 16997.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 314.585946033,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 410300,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 81.0,
+          "stops": 147.0,
+          "hold_ms": 2231.0,
+          "exec_ms": 16997.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 314.63758636,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 410351,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 81.0,
+          "stops": 147.0,
+          "hold_ms": 2231.0,
+          "exec_ms": 16997.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 314.68793823,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 410402,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 81.0,
+          "stops": 147.0,
+          "hold_ms": 2231.0,
+          "exec_ms": 16997.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 314.739487978,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 410453,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 81.0,
+          "stops": 147.0,
+          "hold_ms": 2231.0,
+          "exec_ms": 16997.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 314.791815785,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 410504,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 81.0,
+          "stops": 147.0,
+          "hold_ms": 2231.0,
+          "exec_ms": 16997.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 314.843959826,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 410555,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 81.0,
+          "stops": 147.0,
+          "hold_ms": 2231.0,
+          "exec_ms": 16997.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 314.891976642,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 410606,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 81.0,
+          "stops": 147.0,
+          "hold_ms": 2231.0,
+          "exec_ms": 16997.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 314.945270364,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 410657,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 81.0,
+          "stops": 147.0,
+          "hold_ms": 2231.0,
+          "exec_ms": 16997.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 314.995339249,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 410708,
+        "ack": 1,
+        "wd_trips": 17,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 100.0,
+          "acts": 81.0,
+          "stops": 147.0,
+          "hold_ms": 2231.0,
+          "exec_ms": 16997.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 315.044966012,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 410759,
+        "wd_trips": 18,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 81.0,
+          "stops": 148.0,
+          "hold_ms": 502.0,
+          "exec_ms": 16997.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 315.096648695,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 410810,
+        "wd_trips": 18,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 81.0,
+          "stops": 148.0,
+          "hold_ms": 502.0,
+          "exec_ms": 16997.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 315.146597258,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 410860,
+        "wd_trips": 18,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 81.0,
+          "stops": 148.0,
+          "hold_ms": 502.0,
+          "exec_ms": 16997.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 315.196537552,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 410911,
+        "wd_trips": 18,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 81.0,
+          "stops": 148.0,
+          "hold_ms": 502.0,
+          "exec_ms": 16997.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 315.248078491,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 410962,
+        "wd_trips": 18,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 81.0,
+          "stops": 148.0,
+          "hold_ms": 502.0,
+          "exec_ms": 16997.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 315.300304938,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 411013,
+        "wd_trips": 18,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 81.0,
+          "stops": 148.0,
+          "hold_ms": 502.0,
+          "exec_ms": 16997.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 315.352031233,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 411064,
+        "wd_trips": 18,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 81.0,
+          "stops": 148.0,
+          "hold_ms": 502.0,
+          "exec_ms": 16997.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 315.404126141,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 411115,
+        "wd_trips": 18,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 81.0,
+          "stops": 148.0,
+          "hold_ms": 502.0,
+          "exec_ms": 16997.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 315.452993669,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 411166,
+        "wd_trips": 18,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 81.0,
+          "stops": 148.0,
+          "hold_ms": 502.0,
+          "exec_ms": 16997.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 315.502353442,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 411217,
+        "wd_trips": 18,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 81.0,
+          "stops": 148.0,
+          "hold_ms": 502.0,
+          "exec_ms": 16997.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 315.553711822,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 411268,
+        "wd_trips": 18,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 81.0,
+          "stops": 148.0,
+          "hold_ms": 502.0,
+          "exec_ms": 16997.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 315.604323721,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 411319,
+        "wd_trips": 18,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 81.0,
+          "stops": 148.0,
+          "hold_ms": 502.0,
+          "exec_ms": 16997.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 315.656263847,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 411370,
+        "wd_trips": 18,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 81.0,
+          "stops": 148.0,
+          "hold_ms": 502.0,
+          "exec_ms": 16997.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 315.707824608,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 411421,
+        "wd_trips": 18,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 81.0,
+          "stops": 148.0,
+          "hold_ms": 502.0,
+          "exec_ms": 16997.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 315.758332721,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 411472,
+        "wd_trips": 18,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 81.0,
+          "stops": 148.0,
+          "hold_ms": 502.0,
+          "exec_ms": 16997.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 315.810129024,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 411523,
+        "wd_trips": 18,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 81.0,
+          "stops": 148.0,
+          "hold_ms": 502.0,
+          "exec_ms": 16997.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 315.859882227,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 411574,
+        "wd_trips": 18,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 81.0,
+          "stops": 148.0,
+          "hold_ms": 502.0,
+          "exec_ms": 16997.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 315.911858755,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 411625,
+        "wd_trips": 18,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 81.0,
+          "stops": 148.0,
+          "hold_ms": 502.0,
+          "exec_ms": 16997.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 315.962920404,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 411676,
+        "wd_trips": 18,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 81.0,
+          "stops": 148.0,
+          "hold_ms": 502.0,
+          "exec_ms": 16997.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 316.012334138,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 411727,
+        "wd_trips": 18,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 81.0,
+          "stops": 148.0,
+          "hold_ms": 502.0,
+          "exec_ms": 16997.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 316.063438063,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 411778,
+        "wd_trips": 18,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 81.0,
+          "stops": 148.0,
+          "hold_ms": 502.0,
+          "exec_ms": 16997.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 316.115930268,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 411829,
+        "wd_trips": 18,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 81.0,
+          "stops": 148.0,
+          "hold_ms": 502.0,
+          "exec_ms": 16997.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 316.164530402,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 411879,
+        "wd_trips": 18,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 81.0,
+          "stops": 148.0,
+          "hold_ms": 502.0,
+          "exec_ms": 16997.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 316.216665831,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 411930,
+        "wd_trips": 18,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 81.0,
+          "stops": 148.0,
+          "hold_ms": 502.0,
+          "exec_ms": 16997.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 316.266467262,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 411981,
+        "wd_trips": 18,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 81.0,
+          "stops": 148.0,
+          "hold_ms": 502.0,
+          "exec_ms": 16997.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 316.318938727,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 412032,
+        "wd_trips": 18,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 81.0,
+          "stops": 148.0,
+          "hold_ms": 502.0,
+          "exec_ms": 16997.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 316.370070769,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 412083,
+        "wd_trips": 18,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 81.0,
+          "stops": 148.0,
+          "hold_ms": 502.0,
+          "exec_ms": 16997.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 316.421468812,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 412134,
+        "wd_trips": 18,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 81.0,
+          "stops": 148.0,
+          "hold_ms": 502.0,
+          "exec_ms": 16997.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 316.473404426,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 412185,
+        "wd_trips": 18,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 81.0,
+          "stops": 148.0,
+          "hold_ms": 502.0,
+          "exec_ms": 16997.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 316.521239901,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 412236,
+        "wd_trips": 18,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 81.0,
+          "stops": 148.0,
+          "hold_ms": 502.0,
+          "exec_ms": 16997.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 316.574626445,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 412287,
+        "wd_trips": 18,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 81.0,
+          "stops": 148.0,
+          "hold_ms": 502.0,
+          "exec_ms": 16997.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 316.623253925,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 412338,
+        "wd_trips": 18,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 81.0,
+          "stops": 148.0,
+          "hold_ms": 502.0,
+          "exec_ms": 16997.0
+        }
+      }
+    },
+    {
+      "direction": "rx",
+      "host_mono_s": 316.674448901,
+      "packet": {
+        "type": "STATE",
+        "node": "probe_esp32",
+        "uptime_ms": 412389,
+        "wd_trips": 18,
+        "lease_exp": 9,
+        "seq_drop": 36,
+        "sensors": {
+          "value": 0.0,
+          "acts": 81.0,
+          "stops": 148.0,
+          "hold_ms": 502.0,
+          "exec_ms": 16997.0
+        }
+      }
+    },
+    {
+      "direction": "tx",
+      "host_mono_s": 316.724699987,
+      "packet": {
+        "cmd": "STOP"
+      }
+    }
+  ],
+  "limitations": "hold_ms is callback timing using the slave clock, not motor stopping time. PASS verifies functional observations; timing excess must be reviewed separately. No independent cross-board timing measurement."
+}

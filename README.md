@@ -147,7 +147,19 @@ Repository features can be newer than published packages; see the
 
 ### 2. Declare an ESP32 node
 
-Install **SwarmNode** using Arduino IDE Library Manager, or use PlatformIO:
+**Option A — Arduino IDE Library Manager**
+
+1. Open Arduino IDE and select **Tools → Manage Libraries…**, or click the Library
+   Manager icon in the sidebar.
+2. Search for **`SwarmNode`**.
+3. Select **SwarmNode by Mohammed Raihan Soniwala**, choose **0.4.3**, and click
+   **Install**. Accept any required library dependencies when prompted.
+4. Open **File → Examples → SwarmNode → ESP32_LED_Test** to try the included example,
+   or use the sketch below.
+
+**Option B — PlatformIO**
+
+Add this to your project's `platformio.ini`:
 
 ```ini
 lib_deps =

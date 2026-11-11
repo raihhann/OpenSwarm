@@ -1,484 +1,317 @@
-# OpenSwarm — Software for Wireless Autonomous Robot Management
+<h1 align="center">OpenSwarm</h1>
+<p align="center"><strong>Small controllers. Shared intelligence. Robots built together.</strong></p>
+<p align="center">A common hardware interface for robots built from different controllers.<br/>Declare hardware on the board. Build robot behavior in Python.</p>
 
 <p align="center">
-  <a href="https://pypi.org/project/openswarm-master/"><img src="https://img.shields.io/pypi/v/openswarm-master?style=for-the-badge&label=PyPI%20openswarm-master&color=3775A9" alt="PyPI openswarm-master" /></a>
-  <a href="https://pypi.org/project/openswarm-slave/"><img src="https://img.shields.io/pypi/v/openswarm-slave?style=for-the-badge&label=PyPI%20openswarm-slave&color=0F766E" alt="PyPI openswarm-slave" /></a>
-  <a href="https://github.com/raihhann/OpenSwarm/tree/SwarmNode"><img src="https://img.shields.io/badge/Arduino%20Library-SwarmNode%20v0.4.3-00878F?style=for-the-badge&logo=arduino" alt="Arduino Library" /></a>
-  <img src="https://img.shields.io/badge/Architecture-Klipper--Style%20Remote%20HAL-0A66C2?style=for-the-badge" alt="Architecture" />
-  <img src="https://img.shields.io/badge/Slave%20Loop-100%25%20Empty-2EA043?style=for-the-badge" alt="Zero Slave Logic" />
+  <a href="https://pypi.org/project/openswarm-master/"><img src="https://img.shields.io/pypi/v/openswarm-master?style=for-the-badge&label=Python%20Master&color=3775A9" alt="Master package on PyPI" /></a>
+  <a href="https://pypi.org/project/openswarm-slave/"><img src="https://img.shields.io/pypi/v/openswarm-slave?style=for-the-badge&label=Linux%20Agent&color=0F766E" alt="Linux agent on PyPI" /></a>
+  <a href="https://github.com/raihhann/OpenSwarm/tree/SwarmNode"><img src="https://img.shields.io/badge/Arduino-SwarmNode%20v0.4.3-00878F?style=for-the-badge&logo=arduino" alt="SwarmNode Arduino library" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-7C3AED?style=for-the-badge" alt="MIT license" /></a>
 </p>
-
-> **Flash Once. Declare Pins. Never Reprogram the Robot Again.**  
-> **OpenSwarm** is a lightweight, hardware-agnostic **Distributed Hardware Abstraction Layer (Remote HAL)** for multi-robot swarms. Inspired by [Klipper](https://www.klipper3d.org/), OpenSwarm strips **100% of control logic out of the slave microcontrollers** (`void loop()` is completely empty) and moves all sensor processing, state machines, kinematics, and multi-robot coordination to a central **Linux Master** over low-latency Wi-Fi UDP.
-
-### Official Packages
-* **Central Master SDK (PyPI):** [`openswarm-master`](https://pypi.org/project/openswarm-master/) — install via `pip install openswarm-master`
-* **Linux SBC Slave Agent (PyPI):** [`openswarm-slave`](https://pypi.org/project/openswarm-slave/) — install via `pip install openswarm-slave` (for **Arduino UNO Q**, **Portenta X8**, **Raspberry Pi**, **Jetson**, and **Linux PCs**)
-* **Arduino / PlatformIO Slave Library:** [`SwarmNode`](https://github.com/raihhann/OpenSwarm/tree/SwarmNode) — install in Arduino IDE or PlatformIO (`raihann/SwarmNode`) for Wi-Fi boards: **ESP32**, **RP2040** (Nano RP2040 Connect / Pico W), **Arduino UNO R4 WiFi / UNO WiFi Rev2**, and **Arduino Nano 33 IoT**
-
-## Live Hardware Demo: Linux Master Controlling ESP32 Slave Over Wi-Fi
 
 <p align="center">
-  <a href="assets/demo_esp32_led.mp4">
-    <img src="assets/demo_esp32_led.gif" alt="OpenSwarm Live Demo — Linux Master Controlling ESP32 Slave Over Wi-Fi" width="760" />
-  </a>
-  <br />
-  <em>Click the animation above (or <a href="assets/demo_esp32_led.mp4">open <code>assets/demo_esp32_led.mp4</code></a>) to watch the full demo video.</em>
+  <a href="#meet-hydraarm">HydraArm showcase</a> &nbsp;·&nbsp;
+  <a href="#quick-start">Quick start</a> &nbsp;·&nbsp;
+  <a href="docs/framework_walkthrough.md">Framework walkthrough</a> &nbsp;·&nbsp;
+  <a href="#the-vision-from-connected-hardware-to-cooperative-robots">The vision</a>
 </p>
 
-In the demo above:
-1. The **ESP32 Slave (`esp32_node`)** only declares its Wi-Fi credentials, Node ID, and GPIO Pin `2` (`"led"`) inside `setup()`. Its `void loop()` is **100% empty**.
-2. A background FreeRTOS daemon on Core 0 automatically advertises the node on UDP Port `4211` and streams live 20 Hz Wi-Fi RSSI telemetry on UDP Port `4210`.
-3. The **Linux Master (`openswarm-master`)** connects over Wi-Fi (`192.168.0.118`), receives live 20 Hz sensor telemetry, and toggles GPIO `2` in real time.
-
-## Overall Idea: Small Controllers, Shared Intelligence
-
-Small, low-cost controllers can be valuable building blocks for robots even when
-memory and processing power are limited. They can read sensors, drive actuators,
-and fit robots with tight weight, power, and cost budgets. A small robot does not
-necessarily need a Linux computer of its own to contribute to a larger system.
-
-Many microcontrollers cannot host a full ROS 2 stack directly. micro-ROS enables
-ROS integration on supported microcontrollers, so this is not a claim that all
-low-cost boards are incompatible with ROS. OpenSwarm explores a lightweight
-remote-hardware approach: keep capable, affordable controllers close to the
-hardware and share higher-level computation and coordination through a common
-interface.
-
-This makes it possible to build applications around a mixture of controllers,
-change application behavior on the master, and coordinate hardware across several
-nodes without placing the same software stack on every robot.
-
-## Long-Term Vision: Two Robots or a Swarm Completing Shared Tasks
-
-The longer-term vision is a communication protocol through which **two robots,
-or an entire swarm, can exchange information and work together toward a shared
-goal**, even when they use different controllers and hardware.
-
-Robots should be able to communicate what they can do, what they observe, whether
-they are ready, which part of a task they are handling, and when that work is
-complete. For example, two robots could coordinate moving an object, while a
-larger swarm could divide work and share progress across a common task.
-
-The aim is to grow from a common hardware interface into a common language for
-cooperative robot behavior, with a central coordinator available where useful.
-
-## What Exists Today and What Comes Next
-
-**Today, coordination is master-mediated.** OpenSwarm implements discovery,
-master-to-node commands, and node-to-master sensor telemetry. A Python application
-on the master can coordinate multiple nodes and heterogeneous controllers. The
-application defines how those nodes form robots and how the robots work together;
-hardware access and driver execution remain local to each node.
-
-**Direct peer-to-peer task coordination is future work.** Robot-level capability
-messages, shared observations, task negotiation, work allocation, and progress
-exchange between robots are the next protocol direction. The current remote HAL
-provides the foundation; decentralized swarm coordination is not yet implemented.
-
-
 ---
 
-## Repository Layout and Development
+## Build the robot around the task
 
-The framework lives in `master/` and `slaves/`; applications live in `projects/`.
-Automated tests remain in `tests/`, and reproducible benchmark tools remain in
-`benchmarks/`. These are part of maintaining the framework, not disposable files.
+A robot should be able to use the controller that fits each job: an ESP32 close to
+an actuator, an RP2040 reading local hardware, and a Raspberry Pi exposing Linux
+devices. Connecting those pieces should not mean writing a different robot
+application for every board.
 
-Saved hardware campaigns are organized under
-[`benchmarks/hardware/results/`](benchmarks/hardware/results/README.md), with
-historical files preserved. New local run outputs go into its ignored `local/`
-subfolder. Python virtual environments are local installations and are not tracked.
+**OpenSwarm brings them behind one named-resource interface.** Its distributed
+hardware abstraction layer connects a Python coordinator to microcontroller and
+Linux agents over UDP. Boards declare their sensors, actuators and buses; the host
+application decides what the robot does.
 
-Use `main` for tested framework changes, `dev` for integration work, and
-short-lived `feature/<topic>` branches for individual changes. `SwarmNode` is the
-generated Arduino-library distribution branch. See the
-[development workflow](docs/development.md) for testing and merge commands.
+> **Declare the hardware. Compose the robot. Evolve its behavior.**
+>
+> With an unchanged hardware declaration, you can change host-side behavior without
+> reflashing every controller. Drivers, local execution and supervision stay on the nodes.
 
-## Local 3D Demo (No Hardware)
+| What you want to do | What OpenSwarm provides |
+| --- | --- |
+| Combine different controllers | A common command and telemetry contract for MCU and Linux agents |
+| Keep device firmware focused | Typed resource declarations and a reusable node runtime |
+| Iterate on robot behavior | A Python SDK, discovery, direct-IP connections and a command-line interface |
+| Coordinate multiple nodes | Sequenced commands, clock mapping and optional future execution timestamps |
+| Extend attached hardware | Built-in registrations, I2C/SPI/UART access and custom callbacks |
+| Separate application progress from connectivity | Per-command leases alongside transport keepalives and watchdogs |
 
-Install the master package with its optional demo dependency, then run
-[`launch_demo.bat`](./launch_demo.bat) on Windows or
-[`launch_demo.sh`](./launch_demo.sh) on Linux/macOS:
+Small, affordable controllers matter because weight, power, cost and space are
+real design constraints. They can remain useful sensing and actuation resources
+while a shared computer handles planning, perception or interaction. OpenSwarm
+explores that division through a focused remote-hardware interface.
 
-```bash
-python -m pip install -e "master[demo]"
-```
-
-The demo serves on `http://localhost:8080` and starts virtual ESP32/RP2040 nodes.
-The UDP control protocol is unauthenticated and unencrypted; use real hardware
-only on a trusted, isolated network. The browser demo binds to localhost only.
-
----
-
-## Why OpenSwarm? (How It Complements ROS 2)
-
-Building a heterogeneous micro-robot swarm (mixing small Wi-Fi Arduinos, 32-bit ESP32/RP2040 boards, and Linux SBCs) with standard tools hits three major walls:
-
-| Challenge | Standard `micro-ROS` / `ros2_control` | **OpenSwarm (`SwarmNode` + `SwarmMaster`)** |
-| :--- | :--- | :--- |
-| **Small / Low-RAM Boards** | Struggles on small Arduinos (requires a micro-ROS agent, RTOS and plenty of RAM) | **Runs on small Wi-Fi boards** — from a 6 KB RAM UNO WiFi Rev2 to ESP32/RP2040 and Linux SBCs |
-| **Where Does Logic Live?** | Distributed across C/C++ firmware on every robot (requires recompiling & reflashing to change behavior) | **0% control logic on Slaves.** `void loop()` is empty; 100% of logic runs in Python on the Linux Master |
-| **Adding Sensors / Buses** | Requires custom C++ `hardware_interface` plugins, URDFs, and firmware rebuilds | **1-line pin/bus declaration** (`L298N`, `Ultrasonic`, `MPU6050`, `SPI`, `I2C`, `UART`, or Custom Hook) |
-| **Safety** | Manual implementation per node | Built-in **500 ms software transport watchdog** on every Slave automatically stops motors if Master disconnects |
-
----
-
-## System Architecture
+## One framework, multiple architectures
 
 ```mermaid
 flowchart TB
-    subgraph Master["LINUX MASTER NODE (Ubuntu Laptop / Desktop / Server)"]
-        M1["SwarmMaster Runtime (UDP 4210 / 4211)"]
-        M2["100% of Control Logic, Vision, Kinematics & Swarm Coordination"]
-        M1 <--> M2
+    APP["ROBOT APPLICATION<br/>HydraArm · your robot · multi-node experiments"]
+    HOST["PYTHON COORDINATOR<br/>SwarmMaster + RemoteSwarmNode<br/>Discovery · named resources · clock mapping"]
+    APP <-->|"Commands / sensor samples"| HOST
+
+    subgraph AGENTS["LOCAL EXECUTION   ONE RUNTIME PER CONTROLLER"]
+        direction LR
+        ESP["ESP32<br/>SwarmNode C++<br/>Local HAL"]
+        RP["RP2040<br/>SwarmNode C++<br/>Local HAL"]
+        PI["Linux / Raspberry Pi<br/>Python agent<br/>Hardware backend"]
     end
 
-    subgraph Slaves["ZERO-TOUCH SLAVE NODES (void loop() is 100% Empty)"]
-        S1["ESP32 Slave\n(SwarmNode C++ Library)\nL298N, Sonar, IMU, UART/SPI/I2C"]
-        S2["UNO R4 WiFi / Nano 33 IoT / RP2040\n(SwarmNode C++ Library)\nMotors, Encoders, Servos"]
-        S3["Linux SBC Slave\n(UNO Q / Portenta X8 / RPi)\nCameras, GPIO, CAN"]
-    end
+    HOST <-->|"UDP / JSON"| ESP
+    HOST <-->|"UDP / JSON"| RP
+    HOST <-->|"UDP / JSON"| PI
 
-    M1 <==>|"Wi-Fi UDP (<2ms)\n20Hz Telemetry + Commands"| S1
-    M1 <==>|"Wi-Fi UDP\n20Hz Telemetry + Commands"| S2
-    M1 <==>|"Wi-Fi / Ethernet UDP\n20Hz Telemetry + Video"| S3
+    classDef app fill:#f1edff,stroke:#8b5cf6,color:#24164a,stroke-width:2px;
+    classDef host fill:#e8f1ff,stroke:#3b82f6,color:#102b53,stroke-width:2px;
+    classDef node fill:#e8f7f3,stroke:#0f9d82,color:#123b32,stroke-width:1.5px;
+    class APP app;
+    class HOST host;
+    class ESP,RP,PI node;
 ```
 
----
+The application addresses **node + resource name**, not a remote board's pin map.
+Each agent owns its hardware descriptors, local driver operations, pending commands
+and supervision state. MCU sketches can leave `loop()` empty; the library services
+the runtime through its platform task or loop hook.
 
-## How It Works: Side-by-Side Code
+**OpenSwarm is the framework. HydraArm is one robot built with it.**
 
-### 1A. On a Microcontroller Slave (`ESP32` / `RP2040` — Flashed Once)
-```cpp
-#include <SwarmNode.h> // Or: #include <OpenSwarm.h>
+## Meet HydraArm
 
-SwarmNode node("esp32_node");
+### Four joints. Three controller architectures. One application.
 
-void setup() {
-    // 1. Connect to Wi-Fi
-    node.connectWiFi("YOUR_WIFI_SSID", "YOUR_WIFI_PASSWORD");
+[**HydraArm**](projects/hydra_arm/README.md) is a distributed robotic-arm application
+that puts the framework's central idea to work: one robot can combine heterogeneous
+controllers while exposing a unified joint interface to its operator.
 
-    // 2. Declare attached hardware pins ONLY — Zero Control Logic!
-    node.registerDigitalOutput("led", 2);                 // Onboard LED on GPIO 2
-    node.registerL298N("drive", 14, 27, 26, 32, 25, 33);  // Dual H-Bridge Motor Driver
-    node.registerUltrasonic("front_sonar", 5, 18);        // HC-SR04 Ultrasonic Sensor
-    node.registerOnboardIMU("imu");                       // Built-in 6-Axis IMU (on Nano RP2040 Connect)
-    node.registerWiFiRSSI("rssi");                        // Onboard Wi-Fi RSSI (dBm)
+| Joint | Controller | OpenSwarm node |
+| --- | --- | --- |
+| Base yaw | ESP32 | `arm_base_esp32` |
+| Elbow pitch | RP2040 | `arm_elbow_rp2040` |
+| Shoulder pitch + gripper | Raspberry Pi | `arm_shoulder_gripper_rpi` |
 
-    // 3. Start the background RTOS daemon or board-specific loop hook
-    node.start();
-}
+HydraArm includes a **browser-based 3D joint-control studio**, a **terminal CLI**,
+**episode recording/playback**, and **virtual arm nodes** for trying the application
+before connecting the physical controllers. The browser model visualizes commanded
+joint targets; it is not independent position feedback.
 
-void loop() {
-    // 100% EMPTY! All control happens remotely from the Linux Master.
-}
+<p align="center">
+  <a href="projects/hydra_arm/Demo.mp4"><img src="https://img.shields.io/badge/▶_Watch-HydraArm_Demo-7C3AED?style=for-the-badge" alt="Watch the HydraArm demo video" /></a>
+  &nbsp;
+  <a href="projects/hydra_arm/README.md"><img src="https://img.shields.io/badge/Explore-Wiring_+_Setup-00878F?style=for-the-badge" alt="HydraArm wiring and setup guide" /></a>
+</p>
+
+**[Watch the project video →](projects/hydra_arm/Demo.mp4)** ·
+[Browse the host application](projects/hydra_arm/master/) ·
+[Browse the controller declarations](projects/hydra_arm/slaves/)
+
+The arm demonstrates composition, not a requirement to use OpenSwarm. The same
+resource model can support other robot applications, with their own calibration,
+control logic and hardware validation.
+
+## See the basic hardware loop
+
+The ESP32 LED demonstration shows the smallest version of the workflow: a Linux
+host controls a named GPIO output and reads Wi-Fi RSSI from a real node.
+
+<p align="center">
+  <a href="assets/demo_esp32_led.mp4"><img src="assets/demo_esp32_led.gif" alt="Linux host controlling an ESP32 LED and receiving telemetry over Wi-Fi" width="760" /></a>
+  <br/>
+  <em>Real ESP32 demo   click the animation to open the full video.</em>
+</p>
+
+## Quick start
+
+### 1. Install the host SDK
+
+In your Python environment:
+
+```bash
+python -m pip install openswarm-master
+openswarm scan
 ```
 
-### 1B. On a Linux SBC Slave (`Arduino UNO Q` / `Portenta X8` / `Raspberry Pi` / `Jetson`)
-```python
-from openswarm_slave import SwarmNode
+Packages are independently installable:
+[**Python host SDK**](https://pypi.org/project/openswarm-master/) ·
+[**Linux agent**](https://pypi.org/project/openswarm-slave/) ·
+[**Arduino library**](https://github.com/raihhann/OpenSwarm/tree/SwarmNode).
+Repository features can be newer than published packages; see the
+[release guide](docs/releases.md) when choosing a version.
 
-node = SwarmNode("portenta_x8")
+### 2. Declare an ESP32 node
 
-# Declare attached hardware pins/sensors ONLY — Zero Control Logic!
-node.register_digital_output("led", 2)
-node.register_l298n("drive", 14, 27, 26, 32, 25, 33)
-node.register_cpu_temp("cpu_temp")
-node.register_system_load("sys_load")
-node.register_wifi_rssi("rssi")
+Install **SwarmNode** using Arduino IDE Library Manager, or use PlatformIO:
 
-node.start()
-```
-
-### 2. On the Linux Master (`Python` — Where 100% of Control Lives)
-```python
-import time
-from openswarm import SwarmMaster
-
-master = SwarmMaster()
-
-# Auto-discovers 'esp32_node' on Wi-Fi (or pass ip='192.168.0.118')
-bot = master.connect("esp32_node")
-
-while True:
-    # Read live 20 Hz sensor telemetry streamed from the Slave
-    dist = bot.read("front_sonar")
-    rssi = bot.read("rssi")
-    print(f"Distance: {dist:.1f} cm | RSSI: {rssi:.0f} dBm")
-
-    # Send real-time actuator & pin commands over UDP
-    if dist > 20.0 or dist < 0:
-        bot.digital_write("led", 1)
-        bot.drive("drive", left=180, right=180)
-    else:
-        bot.digital_write("led", 0)
-        bot.stop()
-
-    time.sleep(0.05)
-```
-
----
-
-## Supported Hardware, Sensors, Actuators & Bus Protocols
-
-OpenSwarm supports both dedicated 1-line robotics drivers and **universal bus passthroughs (`SPI`, `I2C`, `UART`, and Custom Callbacks)** so you are never limited by pre-baked sensors:
-
-### Actuators
-| API Method | Hardware / Protocol | Master Python Call |
-| :--- | :--- | :--- |
-| `registerL298N(name, ena, in1, in2, enb, in3, in4)` | 6-pin Dual H-Bridge DC Motor Driver | `bot.drive(name, left, right)` |
-| `registerDRV8833(name, in1, in2, in3, in4)` | 4-pin Dual H-Bridge DC Motor Driver | `bot.drive(name, left, right)` |
-| `registerMotor2Pin(name, pinA, pinB)` | Single Reversible DC Motor | `bot.drive(name, speed)` |
-| `registerServo(name, pin)` | 50 Hz Hobby Servo (`0°–180°`) | `bot.servo(name, angle)` |
-| `registerStepper(name, stepPin, dirPin, enPin)` | Stepper Driver (`A4988`, `DRV8825`, `TMC2209`) | `bot.stepper(name, steps, delay_us)` |
-| `registerDigitalOutput(name, pin)` / `registerPin()` | GPIO Output (LED, Relay, Solenoid, Buzzer) | `bot.digital_write(name, 1)` |
-| `registerPWMOutput(name, pin)` | Variable PWM Output (`0–255`) | `bot.pwm_write(name, duty)` |
-| `registerDACOutput(name, pin)` | True Analog DAC Output (`GPIO25`/`26`) | `bot.set_actuator(name, val)` |
-| `registerI2CActuator(name, i2cAddr, sda, scl)` | Generic I2C Register Writer (`PCA9685`, `MCP23017`) | `bot.write_reg(name, reg, val)` |
-| `registerSPIActuator(name, cs, sck, miso, mosi, hz)` | Generic SPI Register Writer | `bot.write_reg(name, reg, val)` |
-| `registerUARTActuator(name, rx, tx, baud, uartNum)` | Generic Hardware UART Transmitter (`RS485`, Serial) | `bot.send_bus(name, data="...")` |
-| `registerCustomActuator(name, callback)` | Custom User C++ Callback (`loop()` stays empty!) | `bot.send_bus(name, data, v1, v2)` |
-
-### Sensors & Transceivers
-| API Method | Hardware / Protocol | Streamed Telemetry (`bot.read(name)`) |
-| :--- | :--- | :--- |
-| `registerUltrasonic(name, trig, echo)` | `HC-SR04` / `JSN-SR04T` Ultrasonic | Distance in `cm` (`float`) |
-| `registerVL53L0X(name, i2cAddr, sda, scl)` | `VL53L0X` I2C Laser ToF Rangefinder | Distance in `mm` (`float`) |
-| `registerQuadratureEncoder(name, pinA, pinB)` | Hardware Interrupt Wheel Encoder | Cumulative ticks (`float`) |
-| `registerTachometer(name, pin)` | Optical / Hall Speed Sensor | Pulse count (`float`) |
-| `registerMPU6050(name, i2cAddr, sda, scl)` | 6-Axis I2C IMU (`MPU6050` Accel + Gyro) | `[ax, ay, az, gx, gy, gz]` (`g`, `deg/s`) |
-| `registerLSM6DSOX(name, i2cAddr, sda, scl)` / `registerOnboardIMU(name)` | 6-Axis I2C IMU (Onboard Nano RP2040 Connect / `LSM6DS`) | `[ax, ay, az, gx, gy, gz]` (`g`, `deg/s`) |
-| `registerINA219(name, i2cAddr, sda, scl)` | I2C Bus Voltage & Current Monitor | `[voltage_V, current_mA]` |
-| `registerDHT(name, pin, model)` | `DHT11` / `DHT22` Temp & Humidity | `[temp_C, humidity_%]` |
-| `registerBumper(name, pin, pullup)` | Contact Limit Switch / Microswitch | `1.0` (pressed) or `0.0` |
-| `registerIRSensor(name, pin)` / `registerDigitalInput()` | IR Obstacle, Line, PIR, Hall Sensor | `1.0` or `0.0` |
-| `registerAnalogInput(name, pin)` / `registerBatteryVoltage()` | 12-bit ADC (Battery, FSR, LDR, Pot) | Raw ADC `0–4095` |
-| `registerTouchPin(name, touchPin)` | Capacitive Touch Pin | Touch reading |
-| `registerGenericI2C(name, addr, reg, len, sda, scl)` | **Any I2C Sensor** (`BME280`, `BH1750`, etc.) | Register value (`1–4` bytes) |
-| `registerSPISensor(name, cs, reg, len, sck, miso, mosi)` | **Any SPI Sensor** (`MAX6675`, `AS5048A`, etc.) | Register value (`1–4` bytes) |
-| `registerUARTSensor(name, rx, tx, baud, uartNum)` | **Any UART Sensor / Transceiver** (`LiDAR`, `GPS`, `RS485`) | Parsed float stream |
-| `registerCustomSensor(name, callback)` | **Any 3rd-Party Arduino Library** | 20 Hz callback value(s) |
-| `registerWiFiRSSI(name)` | Onboard Wi-Fi Signal Strength | Signal in `dBm` |
-
----
-
-## Installation & Quick Start
-
-### Part 1: Install the `SwarmNode` Slave Library (Arduino IDE & PlatformIO)
-
-#### Option A: Arduino IDE Library Manager
-1. In Arduino IDE, open **Tools -> Manage Libraries...** (or click the Library Manager icon).
-2. Search for **`SwarmNode`**, select the library by Mohammed Raihan Soniwala, and click **Install**. Choose the latest version when prompted.
-3. Open **File -> Examples -> SwarmNode -> ESP32_LED_Test**, enter your Wi-Fi credentials, and click **Upload**.
-
-You can also install it manually from the [**`SwarmNode` branch**](https://github.com/raihhann/OpenSwarm/tree/SwarmNode): download the branch ZIP, then choose **Sketch -> Include Library -> Add .ZIP Library...**.
-
-#### Option B: PlatformIO (`platformio.ini`)
 ```ini
 lib_deps =
     raihann/SwarmNode@^0.4.3
 ```
 
----
+Upload this example after setting your Wi-Fi credentials. GPIO 2 is the LED on
+some ESP32 boards; choose an output pin appropriate for your exact board.
 
-### Part 2: Install the `openswarm-slave` Package (PyPI — For Linux SBC Slaves)
+```cpp
+#include <SwarmNode.h>
 
-[**View `openswarm-slave` on PyPI →**](https://pypi.org/project/openswarm-slave/)
+SwarmNode node("esp32_node");
+
+void setup() {
+    if (!node.connectWiFi("YOUR_WIFI_SSID", "YOUR_WIFI_PASSWORD")) return;
+    node.registerDigitalOutput("led", 2);
+    node.registerWiFiRSSI("rssi");
+    node.start();
+}
+
+void loop() {}  // The node runtime handles communication and local execution.
+```
+
+### 3. Control the named resource from Python
+
+Connect the host and board to the same reachable local network:
+
+```python
+import time
+from openswarm import SwarmMaster
+
+master = SwarmMaster()
+node = None
+try:
+    node = master.connect("esp32_node")  # Or supply ip="192.168.x.x".
+    for _ in range(5):
+        node.digital_write("led", 1)
+        time.sleep(0.5)
+        node.digital_write("led", 0)
+        time.sleep(0.5)
+    print("Wi-Fi RSSI:", node.read("rssi"))
+finally:
+    try:
+        if node is not None:
+            node.digital_write("led", 0)
+    finally:
+        master.close()
+```
+
+For a Linux agent, install `openswarm-slave` on the target machine; physical GPIO
+requires the appropriate optional hardware dependencies and backend. Follow the
+[Linux agent guide](slaves/linux/README.md). For more MCU examples, see
+[the library examples](slaves/arduino/SwarmNode/examples/).
+
+### Try the applications without hardware
+
+From a repository checkout:
 
 ```bash
-# Install on Arduino UNO Q, Portenta X8, Raspberry Pi, Jetson, or Linux PC:
-pip install openswarm-slave
-
-# Launch a Linux Slave node directly from terminal:
-openswarm-slave --id portenta_x8 --led-pin 2
+python -m pip install -e "master[demo]"
 ```
 
----
-
-### Part 3: Install the `openswarm-master` Package (PyPI — Central Master)
-
-[**View `openswarm-master` on PyPI →**](https://pypi.org/project/openswarm-master/)
+**HydraArm:** run the virtual nodes in one terminal and the studio in another:
 
 ```bash
-# Install directly from official PyPI:
-pip install openswarm-master
+python projects/hydra_arm/master/virtual_arm_slaves.py
 ```
 
-#### Test from Your Linux Terminal:
 ```bash
-# 1. Auto-discover all active Slave nodes on Wi-Fi:
-openswarm scan
-
-# 2. Blink GPIO 2 ("led") on your ESP32 and stream live 20 Hz RSSI telemetry:
-openswarm blink esp32_node --ip 192.168.0.118
+python projects/hydra_arm/master/hydra_arm_studio.py
 ```
 
----
+Open **http://localhost:8090**. The optional fleet demo is available through
+[`launch_demo.bat`](launch_demo.bat) or [`launch_demo.sh`](launch_demo.sh) at
+**http://localhost:8080**. These virtual environments demonstrate application and
+protocol behavior, not physical robot motion.
 
-## Repository Structure
+## Engineering behind the interface
 
-```text
-OpenSwarm/
-├── assets/
-│   ├── demo_esp32_led.gif          # Inline hardware demo animation
-│   └── demo_esp32_led.mp4          # Full hardware demo video
-├── slaves/
-│   ├── arduino/
-│   │   └── SwarmNode/              # C++ Arduino Slave Library (synced to `SwarmNode` branch)
-│   │       ├── library.properties
-│   │       ├── keywords.txt
-│   │       ├── src/
-│   │       │   ├── SwarmNode.h
-│   │       │   ├── OpenSwarm.h
-│   │       │   ├── SwarmNode.cpp
-│   │       │   ├── SwarmTypes.h
-│   │       │   └── hal/
-│   │       │       ├── hal_esp32.h     # ESP32 / S2 / S3 / C3 HAL
-│   │       │       ├── hal_rp2040.h    # Arduino Nano RP2040 Connect / Pico W HAL
-│   │       │       ├── hal_uno.h       # Arduino UNO R4 WiFi / UNO WiFi Rev2 HAL
-│   │       │       └── hal_nano.h      # Arduino Nano 33 IoT HAL
-│   │       └── examples/
-│   │           ├── ESP32_LED_Test/
-│   │           ├── ESP32_SlaveNode/
-│   │           ├── ESP32_CustomProtocols/
-│   │           ├── RP2040_LED_Test/
-│   │           ├── RP2040_SlaveNode/
-│   │           ├── UNO_SlaveNode/
-│   │           └── Nano_SlaveNode/
-│   └── linux/                      # Linux SBC Slave Agent (UNO Q, Portenta X8, Raspberry Pi)
-├── master/                         # Central Linux Master Python SDK & CLI (`openswarm-master`)
-│   ├── pyproject.toml
-│   ├── openswarm/
-│   │   ├── web_server.py           # Optional browser 3D fleet demo
-│   │   └── virtual_slave.py        # Protocol-compatible hardware emulator
-│   └── examples/
-│       └── blink_esp32_led.py
-└── 3Dmodels/                       # Printable robot chassis, wheels, camera stand & renders
-```
+| Capability in the repository | What it means |
+| --- | --- |
+| Passive discovery + explicit activation | Inspect discovered nodes without automatically commanding every device |
+| Sequence ordering | Reject stale or duplicate actuator commands within a session |
+| Clock-scheduled commands | Translate a common host target into node-local execution times |
+| Application command leases | Expire an actuator command independently of ongoing PING traffic |
+| Sensor freshness + diagnostics | Inspect sample age, errors and selected runtime counters |
+| HAL/backend boundaries | Keep platform-specific device operations behind a shared interface |
+| Offline benchmarks + regression tests | Exercise protocol, timing, simulation and fault behavior reproducibly |
 
----
+Scheduling is conditional on arrival time, clock estimation and local servicing;
+it is not a hard real-time guarantee. The current execution queue is one pending
+slot per actuator, not a buffered trajectory planner. Receive acknowledgements
+are not proof of physical execution. See the [wire protocol](docs/protocol.md).
 
-## Framework architecture and current behavior
+The repository contains HAL implementations for ESP32, RP2040, UNO R4 WiFi,
+UNO WiFi Rev2 and Nano 33 IoT, plus a Linux agent. Recorded live-board campaigns
+use **ESP32-WROOM-32, Arduino Nano RP2040 Connect and Raspberry Pi**. Implementation
+coverage and physical validation are tracked separately; drivers and capabilities
+vary by board/backend. Boards without the required network support need a port.
 
-The master owns application planning; nodes own hardware access. Keep timing-sensitive
-drivers and fault supervision local to the node rather than relying on Python or Wi-Fi
-timing. An empty sketch `loop()` is a convenience, not a real-time guarantee.
+For declarations covering motors, servos, GPIO, PWM, sensors, buses and custom
+devices, see the [hardware registration reference](docs/hardware_reference.md).
+OpenSwarm is a focused remote-HAL approach; it does not claim to replace ROS 2 or
+micro-ROS, or that inexpensive controllers cannot participate in those ecosystems.
 
-* **Discovery is passive.** `discover_all()`, `nodes`, and `get()` observe nodes without
-  sending keepalives or STOP. `connect()` waits for actual telemetry; `subscribe(id)`
-  explicitly starts telemetry without blocking. Sending an actuator command also
-  activates that node. `close()` and `stop_all()` affect active nodes only; use
-  `stop_all(include_discovered=True)` only when that broader action is intended.
-  This is local session bookkeeping, not exclusive ownership between masters.
-* **Freshness is explicit.** `is_online` requires a received packet; elapsed times use
-  a monotonic clock. Use `node.read("sensor", default=None, max_age=0.25)` to reject
-  stale telemetry. `node.sensor_errors` reports Linux sensor callback failures;
-  failed readings are omitted rather than retained in the next sample.
-* **Drivers expose limitations.** Linux supports dependency injection through
-  `SwarmNode(..., hal=...)`, with `LinuxHAL(backend="sim")` for hardware-free tests.
-  `hal.capabilities` and HELLO metadata expose the selected backend and supported
-  output types. Linux stepper registration raises `NotImplementedError`; the
-  sysfs backend rejects PWM/servo operations instead of simulating their success.
-* **HydraArm has one joint model.** Studio, CLI, episode validation, and generated
-  browser metadata use `hydra_arm_model.py`. Angles remain command estimates, not
-  measured positions. Studio retains explicitly requested offline targets until a
-  node appears; the CLI reports unsent commands instead of claiming they were queued.
-* **Simulation is explicit.** The fleet server defaults to nodes advertising
-  `virtual: true`. `python -m openswarm.web_server --hardware` enables manual hardware
-  commands and disables the simulated autonomous planner. Virtual flags are descriptive,
-  not authenticated. Displayed positions are simulated and latency is unmeasured.
+## The vision: from connected hardware to cooperative robots
 
-The version-1 wire contract and compatibility limits are documented in
-[`docs/protocol.md`](docs/protocol.md). Python packages remain independently
-installable with no mandatory core dependencies.
+**Today:** a central application composes nodes, sends commands and receives
+telemetry. Those nodes may belong to one robot, as in HydraArm, or to several
+robots coordinated by an application.
 
-### Development checks and releases
+**The direction:** a common language through which two robots or a swarm can
+exchange capabilities, observations, task assignments and progress to complete a
+shared task. Imagine robots dividing an inspection route or coordinating a shared
+object-handling task while retaining controllers suited to their individual roles.
+
+That robot-to-robot task protocol is future work. The current framework provides
+the hardware-access foundation and master-mediated communication; decentralized
+negotiation, allocation and peer-to-peer execution are not implemented capabilities.
+
+## Explore, reproduce, contribute
+
+| Start here | What you will find |
+| --- | --- |
+| [Framework walkthrough](docs/framework_walkthrough.md) | How declarations, commands and telemetry fit together |
+| [HydraArm](projects/hydra_arm/README.md) | Application setup, joint allocation and wiring |
+| [Master SDK](master/README.md) / [Linux agent](slaves/linux/README.md) | Package-specific usage |
+| [Hardware API](docs/hardware_reference.md) / [protocol](docs/protocol.md) | Registrations, wire format and execution semantics |
+| [Software benchmarks](benchmarks/REPORT.md) | Host measurements, declared simulations and reproducibility details |
+| [Hardware validation](benchmarks/hardware/README.md) / [saved campaigns](benchmarks/hardware/results/README.md) | Probe procedures and retained observations |
+| [Development workflow](docs/development.md) / [releases](docs/releases.md) | Branches, tests and package publishing |
+| [Roadmap and backlog](docs/roadmap.md) | Controller coverage, reliability, safety and authentication work |
 
 ```bash
 python -m pip install -e "master[demo]" -e slaves/linux
 python -m unittest discover -s tests -t . -v
+python benchmarks/run_benchmarks.py
 ```
 
-The suite uses loopback/simulated hardware. If `g++` is available, it also compiles
-and runs the actual firmware parser and runtime with simulated hardware on the host.
-Regressions cover delayed PING/STOP, sequence wraparound, queued-command preservation,
-and session recovery. This does not replace board builds.
-CI runs tests and builds both Python packages on Windows/Linux with Python 3.8/3.12.
-Arduino synchronization waits for these checks and never rewrites an existing version
-tag. Python publication requires an explicit `master-v<version>` or `slave-v<version>`
-tag matching that package's version and a configured PyPI token; main pushes do not
-publish Python packages automatically.
-See the [release instructions](docs/releases.md) for PyPI tags, PlatformIO publishing,
-and installation of the prepared Python 0.2.0 / Arduino 0.4.3 releases.
+Software benchmarks distinguish host processing from simulated timing and live
+hardware observations. They do not establish physical Wi-Fi capacity or complete
+MCU memory consumption. Hardware campaigns retain failures as well as successes.
 
-Run `python benchmarks/run_benchmarks.py` for offline preliminary validation and
-generated Markdown/LaTeX tables in [`benchmarks/REPORT.md`](benchmarks/REPORT.md),
-with measurements and source fingerprints in [`benchmarks/results.json`](benchmarks/results.json).
-These are host measurements and declared simulations, not physical Wi-Fi or robot results.
-The [Stage 1 readiness assessment](docs/stage1_readiness.md) separates supported claims
-from the remaining research and hardware validation work.
-For live-board measurements, use the [hardware procedure and report template](benchmarks/hardware/README.md).
-For the scheduling/clock patch, follow the [bounded hardware rerun](docs/hardware_rerun.md).
-For a command-by-command explanation, read [how the framework works](docs/framework_walkthrough.md).
+Core code lives in `master/` and `slaves/`, applications in `projects/`, tests in
+`tests/`, and validation tools/evidence in `benchmarks/`. Use **`dev`** for ongoing
+work and **`main`** for reviewed changes; **`SwarmNode`** is the generated Arduino
+distribution branch. Contributions that improve ports, drivers, measurement or
+robot applications are welcome through issues and pull requests.
 
-## TODO: safety and authentication (deferred)
-
-Unchecked items remain open work, not implemented guarantees. Framework reliability is the
-current priority; no authentication or independent hardware safety system has been
-added in this iteration.
-
-- [x] Application command leases: implemented and tested in software, including
-  expiry while transport heartbeats continue. Physical stopping behavior still needs testing.
-- [ ] Independent local supervision and nonblocking stepper/UART/sensor scheduling;
-  the existing 500 ms watchdog is a software transport timeout, not a hardware guarantee.
-- [ ] Per-actuator stop/hold/release callbacks, including custom actuators, servos,
-  PWM/raw pins, and loaded-arm behavior. Stopping playback freezes command targets;
-  it is not a physical emergency-stop guarantee.
-- [ ] Authenticated controller sessions, exclusive ownership, replay protection,
-  sequence/expiry fields, and confirmed delivery for critical commands.
-- [ ] WebSocket origin checks and session authentication; binding localhost alone
-  does not authenticate a browser client.
-- [ ] Operator-disconnect/input leases and stale-sensor interlocks.
-- [ ] Loaded-arm mechanical limits, calibrated pulse ranges, power-budget checks,
-  and physical emergency-stop validation.
-
-## TODO: remaining framework and hardware work
-
-- [ ] Board compile matrix and hardware verification for ESP32/S2/S3/C3, Nano RP2040
-  Connect, Pico W, UNO R4 WiFi, UNO WiFi Rev2, and Nano 33 IoT. The S2/C3 UART reference
-  is now guarded but those targets have not been built in this iteration.
-- [ ] Timer-driven servo output on UNO/Nano and servo-library fallback paths;
-  explicit rejection when ESP32/RP2040 servo slots are exhausted.
-- [ ] Complete UNO/Nano UART implementation and encoder slots beyond two; deduplicate
-  common HAL driver code after the board compilation matrix is established.
-- [ ] Real VL53L0X initialization/ranging and INA219 shunt calibration; sensor-specific
-  polling periods and explicit hardware read failures instead of plausible fallback values.
-- [ ] Correct multi-interface/subnet discovery on Linux and reconnection across address
-  changes; negotiate protocol capabilities and complete telemetry/metadata capacity reporting.
-- [ ] Joint-position feedback/calibration, synchronized multi-node trajectories, and
-  real localization before physical autonomous fleet operation.
-- [ ] Complete arm emulator state/STOP/watchdog behavior and browser interaction testing.
-- [ ] Vendor browser assets for offline use and extract embedded UI code into packaged assets.
-- [ ] Version CAD source deliberately (`3Dmodels/` is currently ignored), avoid deleting
-  unrelated STL files, and verify solid geometry, fit, and slicer-derived print times.
-
-## Project Roadmap
-
-- [x] **Step 1 (ESP32):** ESP32 Slave Library (`hal_esp32.h` — Full Sensor, Actuator, Bus & Custom Driver Suite)
-- [x] **Master Core:** Linux Master Python SDK & CLI (`openswarm-master`) + Live Hardware Verification
-- [x] **Step 2 (RP2040):** RP2040 Slave Support (`hal_rp2040.h` — Arduino Nano RP2040 Connect / Pico W + Onboard 6-Axis IMU)
-- [x] **Step 3 (Linux Slave):** Linux Slave Agent (`slaves/linux/` — `openswarm-slave` for Arduino UNO Q, Portenta X8, Raspberry Pi, Jetson, and Linux PC)
-- [x] **Step 4 (Arduino UNO):** Arduino UNO Slave Support (`hal_uno.h` — UNO R4 WiFi, UNO WiFi Rev2)
-- [x] **Step 5 (Arduino Nano):** Arduino Nano Slave Support (`hal_nano.h` — Nano 33 IoT)
-- [ ] **Step 6:** Flagship Application — **AI Vision Sorter** (laptop camera + trained AI pushes 3D-printed objects Left / Right using zero-logic robots)
-
-> [!NOTE]
-> Boards **without native Wi-Fi** (UNO R3, UNO R4 Minima, Classic Nano, Nano Every) are intentionally not supported yet.
+> [!IMPORTANT]
+> Use physical nodes on a trusted, isolated network. The current UDP protocol is
+> unauthenticated and unencrypted. Software watchdogs and command leases request
+> type-specific stopping; they are not an independent emergency-stop system.
+> Mechanical limits, actuator power and physical stopping need application-specific validation.
 
 ---
 
-## Author & License
+## Built by
 
-Developed by **Mohammed Raihan Soniwala** ([GitHub @raihhann](https://github.com/raihhann)).  
-Released under the **MIT License**.
+**Mohammed Raihan Soniwala** · [GitHub @raihhann](https://github.com/raihhann) ·
+[Email](mailto:raihann.eu@gmail.com)
+
+Interested in the framework, a robotics application, or an engineering collaboration?
+Explore HydraArm, try the examples, or get in touch.
+
+Released under the **[MIT License](LICENSE)**.

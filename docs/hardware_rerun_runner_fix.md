@@ -13,17 +13,17 @@ the tests and does not establish either passing or failing remaining RP2040 beha
 The corrected detector clears its arming state at the epoch/case boundary and
 still rejects genuine subsequent ACK loss. Regression tests cover both paths.
 
-Keep the existing hardware-result folder unchanged. Run just three new RP2040
+Keep the existing benchmarks/hardware/results/campaign-02 folder unchanged. Run just three new RP2040
 trials, using the same probe firmware and active Linux laptop environment:
 
 ```bash
 cd ~/OpenSwarm
 git pull
-mkdir -p hardware-result-rp2040-fix
+mkdir -p benchmarks/hardware/results/local/rp2040-fix
 for run in 01 02 03; do
   python benchmarks/hardware/validate_node.py \
     --ip 192.168.0.170 \
-    --output "hardware-result-rp2040-fix/rp2040-run${run}.json"
+    --output "benchmarks/hardware/results/local/rp2040-fix/rp2040-run${run}.json"
 done
 ```
 
@@ -44,7 +44,7 @@ python benchmarks/hardware/sync_trial.py \
   --node probe_rp2040=192.168.0.170 \
   --node probe_rpi=192.168.0.234 \
   --poses 200 --lead-ms 60 --seed 2028 \
-  --output hardware-result-rp2040-fix/sync-lead60-seed2028.json
+  --output benchmarks/hardware/results/local/rp2040-fix/sync-lead60-seed2028.json
 ```
 
 Confirm all three IPs first. The updated sync script saves each node's last

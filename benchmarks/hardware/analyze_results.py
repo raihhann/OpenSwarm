@@ -25,6 +25,20 @@ def mapped_execution(node):
     return uptime + delta - node["clock_offset_snapshot_ms"]
 
 
+def premature_reset_alarm(data, case):
+    """An ACK cannot disappear in a new case before any ACK was observed there."""
+    if case.get("error_kind") != "unexpected_session_reset":
+        return False
+    phase = case.get("phase")
+    observed = [p["packet"] for p in data["packet_log"] if p.get("phase") == phase and
+                p["direction"] == "rx" and p["packet"].get("type") == "STATE"]
+    reset = [p["packet"] for p in data["packet_log"] if p.get("phase") == phase + "/reset" and
+             p["direction"] == "rx" and p["packet"].get("type") == "STATE"]
+    return bool(observed and reset and not any(p.get("ack") for p in observed) and
+                any(p.get("ack") for p in reset) and not reset[-1].get("ack") and
+                reset[-1].get("wd_trips", 0) > reset[0].get("wd_trips", 0))
+
+
 def verify_case_evidence(data):
     """Check cumulative raw callback/counter evidence, separately from PASS flags."""
     packets = data["packet_log"]
@@ -56,7 +70,14 @@ def verify_case_evidence(data):
             findings.append(name + ": callback count inconsistent")
         drop_increment = 2 if name == "delayed_ping_and_stale_stop" else 1 if name in (
             "sequence_wraparound", "scheduled_preservation_and_stop_cancellation") else 0
-        if not states or max(p.get("seq_drop", 0) for p in states) != base.get("seq_drop", 0) + drop_increment:
+        drop_states = states
+        if name == "scheduled_preservation_and_stop_cancellation" and data.get("schema_version", 1) >= 2:
+            # Delivery retries after the verified stale injection may legitimately
+            # add duplicate drops. Audit the injection before ACT(seq=11).
+            retry_start = next((i for i in range(start + 1, end) if packets[i]["direction"] == "tx" and
+                                packets[i]["packet"].get("cmd") == "ACT" and packets[i]["packet"].get("seq") == 11), end)
+            drop_states = [p["packet"] for p in packets[start:retry_start] if p["direction"] == "rx" and p["packet"].get("type") == "STATE"]
+        if not drop_states or max(p.get("seq_drop", 0) for p in drop_states) != base.get("seq_drop", 0) + drop_increment:
             findings.append(name + ": stale-drop count inconsistent")
         counter = "lease_exp" if name.startswith("lease_") else "wd_trips" if name.startswith("watchdog_") else None
         if counter and states[-1].get(counter, 0) != base.get(counter, 0) + 1:
@@ -89,7 +110,9 @@ def analyze(directory):
                 statuses[case["status"]] += 1
                 by_case[case["name"]][case["status"]] += 1
                 if case["status"] != "PASS":
-                    failure = dict(file=path.name, case=case["name"], error=case.get("error"))
+                    failure = dict(file=path.name, case=case["name"], error=case.get("error"),
+                                   error_kind=case.get("error_kind"), phase=case.get("phase"),
+                                   premature_reset_detector=premature_reset_alarm(data, case))
                     packets = data["packet_log"]
                     first = next((i for i, p in enumerate(packets) if p["direction"] == "tx" and "at_ms" in p["packet"]), None)
                     if first is not None and case["name"].startswith("scheduled_"):
@@ -116,11 +139,14 @@ def analyze(directory):
         sidecar = path.with_suffix(".jsonl")
         raw_lines = [json.loads(line) for line in sidecar.read_text(encoding="utf-8").splitlines() if line.strip()] if sidecar.exists() else None
         sync = dict(status=data.get("status", "completed"), error=data.get("error"), modes={},
-                    jsonl_identical_to_records=raw_lines == data.get("records"),
+                    jsonl_identical_to_records=raw_lines == data["records"] if "records" in data else None,
+                    partial_only="records" not in data, master_version=data.get("master_version"),
                     lead_ms=data.get("lead_ms"), seed=data.get("seed"), order=data.get("order"),
                     injected_jitter=data.get("injected_jitter"), stored_summary_mismatches=[])
+        records = data.get("records", raw_lines or [])
+        sync["record_count"] = len(records)
         for mode in ("scheduled", "immediate"):
-            rows = [r for r in data.get("records", []) if r["mode"] == mode]
+            rows = [r for r in records if r["mode"] == mode]
             if not rows:
                 continue
             skews, per_node = [], defaultdict(lambda: defaultdict(list))
@@ -137,10 +163,14 @@ def analyze(directory):
                     arrays["offset_ms"].append(node["clock_offset_snapshot_ms"])
                     arrays["rtt_ms"].append(node["rtt_ms"])
                     arrays["mapped_delay_ms"].append(estimate - row["host_dispatch_mono_s"] * 1000)
+                    if "execution_master_interval_ms" in node:
+                        arrays["causal_interval_violations"].append(node["execution_master_interval_ms"][1] < row["host_dispatch_mono_s"] * 1000)
+                    live = node.get("live_snapshot", {})
+                    arrays["watchdog_counter"].append(live.get("wd_trips", 0))
             measured = stats(skews)
             stored = data.get("estimated_skew_ms", {}).get(mode, {})
             for key in ("mean", "p50", "p95", "p99", "maximum"):
-                if key not in stored or abs(stored[key] - measured[key]) > 1e-6:
+                if "records" in data and (key not in stored or abs(stored[key] - measured[key]) > 1e-6):
                     sync["stored_summary_mismatches"].append(mode + "/" + key)
             node_summary = {}
             for name, arrays in per_node.items():
@@ -150,7 +180,9 @@ def analyze(directory):
                     incorrect_values=sum(value != row["pose"] + 1 for value, row in zip(arrays["values"], rows)),
                     offset_span_ms=max(arrays["offset_ms"]) - min(arrays["offset_ms"]),
                     rtt_ms=stats(arrays["rtt_ms"]), mapped_delay_ms=stats(arrays["mapped_delay_ms"]),
-                    negative_mapped_delays=sum(v < 0 for v in arrays["mapped_delay_ms"]))
+                    negative_mapped_delays=sum(v < 0 for v in arrays["mapped_delay_ms"]),
+                    causal_interval_violations=sum(arrays["causal_interval_violations"]),
+                    watchdog_counter_span=max(arrays["watchdog_counter"]) - min(arrays["watchdog_counter"]))
             span = rows[-1]["host_dispatch_mono_s"] - rows[0]["host_dispatch_mono_s"]
             sync["modes"][mode] = dict(estimated_skew_ms=measured, nodes=node_summary,
                 unique_pose_indices=len({r["pose"] for r in rows}), dispatch_span_s=span,
@@ -167,66 +199,75 @@ def analyze(directory):
 
 
 def report(result):
-    lines = ["# Hardware evidence review", "",
-        "This review preserves the supplied raw files and includes every recorded failure. Measurements are probe callback/telemetry observations on user-reported physical boards, not independently measured GPIO edges or motor motion.", "",
-        "## Trial inventory and functional outcomes", "",
-        "| Board | Run files | Case PASS | Case FAIL | Scheduled test PASS / attempted |", "| --- | --- | --- | --- | --- |"]
+    lines = ["# Hardware results review", "",
+        "All supplied raw inputs are preserved. This report distinguishes recorded outcomes, test-instrument defects, partial trials and independent physical evidence.", "",
+        "## Board runs", "",
+        "| Board | Run files | Recorded PASS | Recorded FAIL | Runner false-alarm aborts |",
+        "| --- | --- | --- | --- | --- |"]
     for name, board in result["boards"].items():
-        scheduled = board["cases"].get("scheduled_preservation_and_stop_cancellation", {})
-        lines.append(f"| {name} | {board['files']} | {board['statuses'].get('PASS', 0)} | {board['statuses'].get('FAIL', 0)} | {scheduled.get('PASS', 0)} / {sum(scheduled.values())} |")
-    lines += ["", "The delayed-PING/stale-STOP, wraparound, lease, no-lease control and transport-loss cases each passed all supplied runs on all three boards. This supports those specific observed behaviors, not a general zero-loss or safety certification claim.", "",
-        "Raw callback-count, stale-drop-count and stop-counter checks were also compared against case boundaries in every passing trace. Discrepancies (empty means none): " +
-        str({name: findings for board in result["boards"].values() for name, findings in board["raw_consistency_checks"].items() if findings}), "",
-        "## Timing from the on-board probe", "",
-        "Percentiles use linear interpolation at `(n-1)*q`. Small n=10 timing samples are descriptive; tails are not statistically established. Failed scheduled trials are excluded only from timing summaries, and remain in the failure denominator above.", "",
-        "| Board | Measurement (ms) | n | Min | Mean | p50 | p95 | Max |", "| --- | --- | --- | --- | --- | --- | --- | --- |"]
-    labels = {"lease_150ms_with_5hz_ping": "150 ms lease: active interval",
+        aborted = sum(f.get("premature_reset_detector", False) for f in result["failures"] if f["file"].startswith(name + "-"))
+        lines.append(f"| {name} | {board['files']} | {board['statuses'].get('PASS', 0)} | {board['statuses'].get('FAIL', 0)} | {aborted} |")
+    discrepancies = {name: findings for board in result["boards"].values()
+                     for name, findings in board["raw_consistency_checks"].items() if findings}
+    lines += ["", "Raw passing-case callback/drop/stop-counter consistency discrepancies: " + str(discrepancies), "",
+        "## RP2040 failure diagnosis", ""]
+    alarms = [f for f in result["failures"] if f.get("premature_reset_detector")]
+    if alarms:
+        lines += [f"**{len(alarms)} failures match a reproduced runner defect.** During the intentional watchdog-reset phase, an old positive ACK set Session.armed. The old runner did not clear it on the new watchdog epoch. The first active-phase STATE without ACK then triggered unexpected_session_reset even though no positive ACK had yet been observed in that case.", "",
+            "This is a false reset alarm in the test runner. The premature cleanup STOP then aborted the experiment, so the remaining actuator behavior is untested. Keep each original FAIL and mark it instrument-aborted; do not convert it to PASS or infer a bad RP2040 firmware implementation.", "",
+            "The fix clears arming on a watchdog transition and on entry to a new case, and only arms after a positive ACK in the active phase. Regression coverage also verifies a genuine ACK disappearance after that point still fails.", ""]
+    else:
+        lines += ["No supplied failure matched the premature-reset-detector signature.", ""]
+    for failure in result["failures"]:
+        classification = "runner false alarm; rerun required" if failure.get("premature_reset_detector") else "unresolved"
+        lines.append(f"- `{failure['file']}` / `{failure['case']}`: {classification}. Recorded error: {failure['error']}")
+    lines += ["", "## Local probe timing", "",
+        "| Board | Callback measurement (ms) | n | Min | Mean | p50 | p95 | Max |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- |"]
+    labels = {"lease_150ms_with_5hz_ping": "150 ms lease",
+              "lease_450ms_with_5hz_ping": "450 ms lease with intervening PINGs",
               "watchdog_without_ping": "Transport loss: active interval",
               "scheduled_preservation_and_stop_cancellation": "Scheduled callback lateness"}
     for board, data in result["boards"].items():
         for key, label in labels.items():
-            m = data["timing_ms"].get(key, {})
-            if m.get("n"):
-                values = " | ".join(f"{m[k]:.3f}" for k in ("minimum", "mean", "p50", "p95", "maximum"))
-                lines.append(f"| {board} | {label} | {m['n']} | {values} |")
-    lines += ["", "`hold_ms` starts at the ACT callback. The watchdog deadline starts at the last received transport packet, including the immediate PING sent after ACT. Therefore hold_ms minus 500 is **not** a measured watchdog enforcement overshoot. Separately record the last receive timestamp before diagnosing poll latency from this difference.", "",
-        "The lease is 150 ms and periodic PING starts about 200 ms after activation (plus the immediate observation PING). Add a 450 ms lease with 5 Hz PING, or a 150 ms lease with 20 Hz PING, to directly stress repeated heartbeat non-renewal before expiry. The present control still shows transport keepalives maintain a no-lease output for over two seconds.", "",
-        "## Recorded scheduled-test failures", ""]
-    for failure in result["failures"]:
-        lines += [f"- **{failure['file']}**: `{failure['case']}`; {failure['error']}. RX ack states: {failure.get('rx_ack_values')}; watchdog counter states: {failure.get('watchdog_values')}."]
-    lines += ["", "In the supplied ESP32 run07 and Pi run03 traces, the first scheduled command executes, the second ACT(seq=11) is logged as sent, but ack stays 10 and that callback is not observed; a later watchdog trip occurs. This is consistent with an unreceived/unapplied command, but sender logs alone cannot establish where it was lost or rejected.", "",
-        "In RP2040 run04, ack reaches 11, STOP(seq=7) is sent, and a subsequent STATE omits ack while the watchdog counter is still unchanged. The output is zero and the queued callback does not appear. This unexpected receive-watermark transition is unresolved; it must not be called a clean pass or automatically attributed to Wi-Fi. Endpoint changes, interference, exact firmware identity and packet arrival need checking.", "",
-        "The runner is single-shot and does not maintain keepalives during its one-second predicate waits; after a missing command/response it can itself allow the 500 ms watchdog to expire. These watchdog trips do not independently establish a watchdog defect. Preserve failures and distinguish delivery failures, observation failures, session resets and incorrect actuation in the next run.", "",
-        "## Three-board synchronization estimate", ""]
+            measured = data["timing_ms"].get(key, {})
+            if measured.get("n"):
+                values = " | ".join(f"{measured[k]:.3f}" for k in ("minimum", "mean", "p50", "p95", "maximum"))
+                lines.append(f"| {board} | {label} | {measured['n']} | {values} |")
+    lines += ["", "Only completed passing cases contribute timings. Interrupted RP2040 cases are absent from the relevant distributions. These are local callback intervals/quantized timestamps, not measured GPIO edges, motor stopping times or established tail guarantees. Percentiles use linear interpolation at (n-1)*q.", "",
+        "Watchdog hold_ms begins at ACT execution, while its deadline begins at the last received transport packet, including the following PING. Subtracting 500 from hold_ms does not isolate watchdog enforcement overshoot.", "",
+        "## Synchronization sessions", "",
+        "| File | Outcome | Saved poses | Lead ms | Seed | Order |",
+        "| --- | --- | --- | --- | --- | --- |"]
+    sync_errors = []
     for name, sync in result["sync"].items():
-        lines += [f"Input: `{name}`; seed={sync['seed']}, lead={sync['lead_ms']} ms, order={sync['order']}, injected jitter={sync['injected_jitter']}.", "",
-            f"JSON/JSONL equality: **{sync['jsonl_identical_to_records']}**. Raw skew fields were recomputed; stored-summary mismatches: {sync['stored_summary_mismatches']}.", "",
-            "| Mode | Poses | Mean estimated skew ms | p50 | p95 | p99 | Max | Observed Hz |", "| --- | --- | --- | --- | --- | --- | --- | --- |"]
+        outcome = "FAIL / partial" if sync["partial_only"] or sync["status"] == "FAIL" else "complete"
+        lines.append(f"| {name} | {outcome} | {sync['record_count']} | {sync['lead_ms']} | {sync['seed']} | {sync['order']} |")
+        if sync.get("error"):
+            sync_errors += [f"Failure retained in `{name}`: {sync['error']}. The partial JSONL establishes only the completed poses; the failed pose/node cannot be identified conclusively from an exception file that lacks final per-node diagnostics."]
+    lines += [""] + sync_errors + ["", "Completed sessions are not substitutes for a reliability denominator: the failed attempt remains recorded. Repeated seed/lead values are replicated sessions of that configuration, not the planned different-seed/30-vs-60-ms sweep.", "",
+        "| Complete file | Mode | n | Estimated mean skew ms | p50 | p95 | p99 | Max |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- |"]
+    for name, sync in result["sync"].items():
+        if sync["partial_only"] or sync["status"] == "FAIL":
+            continue
         for mode, data in sync["modes"].items():
-            m = data["estimated_skew_ms"]
-            values = " | ".join(f"{m[k]:.3f}" for k in ("mean", "p50", "p95", "p99", "maximum"))
-            lines.append(f"| {mode} | {m['n']} | {values} | {data['observed_interval_rate_hz']:.3f} |")
-        lines += ["", f"Estimated mean reduction: **{sync.get('estimated_mean_reduction_pct', 0):.2f}%**. This is an exploratory comparison from one sequential run, not a paired randomized or multi-seed statistical result.", "",
-            "| Mode / node | Counter discontinuities | Wrong values | Offset span ms | Negative mapped execution delays |", "| --- | --- | --- | --- | --- |"]
-        for mode, data in sync["modes"].items():
-            for node, m in data["nodes"].items():
-                lines.append(f"| {mode} / {node} | {m['nonunit_counter_steps']} | {m['incorrect_values']} | {m['offset_span_ms']:.3f} | {m['negative_mapped_delays']} |")
-    lines += ["", "**Do not present these numbers as independently measured physical skew.** Some mapped immediate callbacks precede the host dispatch time, an impossible physical latency that exposes clock-mapping bias. The same estimated offsets are used to schedule commands and to map execution back to master time, so the scheduled metric is partly self-referential. Directly validate offset error and physical edges before claiming physical synchronization improvement or an accuracy bound.", "",
-        "The supplied synchronization trace has complete counters/values for 200 poses per mode per controller, but no execution-edge instrument, controlled delay distribution, repeated seeds, simultaneous scheduling-time offsets, source/build fingerprints or kernel packet capture. It cannot validate an injected-jitter horizon boundary, a sub-1.5 ms physical skew, or task-level swarm coordination.", "",
-        "## Provenance and missing material", "",
-        "Single-board files record the sending laptop's OS, revision and worktree status. That is not the Pi's OS/backend identity or proof of which MCU firmware was flashed. No completed operator report, sanitized flashed sketches, compiler/core/library versions, ELF/map files, build RAM/flash totals, actual GPIO backend, pin/wiring details, AP/load conditions or power-cycle labels were supplied. Fill those gaps using REPORT_TEMPLATE.md. The synchronization file itself does not record package versions or source revision.", "",
-        "## What this supports for Stage 1", "",
-        "- Preliminary live-board callback evidence for the tested sequence ordering and application-lease behavior, with measured local timing and an explicit CUSTOM-actuator scope.",
-        "- A complete live SDK comparison showing lower estimated clock-mapped skew in one scheduled run; retain the estimator caveat and three functional failures.",
-        "- Evidence of open reliability/measurement questions worth investigating. Not a claim that the framework, physical safety, middleware superiority or research novelty is established.", "",
-        "## Next actions", "",
-        "1. Supply the missing equipment/build/install information. Confirm MCU firmware and installed Python package identities.",
-        "2. Investigate the three failures, especially RP2040's unexpected ack loss without a watchdog increment. Add source endpoints/session IDs and last-receive/execute timestamps to experiment logs before drawing a root-cause conclusion.",
-        "3. Repeat lease tests with heartbeats occurring repeatedly before expiry. Measure watchdog timing relative to last received keepalive, separately from actuator activation.",
-        "4. Obtain an independent common-clock GPIO measurement (instrument or separately calibrated observer). Repeat multiple seeds and alternate/interleave conditions; preserve every failure and distinguish actual delay injection from incidental Wi-Fi jitter.",
-        "5. Test ordinary registered actuator paths and actual application hardware separately; this fixture exercises CUSTOM callbacks, not all HAL drivers.", "",
-        "## Reproduce this audit", "", "```console", "python benchmarks/hardware/analyze_results.py --input hardware-result", "```", "",
-        "REVIEW.json contains recomputed statistics, failure diagnostics and SHA-256 hashes for every supplied raw input. Raw files are not rewritten.", ""]
+            measured = data["estimated_skew_ms"]
+            values = " | ".join(f"{measured[k]:.3f}" for k in ("mean", "p50", "p95", "p99", "maximum"))
+            lines.append(f"| {name} | {mode} | {measured['n']} | {values} |")
+    all_nodes = [node for sync in result["sync"].values() for mode in sync["modes"].values() for node in mode["nodes"].values()]
+    lines += ["", f"Recomputed causal-interval violations in saved poses: **{sum(n['causal_interval_violations'] for n in all_nodes)}**. Non-unit callback-counter steps: **{sum(n['nonunit_counter_steps'] for n in all_nodes)}**. Wrong recorded values: **{sum(n['incorrect_values'] for n in all_nodes)}**. Summed per-mode watchdog-counter spans: **{sum(n['watchdog_counter_span'] for n in all_nodes)}**.", "",
+        "Complete-file JSON and JSONL agree: " + str(all(s["jsonl_identical_to_records"] for s in result["sync"].values() if not s["partial_only"])) +
+        ". Stored numerical summary mismatches: " + str({name: s["stored_summary_mismatches"] for name, s in result["sync"].items() if s["stored_summary_mismatches"]}) + ".", "",
+        "The saved v2 sessions use master 0.2.1 and frozen pretrial calibration. Zero causal-interval violations means the observations are consistent with the declared conditional clock bounds. Negative point estimates can remain inside those bounds. This does not establish true clock-offset error or independent physical synchronization accuracy; drift assumptions and external GPIO-edge timing still need validation.", "",
+        "## Minimal next step", "",
+        "Update validate_node.py and rerun the three RP2040 board trials into a NEW folder. Leave ESP32/Pi firmware and all published packages unchanged; their completed board tests need not be repeated for this runner-only fix. Retain the 12 interrupted cases as such.", "",
+        "Add one three-board synchronization session at lead 60 ms, seed 2028, 200 poses per mode. Seed 2028 reverses the mode order used in the supplied sessions. This adds a missing condition and a fresh completion check without repeating the entire campaign. Retain the earlier failed attempt. Recurrent timeouts require per-node failure diagnostics before attributing a cause.", "",
+        "## Evidence boundaries and missing material", "",
+        "The dataset contains probe CUSTOM callbacks and software timing estimates. Ordinary actuator stop behavior, actual motor/servo dynamics, complete target RAM/flash/stack measurements, authenticated sessions and peer-to-peer robot coordination are not validated here. Supply board/core/firmware build identities, installed package paths, Pi GPIO backend, pin/wiring and AP/load conditions using REPORT_TEMPLATE.md.", "",
+        "The previous ten-runs-per-board dataset is not present in this supplied directory. This review describes only the current input inventory and does not silently merge earlier evidence.", "",
+        "## Reproduce", "", "```console", "python benchmarks/hardware/analyze_results.py --input hardware-result", "```", "",
+        "REVIEW.json includes per-file diagnostics, recomputed descriptive statistics and SHA-256 hashes of all raw inputs. Raw JSON/JSONL files are not rewritten.", ""]
     return "\n".join(lines)
 
 

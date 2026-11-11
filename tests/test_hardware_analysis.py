@@ -2,10 +2,21 @@
 from copy import deepcopy
 import unittest
 
-from benchmarks.hardware.analyze_results import mapped_execution, stats, verify_case_evidence
+from benchmarks.hardware.analyze_results import mapped_execution, stats, verify_case_evidence, premature_reset_alarm
 
 
 class HardwareAnalysisTests(unittest.TestCase):
+    def test_classifies_aborted_detector_without_calling_hardware_pass(self):
+        case = dict(error_kind="unexpected_session_reset", phase="sequence_wraparound")
+        def rx(phase, ack, watchdog):
+            return dict(direction="rx", phase=phase, packet=dict(type="STATE", ack=ack, wd_trips=watchdog))
+        data = dict(packet_log=[rx("sequence_wraparound/reset", 11, 1),
+                                rx("sequence_wraparound/reset", None, 2),
+                                rx("sequence_wraparound", None, 2)])
+        self.assertTrue(premature_reset_alarm(data, case))
+        data["packet_log"].insert(2, rx("sequence_wraparound", 32766, 2))
+        self.assertFalse(premature_reset_alarm(data, case))
+
     def trace(self):
         def tx(**packet):
             return dict(direction="tx", packet=packet)

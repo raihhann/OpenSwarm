@@ -50,13 +50,16 @@ class Session:
         if previous and packet["uptime_ms"] < previous["uptime_ms"]:
             return None  # Preserve raw packet but do not satisfy predicates with reordered telemetry.
         self.last_state = packet
+        watchdog_changed = previous and packet.get("wd_trips", 0) > previous.get("wd_trips", 0)
+        if watchdog_changed:
+            self.armed = False
         if not self.allow_reset and previous:
-            if self.keepalive and packet.get("wd_trips", 0) > previous.get("wd_trips", 0):
+            if self.keepalive and watchdog_changed:
                 raise ObservationError("watchdog_during_schedule", "Watchdog tripped despite scheduling keepalives")
             if (self.armed and not packet.get("ack") and
                     packet.get("wd_trips", 0) == previous.get("wd_trips", 0)):
                 raise ObservationError("unexpected_session_reset", "ACK disappeared without a watchdog event; check endpoints, competing masters and firmware")
-        if packet.get("ack"):
+        if packet.get("ack") and not self.allow_reset:
             self.armed = True
         return packet
 
@@ -100,6 +103,8 @@ class Session:
         self.wait(lambda p: p.get("wd_trips", 0) > before.get("wd_trips", 0), timeout=1.5)
         self.send({"cmd": "PING"})
         initial = self.wait(lambda p: not p.get("ack") and p["sensors"]["value"] == 0)
+        self.armed = False  # ACKs from the previous epoch must not arm this case.
+        self.retries = 0
         self.phase = name
         self.allow_reset = name == "watchdog_without_ping"
         return initial

@@ -1,5 +1,9 @@
 # Bounded rerun after the scheduling/clock patch
 
+After the first v2 campaign, a runner flag-lifecycle bug was identified in the
+RP2040 failures. For the next step, use the smaller [targeted runner-fix rerun](hardware_rerun_runner_fix.md)
+instead of repeating the whole campaign below. This preserves earlier results.
+
 The old 32 raw files and hardware-result/REVIEW.* remain historical evidence.
 Do not overwrite them. This patch fixes reproduced runner/estimator weaknesses;
 the precise causes of all three physical failures are not proven from old logs.

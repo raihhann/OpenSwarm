@@ -1,0 +1,1813 @@
+{
+  "kind": "audit of supplied hardware callback/telemetry evidence",
+  "boards": {
+    "esp32": {
+      "files": 3,
+      "statuses": {
+        "PASS": 21
+      },
+      "cases": {
+        "delayed_ping_and_stale_stop": {
+          "PASS": 3
+        },
+        "sequence_wraparound": {
+          "PASS": 3
+        },
+        "scheduled_preservation_and_stop_cancellation": {
+          "PASS": 3
+        },
+        "lease_150ms_with_5hz_ping": {
+          "PASS": 3
+        },
+        "lease_450ms_with_5hz_ping": {
+          "PASS": 3
+        },
+        "no_lease_with_5hz_ping": {
+          "PASS": 3
+        },
+        "watchdog_without_ping": {
+          "PASS": 3
+        }
+      },
+      "timing_ms": {
+        "scheduled_preservation_and_stop_cancellation": {
+          "n": 3,
+          "minimum": 0,
+          "mean": 0.3333333333333333,
+          "p50": 0.0,
+          "p95": 0.8999999999999999,
+          "p99": 0.98,
+          "maximum": 1
+        },
+        "lease_150ms_with_5hz_ping": {
+          "n": 3,
+          "minimum": 150.0,
+          "mean": 150.33333333333334,
+          "p50": 150.0,
+          "p95": 150.9,
+          "p99": 150.98,
+          "maximum": 151.0
+        },
+        "lease_450ms_with_5hz_ping": {
+          "n": 3,
+          "minimum": 450.0,
+          "mean": 450.0,
+          "p50": 450.0,
+          "p95": 450.0,
+          "p99": 450.0,
+          "maximum": 450.0
+        },
+        "watchdog_without_ping": {
+          "n": 3,
+          "minimum": 502.0,
+          "mean": 503.6666666666667,
+          "p50": 504.0,
+          "p95": 504.9,
+          "p99": 504.98,
+          "maximum": 505.0
+        }
+      },
+      "raw_consistency_checks": {
+        "esp32-run01.json": [],
+        "esp32-run02.json": [],
+        "esp32-run03.json": []
+      },
+      "provenance": [
+        {
+          "file": "esp32-run01.json",
+          "revision": "b4f10f0bc2d73f8f224adbf9f9c52dbdf84cf782",
+          "host": "Linux-7.0.0-30-generic-x86_64-with-glibc2.39",
+          "worktree_status": " D hardware-result/REVIEW.json\n D hardware-result/REVIEW.md\n D hardware-result/esp32-run01.json\n D hardware-result/esp32-run02.json\n D hardware-result/esp32-run03.json\n D hardware-result/esp32-run04.json\n D hardware-result/esp32-run05.json\n D hardware-result/esp32-run06.json\n D hardware-result/esp32-run07.json\n D hardware-result/esp32-run08.json\n D hardware-result/esp32-run09.json\n D hardware-result/esp32-run10.json\n M hardware-result/rp2040-run01.json\n M hardware-result/rp2040-run02.json\n M hardware-result/rp2040-run03.json\n D hardware-result/rp2040-run04.json\n D hardware-result/rp2040-run05.json\n D hardware-result/rp2040-run06.json\n D hardware-result/rp2040-run07.json\n D hardware-result/rp2040-run08.json\n D hardware-result/rp2040-run09.json\n D hardware-result/rp2040-run10.json\n D hardware-result/rpi-run01.json\n D hardware-result/rpi-run02.json\n D hardware-result/rpi-run03.json\n D hardware-result/rpi-run04.json\n D hardware-result/rpi-run05.json\n D hardware-result/rpi-run06.json\n D hardware-result/rpi-run07.json\n D hardware-result/rpi-run08.json\n D hardware-result/rpi-run09.json\n D hardware-result/rpi-run10.json\n D hardware-result/sync-lead30-seed2027.json\n D hardware-result/sync-lead30-seed2027.jsonl\n?? 0.1_hardware-result/\n"
+        },
+        {
+          "file": "esp32-run02.json",
+          "revision": "b4f10f0bc2d73f8f224adbf9f9c52dbdf84cf782",
+          "host": "Linux-7.0.0-30-generic-x86_64-with-glibc2.39",
+          "worktree_status": " D hardware-result/REVIEW.json\n D hardware-result/REVIEW.md\n M hardware-result/esp32-run01.json\n D hardware-result/esp32-run02.json\n D hardware-result/esp32-run03.json\n D hardware-result/esp32-run04.json\n D hardware-result/esp32-run05.json\n D hardware-result/esp32-run06.json\n D hardware-result/esp32-run07.json\n D hardware-result/esp32-run08.json\n D hardware-result/esp32-run09.json\n D hardware-result/esp32-run10.json\n M hardware-result/rp2040-run01.json\n M hardware-result/rp2040-run02.json\n M hardware-result/rp2040-run03.json\n D hardware-result/rp2040-run04.json\n D hardware-result/rp2040-run05.json\n D hardware-result/rp2040-run06.json\n D hardware-result/rp2040-run07.json\n D hardware-result/rp2040-run08.json\n D hardware-result/rp2040-run09.json\n D hardware-result/rp2040-run10.json\n D hardware-result/rpi-run01.json\n D hardware-result/rpi-run02.json\n D hardware-result/rpi-run03.json\n D hardware-result/rpi-run04.json\n D hardware-result/rpi-run05.json\n D hardware-result/rpi-run06.json\n D hardware-result/rpi-run07.json\n D hardware-result/rpi-run08.json\n D hardware-result/rpi-run09.json\n D hardware-result/rpi-run10.json\n D hardware-result/sync-lead30-seed2027.json\n D hardware-result/sync-lead30-seed2027.jsonl\n?? 0.1_hardware-result/\n"
+        },
+        {
+          "file": "esp32-run03.json",
+          "revision": "b4f10f0bc2d73f8f224adbf9f9c52dbdf84cf782",
+          "host": "Linux-7.0.0-30-generic-x86_64-with-glibc2.39",
+          "worktree_status": " D hardware-result/REVIEW.json\n D hardware-result/REVIEW.md\n M hardware-result/esp32-run01.json\n M hardware-result/esp32-run02.json\n D hardware-result/esp32-run03.json\n D hardware-result/esp32-run04.json\n D hardware-result/esp32-run05.json\n D hardware-result/esp32-run06.json\n D hardware-result/esp32-run07.json\n D hardware-result/esp32-run08.json\n D hardware-result/esp32-run09.json\n D hardware-result/esp32-run10.json\n M hardware-result/rp2040-run01.json\n M hardware-result/rp2040-run02.json\n M hardware-result/rp2040-run03.json\n D hardware-result/rp2040-run04.json\n D hardware-result/rp2040-run05.json\n D hardware-result/rp2040-run06.json\n D hardware-result/rp2040-run07.json\n D hardware-result/rp2040-run08.json\n D hardware-result/rp2040-run09.json\n D hardware-result/rp2040-run10.json\n D hardware-result/rpi-run01.json\n D hardware-result/rpi-run02.json\n D hardware-result/rpi-run03.json\n D hardware-result/rpi-run04.json\n D hardware-result/rpi-run05.json\n D hardware-result/rpi-run06.json\n D hardware-result/rpi-run07.json\n D hardware-result/rpi-run08.json\n D hardware-result/rpi-run09.json\n D hardware-result/rpi-run10.json\n D hardware-result/sync-lead30-seed2027.json\n D hardware-result/sync-lead30-seed2027.jsonl\n?? 0.1_hardware-result/\n"
+        }
+      ]
+    },
+    "rp2040": {
+      "files": 3,
+      "statuses": {
+        "PASS": 9,
+        "FAIL": 12
+      },
+      "cases": {
+        "delayed_ping_and_stale_stop": {
+          "PASS": 3
+        },
+        "sequence_wraparound": {
+          "PASS": 1,
+          "FAIL": 2
+        },
+        "scheduled_preservation_and_stop_cancellation": {
+          "FAIL": 3
+        },
+        "lease_150ms_with_5hz_ping": {
+          "FAIL": 2,
+          "PASS": 1
+        },
+        "lease_450ms_with_5hz_ping": {
+          "FAIL": 3
+        },
+        "no_lease_with_5hz_ping": {
+          "PASS": 1,
+          "FAIL": 2
+        },
+        "watchdog_without_ping": {
+          "PASS": 3
+        }
+      },
+      "timing_ms": {
+        "watchdog_without_ping": {
+          "n": 3,
+          "minimum": 518.0,
+          "mean": 520.6666666666666,
+          "p50": 521.0,
+          "p95": 522.8,
+          "p99": 522.96,
+          "maximum": 523.0
+        },
+        "lease_150ms_with_5hz_ping": {
+          "n": 1,
+          "minimum": 153.0,
+          "mean": 153.0,
+          "p50": 153.0,
+          "p95": 153.0,
+          "p99": 153.0,
+          "maximum": 153.0
+        }
+      },
+      "raw_consistency_checks": {
+        "rp2040-run01.json": [],
+        "rp2040-run02.json": [],
+        "rp2040-run03.json": []
+      },
+      "provenance": [
+        {
+          "file": "rp2040-run01.json",
+          "revision": "b4f10f0bc2d73f8f224adbf9f9c52dbdf84cf782",
+          "host": "Linux-7.0.0-30-generic-x86_64-with-glibc2.39",
+          "worktree_status": " D hardware-result/REVIEW.json\n D hardware-result/REVIEW.md\n D hardware-result/esp32-run01.json\n D hardware-result/esp32-run02.json\n D hardware-result/esp32-run03.json\n D hardware-result/esp32-run04.json\n D hardware-result/esp32-run05.json\n D hardware-result/esp32-run06.json\n D hardware-result/esp32-run07.json\n D hardware-result/esp32-run08.json\n D hardware-result/esp32-run09.json\n D hardware-result/esp32-run10.json\n D hardware-result/rp2040-run01.json\n D hardware-result/rp2040-run02.json\n D hardware-result/rp2040-run03.json\n D hardware-result/rp2040-run04.json\n D hardware-result/rp2040-run05.json\n D hardware-result/rp2040-run06.json\n D hardware-result/rp2040-run07.json\n D hardware-result/rp2040-run08.json\n D hardware-result/rp2040-run09.json\n D hardware-result/rp2040-run10.json\n D hardware-result/rpi-run01.json\n D hardware-result/rpi-run02.json\n D hardware-result/rpi-run03.json\n D hardware-result/rpi-run04.json\n D hardware-result/rpi-run05.json\n D hardware-result/rpi-run06.json\n D hardware-result/rpi-run07.json\n D hardware-result/rpi-run08.json\n D hardware-result/rpi-run09.json\n D hardware-result/rpi-run10.json\n D hardware-result/sync-lead30-seed2027.json\n D hardware-result/sync-lead30-seed2027.jsonl\n?? 0.1_hardware-result/\n"
+        },
+        {
+          "file": "rp2040-run02.json",
+          "revision": "b4f10f0bc2d73f8f224adbf9f9c52dbdf84cf782",
+          "host": "Linux-7.0.0-30-generic-x86_64-with-glibc2.39",
+          "worktree_status": " D hardware-result/REVIEW.json\n D hardware-result/REVIEW.md\n D hardware-result/esp32-run01.json\n D hardware-result/esp32-run02.json\n D hardware-result/esp32-run03.json\n D hardware-result/esp32-run04.json\n D hardware-result/esp32-run05.json\n D hardware-result/esp32-run06.json\n D hardware-result/esp32-run07.json\n D hardware-result/esp32-run08.json\n D hardware-result/esp32-run09.json\n D hardware-result/esp32-run10.json\n M hardware-result/rp2040-run01.json\n D hardware-result/rp2040-run02.json\n D hardware-result/rp2040-run03.json\n D hardware-result/rp2040-run04.json\n D hardware-result/rp2040-run05.json\n D hardware-result/rp2040-run06.json\n D hardware-result/rp2040-run07.json\n D hardware-result/rp2040-run08.json\n D hardware-result/rp2040-run09.json\n D hardware-result/rp2040-run10.json\n D hardware-result/rpi-run01.json\n D hardware-result/rpi-run02.json\n D hardware-result/rpi-run03.json\n D hardware-result/rpi-run04.json\n D hardware-result/rpi-run05.json\n D hardware-result/rpi-run06.json\n D hardware-result/rpi-run07.json\n D hardware-result/rpi-run08.json\n D hardware-result/rpi-run09.json\n D hardware-result/rpi-run10.json\n D hardware-result/sync-lead30-seed2027.json\n D hardware-result/sync-lead30-seed2027.jsonl\n?? 0.1_hardware-result/\n"
+        },
+        {
+          "file": "rp2040-run03.json",
+          "revision": "b4f10f0bc2d73f8f224adbf9f9c52dbdf84cf782",
+          "host": "Linux-7.0.0-30-generic-x86_64-with-glibc2.39",
+          "worktree_status": " D hardware-result/REVIEW.json\n D hardware-result/REVIEW.md\n D hardware-result/esp32-run01.json\n D hardware-result/esp32-run02.json\n D hardware-result/esp32-run03.json\n D hardware-result/esp32-run04.json\n D hardware-result/esp32-run05.json\n D hardware-result/esp32-run06.json\n D hardware-result/esp32-run07.json\n D hardware-result/esp32-run08.json\n D hardware-result/esp32-run09.json\n D hardware-result/esp32-run10.json\n M hardware-result/rp2040-run01.json\n M hardware-result/rp2040-run02.json\n D hardware-result/rp2040-run03.json\n D hardware-result/rp2040-run04.json\n D hardware-result/rp2040-run05.json\n D hardware-result/rp2040-run06.json\n D hardware-result/rp2040-run07.json\n D hardware-result/rp2040-run08.json\n D hardware-result/rp2040-run09.json\n D hardware-result/rp2040-run10.json\n D hardware-result/rpi-run01.json\n D hardware-result/rpi-run02.json\n D hardware-result/rpi-run03.json\n D hardware-result/rpi-run04.json\n D hardware-result/rpi-run05.json\n D hardware-result/rpi-run06.json\n D hardware-result/rpi-run07.json\n D hardware-result/rpi-run08.json\n D hardware-result/rpi-run09.json\n D hardware-result/rpi-run10.json\n D hardware-result/sync-lead30-seed2027.json\n D hardware-result/sync-lead30-seed2027.jsonl\n?? 0.1_hardware-result/\n"
+        }
+      ]
+    },
+    "rpi": {
+      "files": 3,
+      "statuses": {
+        "PASS": 21
+      },
+      "cases": {
+        "delayed_ping_and_stale_stop": {
+          "PASS": 3
+        },
+        "sequence_wraparound": {
+          "PASS": 3
+        },
+        "scheduled_preservation_and_stop_cancellation": {
+          "PASS": 3
+        },
+        "lease_150ms_with_5hz_ping": {
+          "PASS": 3
+        },
+        "lease_450ms_with_5hz_ping": {
+          "PASS": 3
+        },
+        "no_lease_with_5hz_ping": {
+          "PASS": 3
+        },
+        "watchdog_without_ping": {
+          "PASS": 3
+        }
+      },
+      "timing_ms": {
+        "scheduled_preservation_and_stop_cancellation": {
+          "n": 3,
+          "minimum": 2,
+          "mean": 4.666666666666667,
+          "p50": 4.0,
+          "p95": 7.6,
+          "p99": 7.92,
+          "maximum": 8
+        },
+        "lease_150ms_with_5hz_ping": {
+          "n": 3,
+          "minimum": 153.946,
+          "mean": 154.17133333333334,
+          "p50": 153.999,
+          "p95": 154.512,
+          "p99": 154.55759999999998,
+          "maximum": 154.569
+        },
+        "lease_450ms_with_5hz_ping": {
+          "n": 3,
+          "minimum": 451.11,
+          "mean": 451.74933333333337,
+          "p50": 451.422,
+          "p95": 452.58660000000003,
+          "p99": 452.69012000000004,
+          "maximum": 452.716
+        },
+        "watchdog_without_ping": {
+          "n": 3,
+          "minimum": 501.872,
+          "mean": 502.6136666666667,
+          "p50": 502.81,
+          "p95": 503.1241,
+          "p99": 503.15202,
+          "maximum": 503.159
+        }
+      },
+      "raw_consistency_checks": {
+        "rpi-run01.json": [],
+        "rpi-run02.json": [],
+        "rpi-run03.json": []
+      },
+      "provenance": [
+        {
+          "file": "rpi-run01.json",
+          "revision": "b4f10f0bc2d73f8f224adbf9f9c52dbdf84cf782",
+          "host": "Linux-7.0.0-30-generic-x86_64-with-glibc2.39",
+          "worktree_status": " D hardware-result/REVIEW.json\n D hardware-result/REVIEW.md\n M hardware-result/esp32-run01.json\n M hardware-result/esp32-run02.json\n M hardware-result/esp32-run03.json\n D hardware-result/esp32-run04.json\n D hardware-result/esp32-run05.json\n D hardware-result/esp32-run06.json\n D hardware-result/esp32-run07.json\n D hardware-result/esp32-run08.json\n D hardware-result/esp32-run09.json\n D hardware-result/esp32-run10.json\n M hardware-result/rp2040-run01.json\n M hardware-result/rp2040-run02.json\n M hardware-result/rp2040-run03.json\n D hardware-result/rp2040-run04.json\n D hardware-result/rp2040-run05.json\n D hardware-result/rp2040-run06.json\n D hardware-result/rp2040-run07.json\n D hardware-result/rp2040-run08.json\n D hardware-result/rp2040-run09.json\n D hardware-result/rp2040-run10.json\n D hardware-result/rpi-run01.json\n D hardware-result/rpi-run02.json\n D hardware-result/rpi-run03.json\n D hardware-result/rpi-run04.json\n D hardware-result/rpi-run05.json\n D hardware-result/rpi-run06.json\n D hardware-result/rpi-run07.json\n D hardware-result/rpi-run08.json\n D hardware-result/rpi-run09.json\n D hardware-result/rpi-run10.json\n D hardware-result/sync-lead30-seed2027.json\n D hardware-result/sync-lead30-seed2027.jsonl\n?? 0.1_hardware-result/\n"
+        },
+        {
+          "file": "rpi-run02.json",
+          "revision": "b4f10f0bc2d73f8f224adbf9f9c52dbdf84cf782",
+          "host": "Linux-7.0.0-30-generic-x86_64-with-glibc2.39",
+          "worktree_status": " D hardware-result/REVIEW.json\n D hardware-result/REVIEW.md\n M hardware-result/esp32-run01.json\n M hardware-result/esp32-run02.json\n M hardware-result/esp32-run03.json\n D hardware-result/esp32-run04.json\n D hardware-result/esp32-run05.json\n D hardware-result/esp32-run06.json\n D hardware-result/esp32-run07.json\n D hardware-result/esp32-run08.json\n D hardware-result/esp32-run09.json\n D hardware-result/esp32-run10.json\n M hardware-result/rp2040-run01.json\n M hardware-result/rp2040-run02.json\n M hardware-result/rp2040-run03.json\n D hardware-result/rp2040-run04.json\n D hardware-result/rp2040-run05.json\n D hardware-result/rp2040-run06.json\n D hardware-result/rp2040-run07.json\n D hardware-result/rp2040-run08.json\n D hardware-result/rp2040-run09.json\n D hardware-result/rp2040-run10.json\n M hardware-result/rpi-run01.json\n D hardware-result/rpi-run02.json\n D hardware-result/rpi-run03.json\n D hardware-result/rpi-run04.json\n D hardware-result/rpi-run05.json\n D hardware-result/rpi-run06.json\n D hardware-result/rpi-run07.json\n D hardware-result/rpi-run08.json\n D hardware-result/rpi-run09.json\n D hardware-result/rpi-run10.json\n D hardware-result/sync-lead30-seed2027.json\n D hardware-result/sync-lead30-seed2027.jsonl\n?? 0.1_hardware-result/\n"
+        },
+        {
+          "file": "rpi-run03.json",
+          "revision": "b4f10f0bc2d73f8f224adbf9f9c52dbdf84cf782",
+          "host": "Linux-7.0.0-30-generic-x86_64-with-glibc2.39",
+          "worktree_status": " D hardware-result/REVIEW.json\n D hardware-result/REVIEW.md\n M hardware-result/esp32-run01.json\n M hardware-result/esp32-run02.json\n M hardware-result/esp32-run03.json\n D hardware-result/esp32-run04.json\n D hardware-result/esp32-run05.json\n D hardware-result/esp32-run06.json\n D hardware-result/esp32-run07.json\n D hardware-result/esp32-run08.json\n D hardware-result/esp32-run09.json\n D hardware-result/esp32-run10.json\n M hardware-result/rp2040-run01.json\n M hardware-result/rp2040-run02.json\n M hardware-result/rp2040-run03.json\n D hardware-result/rp2040-run04.json\n D hardware-result/rp2040-run05.json\n D hardware-result/rp2040-run06.json\n D hardware-result/rp2040-run07.json\n D hardware-result/rp2040-run08.json\n D hardware-result/rp2040-run09.json\n D hardware-result/rp2040-run10.json\n M hardware-result/rpi-run01.json\n M hardware-result/rpi-run02.json\n D hardware-result/rpi-run03.json\n D hardware-result/rpi-run04.json\n D hardware-result/rpi-run05.json\n D hardware-result/rpi-run06.json\n D hardware-result/rpi-run07.json\n D hardware-result/rpi-run08.json\n D hardware-result/rpi-run09.json\n D hardware-result/rpi-run10.json\n D hardware-result/sync-lead30-seed2027.json\n D hardware-result/sync-lead30-seed2027.jsonl\n?? 0.1_hardware-result/\n"
+        }
+      ]
+    }
+  },
+  "failures": [
+    {
+      "file": "rp2040-run01.json",
+      "case": "scheduled_preservation_and_stop_cancellation",
+      "error": "ACK disappeared without a watchdog event; check endpoints, competing masters and firmware",
+      "error_kind": "unexpected_session_reset",
+      "phase": "scheduled_preservation_and_stop_cancellation",
+      "premature_reset_detector": true,
+      "tx_timeline_ms": [
+        {
+          "ms": 0.0,
+          "packet": {
+            "cmd": "ACT",
+            "name": "probe",
+            "seq": 10,
+            "value": 120,
+            "at_ms": 4628
+          }
+        },
+        {
+          "ms": 0.6310120002126496,
+          "packet": {
+            "cmd": "PING"
+          }
+        },
+        {
+          "ms": 41.422544000397465,
+          "packet": {
+            "cmd": "STOP"
+          }
+        },
+        {
+          "ms": 41.644075000021985,
+          "packet": {
+            "cmd": "STOP"
+          }
+        },
+        {
+          "ms": 41.71518000021024,
+          "packet": {
+            "cmd": "PING"
+          }
+        },
+        {
+          "ms": 676.8230550001135,
+          "packet": {
+            "cmd": "PING"
+          }
+        }
+      ],
+      "rx_ack_values": [
+        null,
+        10
+      ],
+      "watchdog_values": [
+        4,
+        5
+      ]
+    },
+    {
+      "file": "rp2040-run01.json",
+      "case": "lease_150ms_with_5hz_ping",
+      "error": "ACK disappeared without a watchdog event; check endpoints, competing masters and firmware",
+      "error_kind": "unexpected_session_reset",
+      "phase": "lease_150ms_with_5hz_ping",
+      "premature_reset_detector": true
+    },
+    {
+      "file": "rp2040-run01.json",
+      "case": "lease_450ms_with_5hz_ping",
+      "error": "ACK disappeared without a watchdog event; check endpoints, competing masters and firmware",
+      "error_kind": "unexpected_session_reset",
+      "phase": "lease_450ms_with_5hz_ping",
+      "premature_reset_detector": true
+    },
+    {
+      "file": "rp2040-run02.json",
+      "case": "sequence_wraparound",
+      "error": "ACK disappeared without a watchdog event; check endpoints, competing masters and firmware",
+      "error_kind": "unexpected_session_reset",
+      "phase": "sequence_wraparound",
+      "premature_reset_detector": true
+    },
+    {
+      "file": "rp2040-run02.json",
+      "case": "scheduled_preservation_and_stop_cancellation",
+      "error": "ACK disappeared without a watchdog event; check endpoints, competing masters and firmware",
+      "error_kind": "unexpected_session_reset",
+      "phase": "scheduled_preservation_and_stop_cancellation",
+      "premature_reset_detector": true,
+      "tx_timeline_ms": [
+        {
+          "ms": 0.0,
+          "packet": {
+            "cmd": "ACT",
+            "name": "probe",
+            "seq": 10,
+            "value": 120,
+            "at_ms": 26527
+          }
+        },
+        {
+          "ms": 0.2522500003578898,
+          "packet": {
+            "cmd": "PING"
+          }
+        },
+        {
+          "ms": 40.98990500006039,
+          "packet": {
+            "cmd": "STOP"
+          }
+        },
+        {
+          "ms": 41.272365000168065,
+          "packet": {
+            "cmd": "STOP"
+          }
+        },
+        {
+          "ms": 41.382729000360996,
+          "packet": {
+            "cmd": "PING"
+          }
+        },
+        {
+          "ms": 675.8839640001497,
+          "packet": {
+            "cmd": "PING"
+          }
+        }
+      ],
+      "rx_ack_values": [
+        null,
+        10
+      ],
+      "watchdog_values": [
+        13,
+        14
+      ]
+    },
+    {
+      "file": "rp2040-run02.json",
+      "case": "lease_450ms_with_5hz_ping",
+      "error": "ACK disappeared without a watchdog event; check endpoints, competing masters and firmware",
+      "error_kind": "unexpected_session_reset",
+      "phase": "lease_450ms_with_5hz_ping",
+      "premature_reset_detector": true
+    },
+    {
+      "file": "rp2040-run02.json",
+      "case": "no_lease_with_5hz_ping",
+      "error": "ACK disappeared without a watchdog event; check endpoints, competing masters and firmware",
+      "error_kind": "unexpected_session_reset",
+      "phase": "no_lease_with_5hz_ping",
+      "premature_reset_detector": true
+    },
+    {
+      "file": "rp2040-run03.json",
+      "case": "sequence_wraparound",
+      "error": "ACK disappeared without a watchdog event; check endpoints, competing masters and firmware",
+      "error_kind": "unexpected_session_reset",
+      "phase": "sequence_wraparound",
+      "premature_reset_detector": true
+    },
+    {
+      "file": "rp2040-run03.json",
+      "case": "scheduled_preservation_and_stop_cancellation",
+      "error": "ACK disappeared without a watchdog event; check endpoints, competing masters and firmware",
+      "error_kind": "unexpected_session_reset",
+      "phase": "scheduled_preservation_and_stop_cancellation",
+      "premature_reset_detector": true,
+      "tx_timeline_ms": [
+        {
+          "ms": 0.0,
+          "packet": {
+            "cmd": "ACT",
+            "name": "probe",
+            "seq": 10,
+            "value": 120,
+            "at_ms": 13595
+          }
+        },
+        {
+          "ms": 0.5033719999119057,
+          "packet": {
+            "cmd": "PING"
+          }
+        },
+        {
+          "ms": 38.28944199995021,
+          "packet": {
+            "cmd": "STOP"
+          }
+        },
+        {
+          "ms": 38.485057999878336,
+          "packet": {
+            "cmd": "STOP"
+          }
+        },
+        {
+          "ms": 38.56495499985613,
+          "packet": {
+            "cmd": "PING"
+          }
+        },
+        {
+          "ms": 684.2084770000838,
+          "packet": {
+            "cmd": "PING"
+          }
+        }
+      ],
+      "rx_ack_values": [
+        null,
+        10
+      ],
+      "watchdog_values": [
+        22,
+        23
+      ]
+    },
+    {
+      "file": "rp2040-run03.json",
+      "case": "lease_150ms_with_5hz_ping",
+      "error": "ACK disappeared without a watchdog event; check endpoints, competing masters and firmware",
+      "error_kind": "unexpected_session_reset",
+      "phase": "lease_150ms_with_5hz_ping",
+      "premature_reset_detector": true
+    },
+    {
+      "file": "rp2040-run03.json",
+      "case": "lease_450ms_with_5hz_ping",
+      "error": "ACK disappeared without a watchdog event; check endpoints, competing masters and firmware",
+      "error_kind": "unexpected_session_reset",
+      "phase": "lease_450ms_with_5hz_ping",
+      "premature_reset_detector": true
+    },
+    {
+      "file": "rp2040-run03.json",
+      "case": "no_lease_with_5hz_ping",
+      "error": "ACK disappeared without a watchdog event; check endpoints, competing masters and firmware",
+      "error_kind": "unexpected_session_reset",
+      "phase": "no_lease_with_5hz_ping",
+      "premature_reset_detector": true
+    }
+  ],
+  "sync": {
+    "sync-lead30-seed2027_01.json": {
+      "status": "FAIL",
+      "error": "Missing execution telemetry; no missing pose may be silently discarded",
+      "modes": {
+        "scheduled": {
+          "estimated_skew_ms": {
+            "n": 109,
+            "minimum": 0.5154429995454848,
+            "mean": 8.132995678859531,
+            "p50": 3.5766020002774894,
+            "p95": 42.176602000277484,
+            "p99": 62.1766020002775,
+            "maximum": 67.57660200027749
+          },
+          "nodes": {
+            "probe_esp32": {
+              "act_first": 431.0,
+              "act_last": 539.0,
+              "nonunit_counter_steps": 0,
+              "incorrect_values": 0,
+              "offset_span_ms": 0.0,
+              "rtt_ms": {
+                "n": 109,
+                "minimum": 4.429,
+                "mean": 23.089183486238532,
+                "p50": 23.285,
+                "p95": 50.79079999999999,
+                "p99": 53.472879999999996,
+                "maximum": 54.811
+              },
+              "mapped_delay_ms": {
+                "n": 109,
+                "minimum": 29.52534950012341,
+                "mean": 31.428977022985627,
+                "p50": 31.40284250024706,
+                "p95": 32.32834709985182,
+                "p99": 32.72540398005396,
+                "maximum": 32.89542550034821
+              },
+              "negative_mapped_delays": 0,
+              "causal_interval_violations": 0,
+              "watchdog_counter_span": 0
+            },
+            "probe_rp2040": {
+              "act_first": 424.0,
+              "act_last": 532.0,
+              "nonunit_counter_steps": 0,
+              "incorrect_values": 0,
+              "offset_span_ms": 0.0,
+              "rtt_ms": {
+                "n": 109,
+                "minimum": 15.619,
+                "mean": 47.00681651376147,
+                "p50": 46.19,
+                "p95": 85.08599999999997,
+                "p99": 103.85824000000001,
+                "maximum": 106.864
+              },
+              "mapped_delay_ms": {
+                "n": 109,
+                "minimum": 29.17725650034845,
+                "mean": 37.785395537024584,
+                "p50": 32.86023150011897,
+                "p95": 74.21201790040357,
+                "p99": 92.89017342027277,
+                "maximum": 98.5569055005908
+              },
+              "negative_mapped_delays": 0,
+              "causal_interval_violations": 0,
+              "watchdog_counter_span": 0
+            },
+            "probe_rpi": {
+              "act_first": 31,
+              "act_last": 139,
+              "nonunit_counter_steps": 0,
+              "incorrect_values": 0,
+              "offset_span_ms": 0.0,
+              "rtt_ms": {
+                "n": 109,
+                "minimum": 2.652,
+                "mean": 24.065908256880736,
+                "p50": 16.408,
+                "p95": 57.6366,
+                "p99": 60.53736,
+                "maximum": 60.876
+              },
+              "mapped_delay_ms": {
+                "n": 109,
+                "minimum": 29.585581499617547,
+                "mean": 33.49349908702879,
+                "p50": 32.9009724999778,
+                "p95": 36.393976899795234,
+                "p99": 37.41311598006636,
+                "maximum": 39.909448499791324
+              },
+              "negative_mapped_delays": 0,
+              "causal_interval_violations": 0,
+              "watchdog_counter_span": 0
+            }
+          },
+          "unique_pose_indices": 109,
+          "dispatch_span_s": 10.900895271999616,
+          "observed_interval_rate_hz": 9.907443132438141
+        }
+      },
+      "jsonl_identical_to_records": null,
+      "partial_only": true,
+      "master_version": null,
+      "lead_ms": 30.0,
+      "seed": 2027,
+      "order": null,
+      "injected_jitter": null,
+      "stored_summary_mismatches": [],
+      "record_count": 109
+    },
+    "sync-lead30-seed2027_02.json": {
+      "status": "completed",
+      "error": null,
+      "modes": {
+        "scheduled": {
+          "estimated_skew_ms": {
+            "n": 200,
+            "minimum": 0.3581910002976656,
+            "mean": 8.272521595200523,
+            "p50": 5.065633000340313,
+            "p95": 40.342557999957336,
+            "p99": 54.302557999957344,
+            "maximum": 58.29255799995735
+          },
+          "nodes": {
+            "probe_esp32": {
+              "act_first": 541.0,
+              "act_last": 740.0,
+              "nonunit_counter_steps": 0,
+              "incorrect_values": 0,
+              "offset_span_ms": 0.0,
+              "rtt_ms": {
+                "n": 200,
+                "minimum": 4.209,
+                "mean": 18.58002,
+                "p50": 13.049,
+                "p95": 46.93619999999997,
+                "p99": 54.080469999999984,
+                "maximum": 59.619
+              },
+              "mapped_delay_ms": {
+                "n": 200,
+                "minimum": 29.250448999926448,
+                "mean": 30.594827139885165,
+                "p50": 30.613626000005752,
+                "p95": 31.438216950022614,
+                "p99": 32.2521973101655,
+                "maximum": 32.71266999980435
+              },
+              "negative_mapped_delays": 0,
+              "causal_interval_violations": 0,
+              "watchdog_counter_span": 0
+            },
+            "probe_rp2040": {
+              "act_first": 533.0,
+              "act_last": 732.0,
+              "nonunit_counter_steps": 0,
+              "incorrect_values": 0,
+              "offset_span_ms": 0.0,
+              "rtt_ms": {
+                "n": 200,
+                "minimum": 15.216,
+                "mean": 45.952845,
+                "p50": 44.498000000000005,
+                "p95": 97.90829999999995,
+                "p99": 138.2078,
+                "maximum": 178.095
+              },
+              "mapped_delay_ms": {
+                "n": 200,
+                "minimum": 25.20953599968925,
+                "mean": 34.96738513984252,
+                "p50": 30.51024749968201,
+                "p95": 71.5262880995171,
+                "p99": 84.47503265983424,
+                "maximum": 87.99060099991038
+              },
+              "negative_mapped_delays": 0,
+              "causal_interval_violations": 0,
+              "watchdog_counter_span": 0
+            },
+            "probe_rpi": {
+              "act_first": 141,
+              "act_last": 340,
+              "nonunit_counter_steps": 0,
+              "incorrect_values": 0,
+              "offset_span_ms": 0.0,
+              "rtt_ms": {
+                "n": 200,
+                "minimum": 2.15,
+                "mean": 23.310715,
+                "p50": 16.292499999999997,
+                "p95": 58.973899999999986,
+                "p99": 60.18801,
+                "maximum": 60.899
+              },
+              "mapped_delay_ms": {
+                "n": 200,
+                "minimum": 28.784310000017285,
+                "mean": 33.29301814018283,
+                "p50": 32.808194500161335,
+                "p95": 37.463516800152135,
+                "p99": 38.594649559967216,
+                "maximum": 39.69259500037879
+              },
+              "negative_mapped_delays": 0,
+              "causal_interval_violations": 0,
+              "watchdog_counter_span": 0
+            }
+          },
+          "unique_pose_indices": 200,
+          "dispatch_span_s": 20.274481002000357,
+          "observed_interval_rate_hz": 9.815294407800915
+        },
+        "immediate": {
+          "estimated_skew_ms": {
+            "n": 200,
+            "minimum": 0.9343669996596873,
+            "mean": 19.34356978974538,
+            "p50": 12.934366999659687,
+            "p95": 70.03436699965965,
+            "p99": 82.94436699965968,
+            "maximum": 86.29255799995735
+          },
+          "nodes": {
+            "probe_esp32": {
+              "act_first": 741.0,
+              "act_last": 940.0,
+              "nonunit_counter_steps": 0,
+              "incorrect_values": 0,
+              "offset_span_ms": 0.0,
+              "rtt_ms": {
+                "n": 200,
+                "minimum": 4.423,
+                "mean": 20.800775,
+                "p50": 16.841,
+                "p95": 50.2399,
+                "p99": 54.50820999999999,
+                "maximum": 55.377
+              },
+              "mapped_delay_ms": {
+                "n": 200,
+                "minimum": 2.076598999556154,
+                "mean": 3.7639353448827753,
+                "p50": 3.4740109997801483,
+                "p95": 5.965888599795289,
+                "p99": 7.685724789681832,
+                "maximum": 10.412415000144392
+              },
+              "negative_mapped_delays": 0,
+              "causal_interval_violations": 0,
+              "watchdog_counter_span": 0
+            },
+            "probe_rp2040": {
+              "act_first": 733.0,
+              "act_last": 932.0,
+              "nonunit_counter_steps": 0,
+              "incorrect_values": 0,
+              "offset_span_ms": 0.0,
+              "rtt_ms": {
+                "n": 200,
+                "minimum": 15.795,
+                "mean": 45.735275,
+                "p50": 40.857,
+                "p95": 93.01794999999996,
+                "p99": 105.58444999999999,
+                "maximum": 132.512
+              },
+              "mapped_delay_ms": {
+                "n": 200,
+                "minimum": -0.4505090001039207,
+                "mean": 21.07149334484013,
+                "p50": 14.661850000033155,
+                "p95": 73.14155905011573,
+                "p99": 82.71705695012582,
+                "maximum": 90.56300999969244
+              },
+              "negative_mapped_delays": 1,
+              "causal_interval_violations": 0,
+              "watchdog_counter_span": 0
+            },
+            "probe_rpi": {
+              "act_first": 341,
+              "act_last": 540,
+              "nonunit_counter_steps": 0,
+              "incorrect_values": 0,
+              "offset_span_ms": 0.0,
+              "rtt_ms": {
+                "n": 200,
+                "minimum": 2.559,
+                "mean": 23.25456,
+                "p50": 16.3315,
+                "p95": 57.857299999999995,
+                "p99": 60.01701,
+                "maximum": 61.36
+              },
+              "mapped_delay_ms": {
+                "n": 200,
+                "minimum": -0.5652100001461804,
+                "mean": 2.0021263451804407,
+                "p50": 2.8420900001656264,
+                "p95": 3.8343445002799847,
+                "p99": 4.96226937041152,
+                "maximum": 5.718593999743462
+              },
+              "negative_mapped_delays": 32,
+              "causal_interval_violations": 0,
+              "watchdog_counter_span": 0
+            }
+          },
+          "unique_pose_indices": 200,
+          "dispatch_span_s": 20.07697902300015,
+          "observed_interval_rate_hz": 9.911849774412076
+        }
+      },
+      "jsonl_identical_to_records": true,
+      "partial_only": false,
+      "master_version": "0.2.1",
+      "lead_ms": 30.0,
+      "seed": 2027,
+      "order": [
+        "scheduled",
+        "immediate"
+      ],
+      "injected_jitter": false,
+      "stored_summary_mismatches": [],
+      "record_count": 400,
+      "estimated_mean_reduction_pct": 57.23373873013842
+    },
+    "sync-lead30-seed2027_03.json": {
+      "status": "completed",
+      "error": null,
+      "modes": {
+        "scheduled": {
+          "estimated_skew_ms": {
+            "n": 200,
+            "minimum": 0.7755570001900196,
+            "mean": 11.691851290008053,
+            "p50": 5.77555700019002,
+            "p95": 52.27227799985556,
+            "p99": 58.24227799985556,
+            "maximum": 77.22227799985558
+          },
+          "nodes": {
+            "probe_esp32": {
+              "act_first": 941.0,
+              "act_last": 1140.0,
+              "nonunit_counter_steps": 0,
+              "incorrect_values": 0,
+              "offset_span_ms": 0.0,
+              "rtt_ms": {
+                "n": 200,
+                "minimum": 4.211,
+                "mean": 22.17076,
+                "p50": 14.3925,
+                "p95": 50.14175,
+                "p99": 53.71731,
+                "maximum": 56.334
+              },
+              "mapped_delay_ms": {
+                "n": 200,
+                "minimum": 28.69347450044006,
+                "mean": 30.00726410503965,
+                "p50": 30.053519999841228,
+                "p95": 31.01142800024245,
+                "p99": 31.249309020126237,
+                "maximum": 31.48287949990481
+              },
+              "negative_mapped_delays": 0,
+              "causal_interval_violations": 0,
+              "watchdog_counter_span": 0
+            },
+            "probe_rp2040": {
+              "act_first": 933.0,
+              "act_last": 1132.0,
+              "nonunit_counter_steps": 0,
+              "incorrect_values": 0,
+              "offset_span_ms": 0.0,
+              "rtt_ms": {
+                "n": 200,
+                "minimum": 18.15,
+                "mean": 48.66047,
+                "p50": 43.086,
+                "p95": 100.88834999999997,
+                "p99": 106.7526599999997,
+                "maximum": 155.774
+              },
+              "mapped_delay_ms": {
+                "n": 200,
+                "minimum": 28.6058554998599,
+                "mean": 40.484542104895226,
+                "p50": 33.77659849985503,
+                "p95": 83.26491535007953,
+                "p99": 88.79355494977904,
+                "maximum": 108.70515749976039
+              },
+              "negative_mapped_delays": 0,
+              "causal_interval_violations": 0,
+              "watchdog_counter_span": 0
+            },
+            "probe_rpi": {
+              "act_first": 541,
+              "act_last": 740,
+              "nonunit_counter_steps": 0,
+              "incorrect_values": 0,
+              "offset_span_ms": 0.0,
+              "rtt_ms": {
+                "n": 200,
+                "minimum": 2.312,
+                "mean": 24.824875,
+                "p50": 16.570999999999998,
+                "p95": 59.8403,
+                "p99": 60.918969999999995,
+                "maximum": 62.009
+              },
+              "mapped_delay_ms": {
+                "n": 200,
+                "minimum": 29.60902350023389,
+                "mean": 33.79282110522967,
+                "p50": 33.268620000220835,
+                "p95": 37.15718110008165,
+                "p99": 39.32639086011797,
+                "maximum": 40.44833549996838
+              },
+              "negative_mapped_delays": 0,
+              "causal_interval_violations": 0,
+              "watchdog_counter_span": 0
+            }
+          },
+          "unique_pose_indices": 200,
+          "dispatch_span_s": 20.19845143299972,
+          "observed_interval_rate_hz": 9.852240438337706
+        },
+        "immediate": {
+          "estimated_skew_ms": {
+            "n": 200,
+            "minimum": 1.2244429998099804,
+            "mean": 23.09012139975559,
+            "p50": 16.44672099966556,
+            "p95": 82.38350014984603,
+            "p99": 101.35452242985356,
+            "maximum": 117.22227799985558
+          },
+          "nodes": {
+            "probe_esp32": {
+              "act_first": 1141.0,
+              "act_last": 1340.0,
+              "nonunit_counter_steps": 0,
+              "incorrect_values": 0,
+              "offset_span_ms": 0.0,
+              "rtt_ms": {
+                "n": 200,
+                "minimum": 4.218,
+                "mean": 21.93181,
+                "p50": 13.864,
+                "p95": 52.666549999999994,
+                "p99": 58.12167999999999,
+                "maximum": 67.354
+              },
+              "mapped_delay_ms": {
+                "n": 200,
+                "minimum": 1.4278204999864101,
+                "mean": 2.9303379850555213,
+                "p50": 2.7939555002376437,
+                "p95": 4.821360600367188,
+                "p99": 6.43900053021032,
+                "maximum": 6.81902449997142
+              },
+              "negative_mapped_delays": 0,
+              "causal_interval_violations": 0,
+              "watchdog_counter_span": 0
+            },
+            "probe_rp2040": {
+              "act_first": 1133.0,
+              "act_last": 1332.0,
+              "nonunit_counter_steps": 0,
+              "incorrect_values": 0,
+              "offset_span_ms": 0.0,
+              "rtt_ms": {
+                "n": 200,
+                "minimum": 16.432,
+                "mean": 46.26592,
+                "p50": 41.335,
+                "p95": 98.22879999999998,
+                "p99": 123.82092999999996,
+                "maximum": 140.697
+              },
+              "mapped_delay_ms": {
+                "n": 200,
+                "minimum": 2.667743499856442,
+                "mean": 24.9676159849111,
+                "p50": 17.784500000067055,
+                "p95": 84.93358299990648,
+                "p99": 103.82818607999467,
+                "maximum": 119.81346049997956
+              },
+              "negative_mapped_delays": 0,
+              "causal_interval_violations": 0,
+              "watchdog_counter_span": 0
+            },
+            "probe_rpi": {
+              "act_first": 741,
+              "act_last": 940,
+              "nonunit_counter_steps": 0,
+              "incorrect_values": 0,
+              "offset_span_ms": 0.0,
+              "rtt_ms": {
+                "n": 200,
+                "minimum": 2.499,
+                "mean": 23.261955,
+                "p50": 16.3915,
+                "p95": 57.639849999999996,
+                "p99": 60.250119999999995,
+                "maximum": 60.53
+              },
+              "mapped_delay_ms": {
+                "n": 200,
+                "minimum": 0.0920625003054738,
+                "mean": 2.5308949852455407,
+                "p50": 3.4380270002875477,
+                "p95": 4.412787450035102,
+                "p99": 4.63762988013681,
+                "maximum": 5.139311500359327
+              },
+              "negative_mapped_delays": 0,
+              "causal_interval_violations": 0,
+              "watchdog_counter_span": 0
+            }
+          },
+          "unique_pose_indices": 200,
+          "dispatch_span_s": 20.233876077999867,
+          "observed_interval_rate_hz": 9.834991537601198
+        }
+      },
+      "jsonl_identical_to_records": true,
+      "partial_only": false,
+      "master_version": "0.2.1",
+      "lead_ms": 30.0,
+      "seed": 2027,
+      "order": [
+        "scheduled",
+        "immediate"
+      ],
+      "injected_jitter": false,
+      "stored_summary_mismatches": [],
+      "record_count": 400,
+      "estimated_mean_reduction_pct": 49.364271033534656
+    },
+    "sync-lead30-seed2027_04.json": {
+      "status": "completed",
+      "error": null,
+      "modes": {
+        "scheduled": {
+          "estimated_skew_ms": {
+            "n": 200,
+            "minimum": 1.4959685001522303,
+            "mean": 12.977261767778545,
+            "p50": 5.789242999628186,
+            "p95": 56.75672550052403,
+            "p99": 70.72672550052403,
+            "maximum": 73.70672550052404
+          },
+          "nodes": {
+            "probe_esp32": {
+              "act_first": 1341.0,
+              "act_last": 1540.0,
+              "nonunit_counter_steps": 0,
+              "incorrect_values": 0,
+              "offset_span_ms": 0.0,
+              "rtt_ms": {
+                "n": 200,
+                "minimum": 4.524,
+                "mean": 21.361605,
+                "p50": 12.4405,
+                "p95": 49.11355,
+                "p99": 53.88120999999998,
+                "maximum": 60.889
+              },
+              "mapped_delay_ms": {
+                "n": 200,
+                "minimum": 29.096445999573916,
+                "mean": 30.538332534702494,
+                "p50": 30.556774500058964,
+                "p95": 31.519165949663147,
+                "p99": 31.628860249454156,
+                "maximum": 31.703458999749273
+              },
+              "negative_mapped_delays": 0,
+              "causal_interval_violations": 0,
+              "watchdog_counter_span": 0
+            },
+            "probe_rp2040": {
+              "act_first": 1333.0,
+              "act_last": 1532.0,
+              "nonunit_counter_steps": 0,
+              "incorrect_values": 0,
+              "offset_span_ms": 0.0,
+              "rtt_ms": {
+                "n": 200,
+                "minimum": 12.39,
+                "mean": 49.19193,
+                "p50": 45.655,
+                "p95": 102.00319999999999,
+                "p99": 110.30972,
+                "maximum": 114.632
+              },
+              "mapped_delay_ms": {
+                "n": 200,
+                "minimum": 29.148219500202686,
+                "mean": 41.72505803522654,
+                "p50": 34.296355000231415,
+                "p95": 87.46443910035305,
+                "p99": 101.81944648998324,
+                "maximum": 103.2767294999212
+              },
+              "negative_mapped_delays": 0,
+              "causal_interval_violations": 0,
+              "watchdog_counter_span": 0
+            },
+            "probe_rpi": {
+              "act_first": 941,
+              "act_last": 1140,
+              "nonunit_counter_steps": 0,
+              "incorrect_values": 0,
+              "offset_span_ms": 0.0,
+              "rtt_ms": {
+                "n": 200,
+                "minimum": 2.421,
+                "mean": 21.722395,
+                "p50": 13.516,
+                "p95": 59.25685,
+                "p99": 60.929129999999994,
+                "maximum": 61.208
+              },
+              "mapped_delay_ms": {
+                "n": 200,
+                "minimum": 31.524920499883592,
+                "mean": 35.01930103485473,
+                "p50": 35.4831609998364,
+                "p95": 39.5519340997329,
+                "p99": 40.530847129868334,
+                "maximum": 41.487408499699086
+              },
+              "negative_mapped_delays": 0,
+              "causal_interval_violations": 0,
+              "watchdog_counter_span": 0
+            }
+          },
+          "unique_pose_indices": 200,
+          "dispatch_span_s": 20.14864102799993,
+          "observed_interval_rate_hz": 9.876596626216925
+        },
+        "immediate": {
+          "estimated_skew_ms": {
+            "n": 200,
+            "minimum": 2.706725500524044,
+            "mean": 23.291382352942602,
+            "p50": 16.210757000371814,
+            "p95": 83.33555542537938,
+            "p99": 99.35075700037169,
+            "maximum": 113.21075700037181
+          },
+          "nodes": {
+            "probe_esp32": {
+              "act_first": 1541.0,
+              "act_last": 1740.0,
+              "nonunit_counter_steps": 0,
+              "incorrect_values": 0,
+              "offset_span_ms": 0.0,
+              "rtt_ms": {
+                "n": 200,
+                "minimum": 4.105,
+                "mean": 20.501935,
+                "p50": 14.5095,
+                "p95": 49.35644999999997,
+                "p99": 53.637789999999995,
+                "maximum": 55.066
+              },
+              "mapped_delay_ms": {
+                "n": 200,
+                "minimum": 1.6204760000109673,
+                "mean": 3.050200414706487,
+                "p50": 2.8344609995838255,
+                "p95": 5.051929799723438,
+                "p99": 6.290460059745235,
+                "maximum": 6.977905999869108
+              },
+              "negative_mapped_delays": 0,
+              "causal_interval_violations": 0,
+              "watchdog_counter_span": 0
+            },
+            "probe_rp2040": {
+              "act_first": 1533.0,
+              "act_last": 1732.0,
+              "nonunit_counter_steps": 0,
+              "incorrect_values": 0,
+              "offset_span_ms": 0.0,
+              "rtt_ms": {
+                "n": 200,
+                "minimum": 15.355,
+                "mean": 43.919395,
+                "p50": 37.5315,
+                "p95": 98.79225,
+                "p99": 111.2942399999997,
+                "maximum": 151.001
+              },
+              "mapped_delay_ms": {
+                "n": 200,
+                "minimum": 4.96985450014472,
+                "mean": 25.556925915230533,
+                "p50": 18.812159000197425,
+                "p95": 84.95281815007323,
+                "p99": 100.64457337030197,
+                "maximum": 114.8447635001503
+              },
+              "negative_mapped_delays": 0,
+              "causal_interval_violations": 0,
+              "watchdog_counter_span": 0
+            },
+            "probe_rpi": {
+              "act_first": 1141,
+              "act_last": 1340,
+              "nonunit_counter_steps": 0,
+              "incorrect_values": 0,
+              "offset_span_ms": 0.0,
+              "rtt_ms": {
+                "n": 200,
+                "minimum": 2.475,
+                "mean": 23.226995,
+                "p50": 16.435000000000002,
+                "p95": 60.137550000000005,
+                "p99": 60.514970000000005,
+                "maximum": 60.675
+              },
+              "mapped_delay_ms": {
+                "n": 200,
+                "minimum": 0.6678025000728667,
+                "mean": 3.1111689148587174,
+                "p50": 3.8965574998874217,
+                "p95": 5.1047442999901245,
+                "p99": 5.6563055995060125,
+                "maximum": 5.996865499764681
+              },
+              "negative_mapped_delays": 0,
+              "causal_interval_violations": 0,
+              "watchdog_counter_span": 0
+            }
+          },
+          "unique_pose_indices": 200,
+          "dispatch_span_s": 20.133108747999813,
+          "observed_interval_rate_hz": 9.884216217715025
+        }
+      },
+      "jsonl_identical_to_records": true,
+      "partial_only": false,
+      "master_version": "0.2.1",
+      "lead_ms": 30.0,
+      "seed": 2027,
+      "order": [
+        "scheduled",
+        "immediate"
+      ],
+      "injected_jitter": false,
+      "stored_summary_mismatches": [],
+      "record_count": 400,
+      "estimated_mean_reduction_pct": 44.28299028743987
+    },
+    "sync-lead30-seed2027_05.json": {
+      "status": "completed",
+      "error": null,
+      "modes": {
+        "scheduled": {
+          "estimated_skew_ms": {
+            "n": 200,
+            "minimum": 0.4479620000347495,
+            "mean": 10.862324902513064,
+            "p50": 5.258896499872208,
+            "p95": 48.239065500162525,
+            "p99": 55.239065500162496,
+            "maximum": 62.18906550016254
+          },
+          "nodes": {
+            "probe_esp32": {
+              "act_first": 1741.0,
+              "act_last": 1940.0,
+              "nonunit_counter_steps": 0,
+              "incorrect_values": 0,
+              "offset_span_ms": 0.0,
+              "rtt_ms": {
+                "n": 200,
+                "minimum": 4.351,
+                "mean": 24.20565,
+                "p50": 19.7375,
+                "p95": 51.308449999999986,
+                "p99": 54.744260000000004,
+                "maximum": 55.981
+              },
+              "mapped_delay_ms": {
+                "n": 200,
+                "minimum": 28.522604499943554,
+                "mean": 30.23224354503909,
+                "p50": 30.133244999684393,
+                "p95": 31.55489690005779,
+                "p99": 32.11400747010949,
+                "maximum": 33.405488499905914
+              },
+              "negative_mapped_delays": 0,
+              "causal_interval_violations": 0,
+              "watchdog_counter_span": 0
+            },
+            "probe_rp2040": {
+              "act_first": 1733.0,
+              "act_last": 1932.0,
+              "nonunit_counter_steps": 0,
+              "incorrect_values": 0,
+              "offset_span_ms": 0.0,
+              "rtt_ms": {
+                "n": 200,
+                "minimum": 12.181,
+                "mean": 52.662325,
+                "p50": 50.881,
+                "p95": 98.14934999999997,
+                "p99": 105.24171999999999,
+                "maximum": 113.243
+              },
+              "mapped_delay_ms": {
+                "n": 200,
+                "minimum": 26.13057400053367,
+                "mean": 37.596309045201636,
+                "p50": 31.16425700020045,
+                "p95": 77.77114105005747,
+                "p99": 85.93852554013482,
+                "maximum": 93.41001600027084
+              },
+              "negative_mapped_delays": 0,
+              "causal_interval_violations": 0,
+              "watchdog_counter_span": 0
+            },
+            "probe_rpi": {
+              "act_first": 1341,
+              "act_last": 1540,
+              "nonunit_counter_steps": 0,
+              "incorrect_values": 0,
+              "offset_span_ms": 0.0,
+              "rtt_ms": {
+                "n": 200,
+                "minimum": 2.244,
+                "mean": 27.141045,
+                "p50": 25.1715,
+                "p95": 60.007549999999995,
+                "p99": 60.60075,
+                "maximum": 61.036
+              },
+              "mapped_delay_ms": {
+                "n": 200,
+                "minimum": 29.40444550011307,
+                "mean": 33.70020554507384,
+                "p50": 32.98605499998666,
+                "p95": 36.972672200249505,
+                "p99": 38.69544511029496,
+                "maximum": 40.08016250003129
+              },
+              "negative_mapped_delays": 0,
+              "causal_interval_violations": 0,
+              "watchdog_counter_span": 0
+            }
+          },
+          "unique_pose_indices": 200,
+          "dispatch_span_s": 20.08114736100015,
+          "observed_interval_rate_hz": 9.909792325237373
+        },
+        "immediate": {
+          "estimated_skew_ms": {
+            "n": 200,
+            "minimum": 1.5520379999652505,
+            "mean": 23.068638432640583,
+            "p50": 15.741103500127792,
+            "p95": 82.18906550016254,
+            "p99": 88.38906550016236,
+            "maximum": 129.7411035001278
+          },
+          "nodes": {
+            "probe_esp32": {
+              "act_first": 1941.0,
+              "act_last": 2140.0,
+              "nonunit_counter_steps": 0,
+              "incorrect_values": 0,
+              "offset_span_ms": 0.0,
+              "rtt_ms": {
+                "n": 200,
+                "minimum": 4.553,
+                "mean": 24.575455,
+                "p50": 24.2045,
+                "p95": 53.01965,
+                "p99": 59.81772999999999,
+                "maximum": 80.005
+              },
+              "mapped_delay_ms": {
+                "n": 200,
+                "minimum": 1.5136584998108447,
+                "mean": 3.2972588850441387,
+                "p50": 3.0884360000491142,
+                "p95": 5.509886249899862,
+                "p99": 6.766805119835765,
+                "maximum": 8.88329750020057
+              },
+              "negative_mapped_delays": 0,
+              "causal_interval_violations": 0,
+              "watchdog_counter_span": 0
+            },
+            "probe_rp2040": {
+              "act_first": 1933.0,
+              "act_last": 2132.0,
+              "nonunit_counter_steps": 0,
+              "incorrect_values": 0,
+              "offset_span_ms": 0.0,
+              "rtt_ms": {
+                "n": 200,
+                "minimum": 16.524,
+                "mean": 50.01337,
+                "p50": 46.581,
+                "p95": 98.55499999999996,
+                "p99": 106.14002999999998,
+                "maximum": 154.744
+              },
+              "mapped_delay_ms": {
+                "n": 200,
+                "minimum": 2.6610530000180006,
+                "mean": 25.396324385206682,
+                "p50": 18.341977500123903,
+                "p95": 84.38698545044753,
+                "p99": 91.73611277008412,
+                "maximum": 131.3753000004217
+              },
+              "negative_mapped_delays": 0,
+              "causal_interval_violations": 0,
+              "watchdog_counter_span": 0
+            },
+            "probe_rpi": {
+              "act_first": 1541,
+              "act_last": 1740,
+              "nonunit_counter_steps": 0,
+              "incorrect_values": 0,
+              "offset_span_ms": 0.0,
+              "rtt_ms": {
+                "n": 200,
+                "minimum": 2.612,
+                "mean": 29.00134,
+                "p50": 26.767,
+                "p95": 60.0865,
+                "p99": 60.57131999999999,
+                "maximum": 61.206
+              },
+              "mapped_delay_ms": {
+                "n": 200,
+                "minimum": 0.5346855004318058,
+                "mean": 3.1152208850788883,
+                "p50": 3.29295300017111,
+                "p95": 5.185616600257343,
+                "p99": 5.527271550078876,
+                "maximum": 5.7499215002171695
+              },
+              "negative_mapped_delays": 0,
+              "causal_interval_violations": 0,
+              "watchdog_counter_span": 0
+            }
+          },
+          "unique_pose_indices": 200,
+          "dispatch_span_s": 20.203399480999906,
+          "observed_interval_rate_hz": 9.849827509828119
+        }
+      },
+      "jsonl_identical_to_records": true,
+      "partial_only": false,
+      "master_version": "0.2.1",
+      "lead_ms": 30.0,
+      "seed": 2027,
+      "order": [
+        "scheduled",
+        "immediate"
+      ],
+      "injected_jitter": false,
+      "stored_summary_mismatches": [],
+      "record_count": 400,
+      "estimated_mean_reduction_pct": 52.913021138067684
+    },
+    "sync-lead30-seed2027_06.json": {
+      "status": "completed",
+      "error": null,
+      "modes": {
+        "scheduled": {
+          "estimated_skew_ms": {
+            "n": 200,
+            "minimum": 0.7914729998447001,
+            "mean": 10.131812904966063,
+            "p50": 5.260054000187665,
+            "p95": 49.31005400018765,
+            "p99": 78.30005400018763,
+            "maximum": 87.26005400018767
+          },
+          "nodes": {
+            "probe_esp32": {
+              "act_first": 2141.0,
+              "act_last": 2340.0,
+              "nonunit_counter_steps": 0,
+              "incorrect_values": 0,
+              "offset_span_ms": 0.0,
+              "rtt_ms": {
+                "n": 200,
+                "minimum": 4.159,
+                "mean": 17.585385,
+                "p50": 10.082,
+                "p95": 48.345499999999994,
+                "p99": 53.790049999999994,
+                "maximum": 55.136
+              },
+              "mapped_delay_ms": {
+                "n": 200,
+                "minimum": 29.203083500266075,
+                "mean": 30.55556020509219,
+                "p50": 30.516354500083253,
+                "p95": 31.906196150253525,
+                "p99": 32.45273796029854,
+                "maximum": 33.660345499869436
+              },
+              "negative_mapped_delays": 0,
+              "causal_interval_violations": 0,
+              "watchdog_counter_span": 0
+            },
+            "probe_rp2040": {
+              "act_first": 2133.0,
+              "act_last": 2332.0,
+              "nonunit_counter_steps": 0,
+              "incorrect_values": 0,
+              "offset_span_ms": 0.0,
+              "rtt_ms": {
+                "n": 200,
+                "minimum": 18.183,
+                "mean": 44.96542,
+                "p50": 39.3405,
+                "p95": 95.21039999999996,
+                "p99": 106.82956999999999,
+                "maximum": 140.149
+              },
+              "mapped_delay_ms": {
+                "n": 200,
+                "minimum": 28.02858250029385,
+                "mean": 38.725614205279854,
+                "p50": 33.17412850027904,
+                "p95": 79.49424490011296,
+                "p99": 107.64984580049753,
+                "maximum": 118.56750150024891
+              },
+              "negative_mapped_delays": 0,
+              "causal_interval_violations": 0,
+              "watchdog_counter_span": 0
+            },
+            "probe_rpi": {
+              "act_first": 1741,
+              "act_last": 1940,
+              "nonunit_counter_steps": 0,
+              "incorrect_values": 0,
+              "offset_span_ms": 0.0,
+              "rtt_ms": {
+                "n": 200,
+                "minimum": 2.341,
+                "mean": 22.453225,
+                "p50": 16.184,
+                "p95": 59.478049999999996,
+                "p99": 60.620779999999996,
+                "maximum": 62.854
+              },
+              "mapped_delay_ms": {
+                "n": 200,
+                "minimum": 30.112890500109643,
+                "mean": 34.542033204936885,
+                "p50": 35.129531000042334,
+                "p95": 37.96070419969037,
+                "p99": 38.75229082003236,
+                "maximum": 39.579548500012606
+              },
+              "negative_mapped_delays": 0,
+              "causal_interval_violations": 0,
+              "watchdog_counter_span": 0
+            }
+          },
+          "unique_pose_indices": 200,
+          "dispatch_span_s": 20.225025749999986,
+          "observed_interval_rate_hz": 9.839295260229774
+        },
+        "immediate": {
+          "estimated_skew_ms": {
+            "n": 200,
+            "minimum": 0.7399459998123348,
+            "mean": 22.08644818024477,
+            "p50": 14.468581000342965,
+            "p95": 82.31005400018765,
+            "p99": 87.2821392701892,
+            "maximum": 91.26005400018767
+          },
+          "nodes": {
+            "probe_esp32": {
+              "act_first": 2341.0,
+              "act_last": 2540.0,
+              "nonunit_counter_steps": 0,
+              "incorrect_values": 0,
+              "offset_span_ms": 0.0,
+              "rtt_ms": {
+                "n": 200,
+                "minimum": 4.311,
+                "mean": 18.075595,
+                "p50": 10.119,
+                "p95": 48.78379999999999,
+                "p99": 54.07839999999998,
+                "maximum": 56.24
+              },
+              "mapped_delay_ms": {
+                "n": 200,
+                "minimum": 1.9452484999783337,
+                "mean": 3.5051011250843294,
+                "p50": 3.265516000101343,
+                "p95": 5.4339327500900225,
+                "p99": 8.028863360066897,
+                "maximum": 10.740509499795735
+              },
+              "negative_mapped_delays": 0,
+              "causal_interval_violations": 0,
+              "watchdog_counter_span": 0
+            },
+            "probe_rp2040": {
+              "act_first": 2333.0,
+              "act_last": 2532.0,
+              "nonunit_counter_steps": 0,
+              "incorrect_values": 0,
+              "offset_span_ms": 0.0,
+              "rtt_ms": {
+                "n": 200,
+                "minimum": 15.475,
+                "mean": 44.013995,
+                "p50": 37.176500000000004,
+                "p95": 98.23239999999998,
+                "p99": 105.26345999999998,
+                "maximum": 107.427
+              },
+              "mapped_delay_ms": {
+                "n": 200,
+                "minimum": 2.3093395004980266,
+                "mean": 24.990155125271993,
+                "p50": 17.610350500093773,
+                "p95": 85.33704570010303,
+                "p99": 89.37863182055295,
+                "maximum": 93.6139325001277
+              },
+              "negative_mapped_delays": 0,
+              "causal_interval_violations": 0,
+              "watchdog_counter_span": 0
+            },
+            "probe_rpi": {
+              "act_first": 1941,
+              "act_last": 2140,
+              "nonunit_counter_steps": 0,
+              "incorrect_values": 0,
+              "offset_span_ms": 0.0,
+              "rtt_ms": {
+                "n": 200,
+                "minimum": 2.315,
+                "mean": 21.63262,
+                "p50": 8.3375,
+                "p95": 59.82574999999999,
+                "p99": 60.587379999999996,
+                "maximum": 61.488
+              },
+              "mapped_delay_ms": {
+                "n": 200,
+                "minimum": 1.4414054998196661,
+                "mean": 4.24657412492903,
+                "p50": 5.026981999864802,
+                "p95": 6.155409950134343,
+                "p99": 6.720953199649227,
+                "maximum": 7.292064500041306
+              },
+              "negative_mapped_delays": 0,
+              "causal_interval_violations": 0,
+              "watchdog_counter_span": 0
+            }
+          },
+          "unique_pose_indices": 200,
+          "dispatch_span_s": 20.110401074000038,
+          "observed_interval_rate_hz": 9.89537698764643
+        }
+      },
+      "jsonl_identical_to_records": true,
+      "partial_only": false,
+      "master_version": "0.2.1",
+      "lead_ms": 30.0,
+      "seed": 2027,
+      "order": [
+        "scheduled",
+        "immediate"
+      ],
+      "injected_jitter": false,
+      "stored_summary_mismatches": [],
+      "record_count": 400,
+      "estimated_mean_reduction_pct": 54.1265629390403
+    }
+  },
+  "inputs": {
+    "esp32-run01.json": {
+      "bytes": 280774,
+      "sha256": "f65e95cbc3f6eb0050783db38bd5f0911fe9f592afa824802e7740dc8c016a9d"
+    },
+    "esp32-run02.json": {
+      "bytes": 284833,
+      "sha256": "7faec042eef6c34e2a8cff90c80fc3e288f7ca7e077b93cefeaa055f586c8a22"
+    },
+    "esp32-run03.json": {
+      "bytes": 285692,
+      "sha256": "fb063986a73976d0acd083dbb1069b25f8e3514eadb6a28e15174d3031b31eb5"
+    },
+    "rp2040-run01.json": {
+      "bytes": 171076,
+      "sha256": "76a509ad380ec9761cdbc5f4786d22b8964f267d626d71ca3c24b1c36e241610"
+    },
+    "rp2040-run02.json": {
+      "bytes": 164145,
+      "sha256": "4117aed4a7b276685e5a2cd3e7517ad08b569b7b2f2fa19ddfebdf744a80c537"
+    },
+    "rp2040-run03.json": {
+      "bytes": 130170,
+      "sha256": "682e36e5f575404b329d20bf4c9520aad3609d616afcc1d8450f49d9c1073959"
+    },
+    "rpi-run01.json": {
+      "bytes": 278533,
+      "sha256": "cc633150ea5cbfaa87687097e214decb34835b36d5842b7155d6ccc21c3a1d56"
+    },
+    "rpi-run02.json": {
+      "bytes": 283318,
+      "sha256": "f9e47b0fde3d62fad9a60c71164d0181973d8b7bc10dd304fee801779ddf0eaa"
+    },
+    "rpi-run03.json": {
+      "bytes": 283877,
+      "sha256": "6cd950b6aa04045e04110cfce79ec01ab37c2487edee89a8cab761adb330a647"
+    },
+    "sync-lead30-seed2027_01.json": {
+      "bytes": 368,
+      "sha256": "e9a6ea2f18693c6095502a7f9381036f8d27633374dc6c41be002618c44b7ddd"
+    },
+    "sync-lead30-seed2027_01.jsonl": {
+      "bytes": 387083,
+      "sha256": "787517ac11eb8094b90ac15b934f0dbb777d4b060308b29d20346d83984dcc16"
+    },
+    "sync-lead30-seed2027_02.json": {
+      "bytes": 2352814,
+      "sha256": "471d0e02c0d3f09d21d703d73a1c042274848a60ceffd622abe0d6be6f506815"
+    },
+    "sync-lead30-seed2027_02.jsonl": {
+      "bytes": 1421591,
+      "sha256": "bf69e9b043d20b2fff0fc4007f30a4de2839ca7d498dc43a49678b7fa64b04be"
+    },
+    "sync-lead30-seed2027_03.json": {
+      "bytes": 2352147,
+      "sha256": "c4e1d92e3c50c3200f89cb28eaad41676a95af875c0e4365424e1691c6d352e7"
+    },
+    "sync-lead30-seed2027_03.jsonl": {
+      "bytes": 1420925,
+      "sha256": "3b26dcfafb6cda6c5faf0731e60d035c877de3150282f555e95d2a4da0cca18d"
+    },
+    "sync-lead30-seed2027_04.json": {
+      "bytes": 2351025,
+      "sha256": "833f51c8b1b5ce122c81f0151dcbcf05ae6b67b69e4555a4a5a5aca8a6b39cd5"
+    },
+    "sync-lead30-seed2027_04.jsonl": {
+      "bytes": 1419801,
+      "sha256": "677e306a6e12f433e87306b486f4463279400d40f1c6b8c41b553d50b9f52632"
+    },
+    "sync-lead30-seed2027_05.json": {
+      "bytes": 2353815,
+      "sha256": "edefff791f9fa713fa1dbdac71450db632da53b3fe9f2aecad7fa3830ead5caa"
+    },
+    "sync-lead30-seed2027_05.jsonl": {
+      "bytes": 1422590,
+      "sha256": "de2a1b16244a5d468ac9211eedb7a0ebc09ad17b711f36b183e9e9fe60333890"
+    },
+    "sync-lead30-seed2027_06.json": {
+      "bytes": 2354025,
+      "sha256": "7a4244bcf3a163c1887bc495170a5f6123718a9c9a629aeba1704ce069c2570a"
+    },
+    "sync-lead30-seed2027_06.jsonl": {
+      "bytes": 1422804,
+      "sha256": "21dd948a83e3ba1d22c14a0af5fdc446c2deef3714595d97a48ad527a589d460"
+    }
+  }
+}

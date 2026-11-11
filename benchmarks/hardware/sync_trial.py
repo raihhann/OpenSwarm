@@ -9,6 +9,14 @@ from openswarm import SwarmMaster
 from openswarm import __version__ as master_version
 
 
+class ExecutionObservationTimeout(TimeoutError):
+    def __init__(self, mode, pose, nodes, counts, snapshots):
+        super().__init__("Missing execution telemetry; no missing pose may be silently discarded")
+        self.diagnostics = dict(mode=mode, pose=pose, nodes=[
+            dict(node=n.node_id, expected_acts=count + 1, observed=snapshot)
+            for n, count, snapshot in zip(nodes, counts, snapshots)])
+
+
 def trial(targets, poses=200, lead_ms=30, seed=2027, record_callback=None):
     import random
     rng = random.Random(seed)
@@ -44,7 +52,7 @@ def trial(targets, poses=200, lead_ms=30, seed=2027, record_callback=None):
                     if all(s["sensors"].get("acts", 0) >= c + 1 for s, c in zip(snapshots, counts)):
                         break
                     if time.monotonic() > deadline:
-                        raise TimeoutError("Missing execution telemetry; no missing pose may be silently discarded")
+                        raise ExecutionObservationTimeout(mode, index, nodes, counts, snapshots)
                     time.sleep(0.002)
                 callbacks, raw, intervals = [], [], []
                 for n, count, snapshot, clock in zip(nodes, counts, snapshots, calibration):
@@ -109,6 +117,7 @@ if __name__ == "__main__":
             result = trial([value.split("=", 1) for value in args.node], args.poses, args.lead_ms, args.seed, record)
         except Exception as exc:
             result = dict(status="FAIL", error=str(exc), targets=args.node,
+                          master_version=master_version, diagnostics=getattr(exc, "diagnostics", None),
                           seed=args.seed, poses_per_mode=args.poses, lead_ms=args.lead_ms,
                           partial_records=str(args.output.with_suffix(".jsonl")))
     args.output.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")

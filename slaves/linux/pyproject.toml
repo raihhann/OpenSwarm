@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "openswarm-slave"
-version = "0.1.0"
+version = "0.2.0"
 description = "Zero-Control-Logic Linux Slave Agent for the OpenSwarm Robotics Framework (Arduino UNO Q, Portenta X8, Raspberry Pi, Jetson, Linux PC)"
 readme = "README.md"
 requires-python = ">=3.8"

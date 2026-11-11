@@ -76,6 +76,14 @@ struct ActuatorDescriptor {
     uint32_t bus_freq = 0;       // Baudrate (UART) or SPI clock Hz
     int16_t val1 = 0;            // Primary command (Left PWM / Angle / Reg / Steps / Digital)
     int16_t val2 = 0;            // Secondary command (Right PWM / Val / Step Speed)
+    bool pending = false;        // 1-slot scheduled command active flag
+    uint32_t due_ms = 0;         // Target Slave millis() when pending command should fire
+    int16_t pending_v1 = 0;
+    int16_t pending_v2 = 0;
+    uint16_t pending_lease_ms = 0;
+    char pending_data[32] = {0};
+    bool lease_active = false;   // Active per-command application lease flag
+    uint32_t lease_due_ms = 0;   // Target Slave millis() when lease expires
     SwarmCustomActuatorFn custom_fn = nullptr;
 };
 

@@ -149,11 +149,16 @@ private:
     uint32_t _lastHelloMs = 0;
     uint32_t _lastServoMs = 0;
     bool _watchdogTripped = false;
+    int16_t _lastCmdSeq = 0;
+    uint16_t _watchdogTrips = 0;
+    uint16_t _droppedOutOfOrder = 0;
+    uint16_t _leaseExpirations = 0;
 
     void _handleIncomingPacket();
     void _processCommand(const char* json, IPAddress senderIP, uint16_t senderPort);
     void _sendHelloBroadcast();
     void _sendTelemetry();
+    void _stopActuator(ActuatorDescriptor& act);
     void _emergencyStopAll();
 
     static int _appendf(char* buf, size_t cap, int offset, const char* fmt, ...);

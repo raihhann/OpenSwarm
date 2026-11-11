@@ -521,7 +521,35 @@ void SwarmNode::_backgroundTick() {
         if (!_watchdogTripped) {
             _emergencyStopAll();
             _watchdogTripped = true;
+            _watchdogTrips++;
+            _lastCmdSeq = 0;
             Serial.println("[SwarmNode] WATCHDOG: Master timeout -> Motors stopped.");
+        }
+    }
+
+    for (uint8_t i = 0; i < _actuatorCount; i++) {
+        if (_actuators[i].pending && (int32_t)(now - _actuators[i].due_ms) >= 0) {
+            _actuators[i].pending = false;
+            if (_actuators[i].pending_lease_ms > 0) {
+                _actuators[i].lease_active = true;
+                _actuators[i].lease_due_ms = _actuators[i].due_ms + (uint32_t)_actuators[i].pending_lease_ms;
+                _actuators[i].pending_lease_ms = 0;
+            } else {
+                _actuators[i].lease_active = false;
+            }
+            if (_actuators[i].type == ACT_SERVO) {
+                _actuators[i].bus_addr = 1;
+            }
+            SwarmHAL::writeActuator(
+                _actuators[i],
+                _actuators[i].pending_v1,
+                _actuators[i].pending_v2,
+                _actuators[i].pending_data
+            );
+        }
+        if (_actuators[i].lease_active && (int32_t)(now - _actuators[i].lease_due_ms) >= 0) {
+            _stopActuator(_actuators[i]);
+            _leaseExpirations++;
         }
     }
 
@@ -553,11 +581,27 @@ void SwarmNode::_processCommand(const char* json, IPAddress senderIP, uint16_t s
     char cmd[16] = {0};
     if (!_extractString(json, "cmd", cmd, sizeof(cmd))) return;
     const char* numericFields[] = {"value", "state", "left", "right", "angle",
-                                  "steps", "reg", "val", "v1", "v2", "pin", "pwm"};
+                                  "steps", "reg", "val", "v1", "v2", "pin", "pwm", "seq", "at_ms", "lease_ms"};
     for (uint8_t i = 0; i < sizeof(numericFields) / sizeof(numericFields[0]); ++i) {
         int16_t value;
         if (SwarmProtocol::field(json, numericFields[i]) &&
             !_extractInt(json, numericFields[i], value)) return;
+    }
+
+    int16_t seq = 0;
+    bool hasSeq = (SwarmProtocol::field(json, "seq") != nullptr);
+    if (hasSeq && (!_extractInt(json, "seq", seq) || seq < 1)) return;
+
+    int16_t atMs = -1;
+    bool hasAtMs = (SwarmProtocol::field(json, "at_ms") != nullptr);
+    if (hasAtMs && (!_extractInt(json, "at_ms", atMs) || atMs < 0)) return;
+
+    int16_t leaseMs = 0;
+    bool hasLeaseMs = (SwarmProtocol::field(json, "lease_ms") != nullptr);
+    if (hasLeaseMs && (!_extractInt(json, "lease_ms", leaseMs) || leaseMs < 1 || leaseMs > 30000)) return;
+
+    if (!_masterConnected || _masterIP != senderIP || (senderPort > 0 && _masterPort != senderPort) || _watchdogTripped) {
+        _lastCmdSeq = 0;
     }
 
     _masterIP = senderIP;
@@ -567,11 +611,13 @@ void SwarmNode::_processCommand(const char* json, IPAddress senderIP, uint16_t s
     _watchdogTripped = false;
 
     if (strcmp(cmd, "PING") == 0) {
+        if (hasSeq) SwarmProtocol::acceptSeq(seq, _lastCmdSeq);
         _sendTelemetry();
         return;
     }
 
     if (strcmp(cmd, "STOP") == 0) {
+        if (hasSeq) SwarmProtocol::acceptSeq(seq, _lastCmdSeq);
         _emergencyStopAll();
         return;
     }
@@ -579,6 +625,15 @@ void SwarmNode::_processCommand(const char* json, IPAddress senderIP, uint16_t s
     if (strcmp(cmd, "ACT") == 0) {
         char targetName[16] = {0};
         if (!_extractString(json, "name", targetName, sizeof(targetName))) return;
+
+        char dataPayload[32] = {0};
+        if (SwarmProtocol::field(json, "data") &&
+            !_extractString(json, "data", dataPayload, sizeof(dataPayload))) return;
+
+        if (hasSeq && !SwarmProtocol::acceptSeq(seq, _lastCmdSeq)) {
+            _droppedOutOfOrder++;
+            return;
+        }
 
         int16_t v1 = 0, v2 = 0;
         if (!_extractInt(json, "value", v1)) {
@@ -600,16 +655,33 @@ void SwarmNode::_processCommand(const char* json, IPAddress senderIP, uint16_t s
             }
         }
 
-        char dataPayload[32] = {0};
-        if (SwarmProtocol::field(json, "data") &&
-            !_extractString(json, "data", dataPayload, sizeof(dataPayload))) return;
+        uint32_t nowMs = millis();
+        int16_t deltaMs = hasAtMs ? SwarmProtocol::scheduleDelayMs(atMs, nowMs) : 0;
 
         for (uint8_t i = 0; i < _actuatorCount; i++) {
             if (strcmp(_actuators[i].name, targetName) == 0) {
-                if (_actuators[i].type == ACT_SERVO) {
-                    _actuators[i].bus_addr = 1;
+                if (hasAtMs && deltaMs >= 1 && deltaMs <= 1000) {
+                    _actuators[i].pending = true;
+                    _actuators[i].due_ms = nowMs + (uint32_t)deltaMs;
+                    _actuators[i].pending_v1 = v1;
+                    _actuators[i].pending_v2 = v2;
+                    _actuators[i].pending_lease_ms = hasLeaseMs ? (uint16_t)leaseMs : 0;
+                    strncpy(_actuators[i].pending_data, dataPayload, sizeof(_actuators[i].pending_data) - 1);
+                    _actuators[i].pending_data[sizeof(_actuators[i].pending_data) - 1] = '\0';
+                } else {
+                    _actuators[i].pending = false;
+                    _actuators[i].pending_lease_ms = 0;
+                    if (hasLeaseMs) {
+                        _actuators[i].lease_active = true;
+                        _actuators[i].lease_due_ms = nowMs + (uint32_t)leaseMs;
+                    } else {
+                        _actuators[i].lease_active = false;
+                    }
+                    if (_actuators[i].type == ACT_SERVO) {
+                        _actuators[i].bus_addr = 1;
+                    }
+                    SwarmHAL::writeActuator(_actuators[i], v1, v2, dataPayload);
                 }
-                SwarmHAL::writeActuator(_actuators[i], v1, v2, dataPayload);
                 break;
             }
         }
@@ -618,7 +690,11 @@ void SwarmNode::_processCommand(const char* json, IPAddress senderIP, uint16_t s
 
     if (strcmp(cmd, "PIN") == 0) {
         int16_t pin = -1, val = 0, mode = 0;
-        if (_extractInt(json, "pin", pin) && pin >= 0) {
+        if (_extractInt(json, "pin", pin) && pin >= 0 && pin <= 254) {
+            if (hasSeq && !SwarmProtocol::acceptSeq(seq, _lastCmdSeq)) {
+                _droppedOutOfOrder++;
+                return;
+            }
             _extractInt(json, "value", val);
             _extractInt(json, "pwm", mode);
             pinMode((uint8_t)pin, OUTPUT);
@@ -699,8 +775,27 @@ void SwarmNode::_sendTelemetry() {
 
     char msg[384];
     int offset = _appendf(msg, sizeof(msg), 0,
-        "{\"type\":\"STATE\",\"node\":\"%s\",\"uptime_ms\":%lu,\"sensors\":{",
+        "{\"type\":\"STATE\",\"node\":\"%s\",\"uptime_ms\":%lu",
         _nodeId, (unsigned long)millis());
+    if (offset < 0) return;
+
+    if (_lastCmdSeq > 0) {
+        offset = _appendf(msg, sizeof(msg), offset, ",\"ack\":%d", (int)_lastCmdSeq);
+        if (offset < 0) return;
+    }
+    if (_watchdogTrips > 0) {
+        offset = _appendf(msg, sizeof(msg), offset, ",\"wd_trips\":%u", (unsigned)_watchdogTrips);
+        if (offset < 0) return;
+    }
+    if (_leaseExpirations > 0) {
+        offset = _appendf(msg, sizeof(msg), offset, ",\"lease_exp\":%u", (unsigned)_leaseExpirations);
+        if (offset < 0) return;
+    }
+    if (_droppedOutOfOrder > 0) {
+        offset = _appendf(msg, sizeof(msg), offset, ",\"seq_drop\":%u", (unsigned)_droppedOutOfOrder);
+        if (offset < 0) return;
+    }
+    offset = _appendf(msg, sizeof(msg), offset, ",\"sensors\":{");
     if (offset < 0) return;
 
     bool first = true;
@@ -739,14 +834,27 @@ void SwarmNode::_sendTelemetry() {
     _udp.endPacket();
 }
 
+void SwarmNode::_stopActuator(ActuatorDescriptor& act) {
+    act.pending = false;
+    act.pending_lease_ms = 0;
+    act.lease_active = false;
+    if (act.type == ACT_L298N ||
+        act.type == ACT_DRV8833 ||
+        act.type == ACT_MOTOR_2PIN ||
+        act.type == ACT_STEPPER ||
+        act.type == ACT_PWM_OUT ||
+        act.type == ACT_DAC_OUT) {
+        SwarmHAL::writeActuator(act, 0, 0, "");
+    } else if (act.type == ACT_SERVO) {
+        act.bus_addr = 0;
+    } else if (act.type == ACT_CUSTOM) {
+        SwarmHAL::writeActuator(act, 0, 0, "STOP");
+    }
+}
+
 void SwarmNode::_emergencyStopAll() {
     for (uint8_t i = 0; i < _actuatorCount; i++) {
-        if (_actuators[i].type == ACT_L298N ||
-            _actuators[i].type == ACT_DRV8833 ||
-            _actuators[i].type == ACT_MOTOR_2PIN ||
-            _actuators[i].type == ACT_STEPPER) {
-            SwarmHAL::writeActuator(_actuators[i], 0, 0);
-        }
+        _stopActuator(_actuators[i]);
     }
 }
 

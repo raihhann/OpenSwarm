@@ -111,5 +111,24 @@ namespace SwarmProtocol {
         }
         return true;
     }
+
+    inline bool acceptSeq(int16_t incomingSeq, int16_t& lastSeq) {
+        if (incomingSeq < 1) return false;
+        if (lastSeq <= 0) {
+            lastSeq = incomingSeq;
+            return true;
+        }
+        // The sender cycles over 1..32767 (zero is reserved). Wider arithmetic
+        // avoids signed 16-bit overflow on AVR.
+        uint16_t distance = (uint16_t)(((int32_t)incomingSeq - lastSeq + 32767L) % 32767L);
+        if (distance == 0 || distance > 16383) return false;
+        lastSeq = incomingSeq;
+        return true;
+    }
+
+    inline int16_t scheduleDelayMs(int16_t atMs, uint32_t nowMs) {
+        int16_t now15 = (int16_t)(nowMs & 0x7FFF);
+        return (int16_t)((((int32_t)atMs - now15 + 16384L) & 0x7FFF) - 16384L);
+    }
 }
 #endif

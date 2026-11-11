@@ -197,6 +197,50 @@ class SwarmMaster:
         with self._lock:
             return self._nodes.get(node_id)
 
+    def sync_actuate(self, commands, lead_ms: float = 30.0, lease_ms: Optional[int] = None) -> int:
+        """
+        Dispatches a synchronized batch of actuator commands across multiple Slave nodes
+        scheduled for a shared future Master monotonic instant `time.monotonic() + lead_ms / 1000.0`.
+        Each entry in `commands` can be a tuple `(node_or_id, actuator_name, v1[, v2[, data[, lease_ms]]])`
+        or a dict `{"node": node_or_id, "name": actuator_name, ...}`.
+        Returns the number of commands dispatched.
+        """
+        if self._closed:
+            raise RuntimeError("Master is closed")
+        lead_clamped_ms = max(0.0, min(1000.0, float(lead_ms)))
+        t_exec = time.monotonic() + (lead_clamped_ms / 1000.0)
+        dispatched = 0
+
+        for item in commands:
+            if isinstance(item, dict):
+                target = item.get("node")
+                name = str(item.get("name", ""))
+                v1 = int(item.get("v1", item.get("angle", item.get("value", item.get("left", 0)))))
+                v2 = int(item.get("v2", item.get("right", item.get("val", 0))))
+                data = str(item.get("data", ""))
+                item_lease_ms = item.get("lease_ms", lease_ms)
+            else:
+                seq_item = list(item)
+                if len(seq_item) < 3:
+                    raise ValueError("Tuple command spec must have at least (node, actuator_name, v1)")
+                target = seq_item[0]
+                name = str(seq_item[1])
+                v1 = int(seq_item[2])
+                v2 = int(seq_item[3]) if len(seq_item) >= 4 else 0
+                data = str(seq_item[4]) if len(seq_item) >= 5 else ""
+                item_lease_ms = seq_item[5] if len(seq_item) >= 6 else lease_ms
+
+            node = target if isinstance(target, RemoteSwarmNode) else self.get(str(target))
+            if node is None:
+                continue
+
+            slave_target_ms = node.slave_time_ms(t_exec)
+            at_ms = (slave_target_ms & 0x7FFF) if slave_target_ms is not None else None
+            node.set_actuator(name, v1=v1, v2=v2, data=data, at_ms=at_ms, lease_ms=item_lease_ms)
+            dispatched += 1
+
+        return dispatched
+
     def stop_all(self, include_discovered: bool = False) -> None:
         """Send STOP to active nodes, optionally including passive discoveries."""
         with self._lock:
@@ -360,8 +404,12 @@ class SwarmMaster:
                 try:
                     uptime_ms = integer(msg.get("uptime_ms", 0))
                     sensors_dict = sensor_values(msg.get("sensors", {}))
+                    ack = integer(msg["ack"], 1, 32767) if "ack" in msg else None
+                    wd_trips = integer(msg["wd_trips"], 0) if "wd_trips" in msg else None
+                    lease_exp = integer(msg["lease_exp"], 0) if "lease_exp" in msg else None
+                    seq_drop = integer(msg["seq_drop"], 0) if "seq_drop" in msg else None
                 except (TypeError, ValueError, OverflowError):
-                    logger.debug("Ignoring STATE with invalid uptime from %s", addr)
+                    logger.debug("Ignoring STATE with invalid uptime or ack from %s", addr)
                     return
                 sensors_dict = msg.get("sensors", {})
                 if not isinstance(sensors_dict, dict):
@@ -378,7 +426,14 @@ class SwarmMaster:
                 node = self._nodes[node_id]
                 if node.ip != addr[0] or node.port != addr[1]:
                     return
-                node._update_state(uptime_ms, sensors_dict)
+                node._update_state(
+                    uptime_ms,
+                    sensors_dict,
+                    ack=ack,
+                    wd_trips=wd_trips,
+                    lease_exp=lease_exp,
+                    seq_drop=seq_drop,
+                )
                 errors = msg.get("sensor_errors", {})
                 if isinstance(errors, dict) and all(isinstance(k, str) and isinstance(v, str) for k, v in errors.items()):
                     node.sensor_errors = dict(errors)

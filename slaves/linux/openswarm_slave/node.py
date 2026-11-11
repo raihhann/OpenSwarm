@@ -14,7 +14,7 @@ import time
 from typing import Any, Callable, Dict, List, Optional, Union
 
 from .hal_linux import LinuxHAL
-from .protocol import decode_command, PROTOCOL_VERSION
+from .protocol import decode_command, schedule_delay_ms, PROTOCOL_VERSION, sequence_is_newer
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +38,12 @@ class SwarmNode:
         self._master_addr: Optional[ tuple ] = None
         self._last_master_pkt = 0.0
         self._watchdog_tripped = False
+        self._watchdog_trips: int = 0
+        self._last_cmd_seq: int = 0
+        self._dropped_out_of_order: int = 0
+        self._lease_expirations: int = 0
+        self._pending_actuations: Dict[str, Dict[str, Any]] = {}
+        self._active_leases: Dict[str, float] = {}
         self._start_time = time.monotonic()
         self._running = False
         self._sock: Optional[socket.socket] = None
@@ -70,7 +76,7 @@ class SwarmNode:
         if not self.hal.capabilities["servo"]:
             raise NotImplementedError("This GPIO backend cannot generate servo pulses")
         self.hal.setup_pin(pin, "OUT")
-        self._actuators[name] = {"type": "SERVO", "pins": [pin]}
+        self._actuators[name] = {"type": "SERVO", "pins": [pin], "holding": False}
         return True
 
     def register_stepper(self, name: str, step_pin: int, dir_pin: int, en_pin: int = 255) -> bool:
@@ -275,7 +281,12 @@ class SwarmNode:
                 if not self._watchdog_tripped:
                     self._emergency_stop_all()
                     self._watchdog_tripped = True
+                    self._watchdog_trips += 1
+                    self._last_cmd_seq = 0
                     print("[SwarmNode] WATCHDOG: Master timeout -> Motors stopped.")
+
+            # 2b. Execute due scheduled actuations
+            self._run_due_actuations(now)
 
             # 3. 20 Hz Sensor Telemetry Stream
             if self._master_addr is not None and (now - last_telemetry >= SWARM_TELEMETRY_SEC):
@@ -306,9 +317,22 @@ class SwarmNode:
         if not cmd:
             return
 
+        if self._master_addr != addr or self._watchdog_tripped:
+            self._last_cmd_seq = 0
+
         self._master_addr = addr
         self._last_master_pkt = time.monotonic()
         self._watchdog_tripped = False
+
+        seq = msg.get("seq")
+        if seq is not None:
+            if sequence_is_newer(seq, self._last_cmd_seq):
+                self._last_cmd_seq = seq
+            elif cmd in ("PIN", "ACT"):
+                self._dropped_out_of_order += 1
+                return
+            # Stale PING still gets telemetry and STOP still executes, but
+            # neither can move the session watermark backward.
 
         if cmd == "PING":
             self._send_telemetry()
@@ -331,10 +355,71 @@ class SwarmNode:
 
             v1, v2 = msg["v1"], msg["v2"]
             data_str = str(msg.get("data", ""))
+            at_ms = msg.get("at_ms")
+            lease_ms = msg.get("lease_ms")
+            now = time.monotonic()
+            if at_ms is not None:
+                uptime_ms = int((now - self._start_time) * 1000)
+                delta_ms = schedule_delay_ms(at_ms, uptime_ms)
+                if 1 <= delta_ms <= 1000:
+                    self._pending_actuations[name] = {
+                        "due_mono": now + (delta_ms / 1000.0),
+                        "v1": v1,
+                        "v2": v2,
+                        "data": data_str,
+                        "lease_ms": lease_ms,
+                    }
+                    return
+            self._pending_actuations.pop(name, None)
+            if lease_ms is not None:
+                self._active_leases[name] = now + (lease_ms / 1000.0)
+            else:
+                self._active_leases.pop(name, None)
             try:
                 self._execute_actuator(act, v1, v2, data_str)
             except Exception as exc:
                 print(f"[SwarmLinuxSlave] Actuator error on '{name}': {exc}")
+
+    def _run_due_actuations(self, now: Optional[float] = None) -> None:
+        t = time.monotonic() if now is None else now
+        if self._pending_actuations:
+            due = [name for name, item in self._pending_actuations.items() if t >= item["due_mono"]]
+            for name in due:
+                item = self._pending_actuations.pop(name, None)
+                act = self._actuators.get(name)
+                if item is not None and act is not None:
+                    lease_ms = item.get("lease_ms")
+                    if lease_ms is not None:
+                        self._active_leases[name] = item["due_mono"] + (lease_ms / 1000.0)
+                    else:
+                        self._active_leases.pop(name, None)
+                    try:
+                        self._execute_actuator(act, item["v1"], item["v2"], item["data"])
+                    except Exception as exc:
+                        print(f"[SwarmLinuxSlave] Scheduled actuator error on '{name}': {exc}")
+
+        if self._active_leases:
+            expired = [name for name, due_mono in self._active_leases.items() if t >= due_mono]
+            for name in expired:
+                self._active_leases.pop(name, None)
+                act = self._actuators.get(name)
+                if act is not None:
+                    self._lease_expirations += 1
+                    try:
+                        self._stop_actuator(name, act)
+                    except Exception as exc:
+                        print(f"[SwarmLinuxSlave] Lease expiration stop error on '{name}': {exc}")
+
+    def _stop_actuator(self, name: str, act: Dict[str, Any]) -> None:
+        self._pending_actuations.pop(name, None)
+        self._active_leases.pop(name, None)
+        t = act["type"]
+        if t in ("L298N", "DRV8833", "MOTOR_2PIN", "STEPPER", "PWM_OUT"):
+            self._execute_actuator(act, 0, 0, "")
+        elif t == "SERVO":
+            act["holding"] = False
+        elif t == "CUSTOM":
+            self._execute_actuator(act, 0, 0, "STOP")
 
     def _execute_actuator(self, act: Dict[str, Any], v1: int, v2: int, data_str: str) -> None:
         t = act["type"]
@@ -350,6 +435,7 @@ class SwarmNode:
         elif t == "DIGITAL_OUT":
             self.hal.digital_write(pins[0], 1 if v1 > 0 else 0)
         elif t == "SERVO":
+            act["holding"] = True
             self.hal.servo_write(pins[0], v1)
         elif t == "PWM_OUT":
             self.hal.pwm_write(pins[0], v1)
@@ -436,6 +522,14 @@ class SwarmNode:
             "sensors": sensor_readings,
             "sensor_errors": dict(self.sensor_errors),
         }
+        if self._last_cmd_seq > 0:
+            payload["ack"] = self._last_cmd_seq
+        if self._watchdog_trips > 0:
+            payload["wd_trips"] = self._watchdog_trips
+        if self._lease_expirations > 0:
+            payload["lease_exp"] = self._lease_expirations
+        if self._dropped_out_of_order > 0:
+            payload["seq_drop"] = self._dropped_out_of_order
         raw = json.dumps(payload, separators=(",", ":"), allow_nan=False).encode("utf-8")
         try:
             self._sock.sendto(raw, self._master_addr)
@@ -443,9 +537,10 @@ class SwarmNode:
             pass
 
     def _emergency_stop_all(self) -> None:
-        for act in self._actuators.values():
-            if act["type"] in ("L298N", "DRV8833", "MOTOR_2PIN", "STEPPER"):
-                try:
-                    self._execute_actuator(act, 0, 0, "")
-                except Exception:
-                    logger.exception("Could not stop actuator")
+        self._pending_actuations.clear()
+        self._active_leases.clear()
+        for name, act in self._actuators.items():
+            try:
+                self._stop_actuator(name, act)
+            except Exception:
+                logger.exception("Could not stop actuator")

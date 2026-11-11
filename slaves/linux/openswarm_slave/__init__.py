@@ -8,5 +8,5 @@ as the microcontroller slaves.
 
 from .node import SwarmNode
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 __all__ = ["SwarmNode"]

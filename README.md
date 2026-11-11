@@ -3,7 +3,7 @@
 <p align="center">
   <a href="https://pypi.org/project/openswarm-master/"><img src="https://img.shields.io/pypi/v/openswarm-master?style=for-the-badge&label=PyPI%20openswarm-master&color=3775A9" alt="PyPI openswarm-master" /></a>
   <a href="https://pypi.org/project/openswarm-slave/"><img src="https://img.shields.io/pypi/v/openswarm-slave?style=for-the-badge&label=PyPI%20openswarm-slave&color=0F766E" alt="PyPI openswarm-slave" /></a>
-  <a href="https://github.com/raihhann/OpenSwarm/tree/SwarmNode"><img src="https://img.shields.io/badge/Arduino%20Library-SwarmNode%20v0.4.2-00878F?style=for-the-badge&logo=arduino" alt="Arduino Library" /></a>
+  <a href="https://github.com/raihhann/OpenSwarm/tree/SwarmNode"><img src="https://img.shields.io/badge/Arduino%20Library-SwarmNode%20v0.4.3-00878F?style=for-the-badge&logo=arduino" alt="Arduino Library" /></a>
   <img src="https://img.shields.io/badge/Architecture-Klipper--Style%20Remote%20HAL-0A66C2?style=for-the-badge" alt="Architecture" />
   <img src="https://img.shields.io/badge/Slave%20Loop-100%25%20Empty-2EA043?style=for-the-badge" alt="Zero Slave Logic" />
 </p>
@@ -261,7 +261,7 @@ You can also install it manually from the [**`SwarmNode` branch**](https://githu
 #### Option B: PlatformIO (`platformio.ini`)
 ```ini
 lib_deps =
-    raihann/SwarmNode@^0.4.2
+    raihann/SwarmNode@^0.4.3
 ```
 
 ---
@@ -385,21 +385,33 @@ python -m unittest discover -s tests -t . -v
 ```
 
 The suite uses loopback/simulated hardware. If `g++` is available, it also compiles
-and runs the actual firmware parser on the host. This does not replace board builds.
+and runs the actual firmware parser and runtime with simulated hardware on the host.
+Regressions cover delayed PING/STOP, sequence wraparound, queued-command preservation,
+and session recovery. This does not replace board builds.
 CI runs tests and builds both Python packages on Windows/Linux with Python 3.8/3.12.
 Arduino synchronization waits for these checks and never rewrites an existing version
 tag. Python publication requires an explicit `master-v<version>` or `slave-v<version>`
 tag matching that package's version and a configured PyPI token; main pushes do not
 publish Python packages automatically.
+See the [release instructions](docs/releases.md) for PyPI tags, PlatformIO publishing,
+and installation of the prepared Python 0.2.0 / Arduino 0.4.3 releases.
+
+Run `python benchmarks/run_benchmarks.py` for offline preliminary validation and
+generated Markdown/LaTeX tables in [`benchmarks/REPORT.md`](benchmarks/REPORT.md),
+with measurements and source fingerprints in [`benchmarks/results.json`](benchmarks/results.json).
+These are host measurements and declared simulations, not physical Wi-Fi or robot results.
+The [Stage 1 readiness assessment](docs/stage1_readiness.md) separates supported claims
+from the remaining research and hardware validation work.
+For live-board measurements, use the [hardware procedure and report template](benchmarks/hardware/README.md).
 
 ## TODO: safety and authentication (deferred)
 
-These remain open work, not implemented guarantees. Framework reliability is the
+Unchecked items remain open work, not implemented guarantees. Framework reliability is the
 current priority; no authentication or independent hardware safety system has been
 added in this iteration.
 
-- [ ] Application command leases: expire movement if the control application stalls,
-  even while transport heartbeats continue.
+- [x] Application command leases: implemented and tested in software, including
+  expiry while transport heartbeats continue. Physical stopping behavior still needs testing.
 - [ ] Independent local supervision and nonblocking stepper/UART/sensor scheduling;
   the existing 500 ms watchdog is a software transport timeout, not a hardware guarantee.
 - [ ] Per-actuator stop/hold/release callbacks, including custom actuators, servos,

@@ -109,3 +109,134 @@ class MasterTests(unittest.TestCase):
     def test_decoder_limits_datagram_size(self):
         with self.assertRaises(ValueError):
             decode_packet(b' ' * 4097)
+
+    def test_seq_ack_rtt_jitter_and_clock_offset(self):
+        sent = []
+        node = RemoteSwarmNode("robot", "127.0.0.1", 4210, lambda ip, port, payload: sent.append(payload))
+        with patch("openswarm.node.time.monotonic", return_value=10.000):
+            node.ping()
+        self.assertEqual(sent[-1], {"cmd": "PING", "seq": 1})
+
+        with patch("openswarm.node.time.monotonic", return_value=10.020):
+            node._update_state(5000, {"x": 1}, ack=1)
+        self.assertEqual(node.last_ack_seq, 1)
+        self.assertAlmostEqual(node.rtt_ms, 20.0, places=3)
+        self.assertAlmostEqual(node.jitter_ms, 0.0, places=3)
+        # master_rx_ms = 10020.0, rtt/2 = 10.0 -> master_mid = 10010.0 -> offset = 5000 - 10010 = -5010.0
+        self.assertAlmostEqual(node.clock_offset_ms, -5010.0, places=3)
+
+        with patch("openswarm.node.time.monotonic", return_value=11.000):
+            node.servo("arm", 90)
+        self.assertEqual(sent[-1]["seq"], 2)
+
+        with patch("openswarm.node.time.monotonic", return_value=11.036):
+            node._update_state(6028, {"x": 2}, ack=2)
+        self.assertEqual(node.last_ack_seq, 2)
+        self.assertAlmostEqual(node.rtt_ms, 36.0, places=3)
+        self.assertAlmostEqual(node.jitter_ms, 1.0, places=3)  # |36 - 20| / 16 = 1.0
+
+    def test_master_parses_ack_and_rejects_invalid_ack(self):
+        self.hello()
+        node = self.master.get("robot")
+        with patch.object(self.master, "_send_json"):
+            node.ping()
+        seq = node._tx_seq
+        self.master._handle_packet(
+            json.dumps({"type": "STATE", "node": "robot", "uptime_ms": 1200, "ack": seq, "sensors": {"x": 5}}).encode(),
+            ("127.0.0.1", 4210),
+        )
+        self.assertEqual(node.last_ack_seq, seq)
+        self.assertIsNotNone(node.rtt_ms)
+        self.assertIsNotNone(node.clock_offset_ms)
+
+        # Invalid ack values must be ignored without mutating state
+        for bad_ack in [0, -1, 40000, True, "1"]:
+            self.master._handle_packet(
+                json.dumps({"type": "STATE", "node": "robot", "uptime_ms": 1300, "ack": bad_ack, "sensors": {"x": 99}}).encode(),
+                ("127.0.0.1", 4210),
+            )
+        self.assertEqual(node.read("x"), 5)
+
+    def test_sync_actuate_aligns_heterogeneous_node_clocks(self):
+        self.hello("base", port=4210)
+        self.hello("elbow", port=4213)
+        base = self.master.get("base")
+        elbow = self.master.get("elbow")
+        # Different boot times -> different clock offsets relative to Master monotonic clock
+        base.clock_offset_ms = 5000.0
+        elbow.clock_offset_ms = 40000.0  # wraps around 32768
+
+        sent = []
+        with patch.object(self.master, "_send_json", side_effect=lambda ip, port, payload: sent.append((port, payload))):
+            with patch("openswarm.master.time.monotonic", return_value=2.000):
+                count = self.master.sync_actuate(
+                    [
+                        ("base", "servo", 90),
+                        {"node": elbow, "name": "servo", "angle": 120},
+                    ],
+                    lead_ms=40.0,
+                )
+        self.assertEqual(count, 2)
+        # t_exec = 2.040s = 2040 ms
+        # base: (2040 + 5000) & 0x7FFF = 7040
+        # elbow: (2040 + 40000) & 0x7FFF = 42040 & 0x7FFF = 9272
+        self.assertEqual(sent[0][1]["at_ms"], 7040)
+        self.assertEqual(sent[1][1]["at_ms"], 9272)
+
+    def test_node_and_sync_actuate_lease_ms(self):
+        sent = []
+        node = RemoteSwarmNode("robot", "127.0.0.1", 4210, lambda ip, port, payload: sent.append(payload))
+        node.default_lease_ms = 300
+        node.drive("drive", 150, 150)
+        self.assertEqual(sent[-1]["lease_ms"], 300)
+
+        node.drive("drive", 180, 180, lease_ms=120)
+        self.assertEqual(sent[-1]["lease_ms"], 120)
+
+        for invalid_lease in (0, -10, 30001, True):
+            with self.assertRaises(ValueError):
+                node.drive("drive", 100, 100, lease_ms=invalid_lease)
+
+    def test_master_parses_safety_diagnostic_counters(self):
+        self.hello()
+        node = self.master.get("robot")
+        self.assertEqual(node.watchdog_trips, 0)
+        self.assertEqual(node.lease_expirations, 0)
+        self.assertEqual(node.dropped_out_of_order, 0)
+
+        self.master._handle_packet(
+            json.dumps(
+                {
+                    "type": "STATE",
+                    "node": "robot",
+                    "uptime_ms": 2500,
+                    "wd_trips": 2,
+                    "lease_exp": 5,
+                    "seq_drop": 3,
+                    "sensors": {"x": 10},
+                }
+            ).encode(),
+            ("127.0.0.1", 4210),
+        )
+        self.assertEqual(node.watchdog_trips, 2)
+        self.assertEqual(node.lease_expirations, 5)
+        self.assertEqual(node.dropped_out_of_order, 3)
+
+        # Negative or non-integer diagnostic counters are rejected without mutating node state
+        for bad_field in ({"wd_trips": -1}, {"lease_exp": True}, {"seq_drop": "bad"}):
+            self.master._handle_packet(
+                json.dumps(
+                    {
+                        "type": "STATE",
+                        "node": "robot",
+                        "uptime_ms": 2600,
+                        **bad_field,
+                        "sensors": {"x": 99},
+                    }
+                ).encode(),
+                ("127.0.0.1", 4210),
+            )
+        self.assertEqual(node.read("x"), 10)
+        self.assertEqual(node.watchdog_trips, 2)
+        self.assertEqual(node.lease_expirations, 5)
+        self.assertEqual(node.dropped_out_of_order, 3)

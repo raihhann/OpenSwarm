@@ -2,10 +2,12 @@ import json
 import socket
 import unittest
 
+from unittest.mock import patch
+
 from openswarm import SwarmMaster
 from openswarm_slave import SwarmNode
 from openswarm_slave.hal_linux import LinuxHAL
-from openswarm_slave.protocol import decode_command
+from openswarm_slave.protocol import decode_command, schedule_delay_ms
 
 
 class FakeSocket:
@@ -95,3 +97,188 @@ class SlaveTests(unittest.TestCase):
             self.assertTrue(node._thread.is_alive())
         node.stop()
         self.assertFalse(node._thread.is_alive())
+
+    def test_out_of_order_rejection_and_state_ack(self):
+        node = self.node()
+        calls = []
+        node.register_custom_actuator("servo", lambda v1, v2, data: calls.append(v1))
+
+        # Send ACT with seq=10 -> executed
+        node._sock = FakeSocket(json.dumps({"cmd": "ACT", "name": "servo", "angle": 45, "seq": 10}).encode())
+        node._handle_incoming()
+        self.assertEqual(calls, [45])
+        self.assertEqual(node._last_cmd_seq, 10)
+        self.assertEqual(node._dropped_out_of_order, 0)
+
+        # Send stale ACT with seq=9 and duplicate seq=10 -> both rejected
+        for stale_seq in (9, 10):
+            node._sock = FakeSocket(json.dumps({"cmd": "ACT", "name": "servo", "angle": 90, "seq": stale_seq}).encode())
+            node._handle_incoming()
+        self.assertEqual(calls, [45])
+        self.assertEqual(node._last_cmd_seq, 10)
+        self.assertEqual(node._dropped_out_of_order, 2)
+
+        # Send newer ACT with seq=11 -> executed
+        node._sock = FakeSocket(json.dumps({"cmd": "ACT", "name": "servo", "angle": 120, "seq": 11}).encode())
+        node._handle_incoming()
+        self.assertEqual(calls, [45, 120])
+        self.assertEqual(node._last_cmd_seq, 11)
+
+        # Telemetry includes ack=11
+        node._send_telemetry()
+        self.assertEqual(node._sock.sent[-1]["ack"], 11)
+
+        # A delayed PING responds without rewinding the current session.
+        node._sock = FakeSocket(json.dumps({"cmd": "PING", "seq": 1}).encode())
+        node._handle_incoming()
+        self.assertEqual(node._last_cmd_seq, 11)
+        self.assertEqual(node._sock.sent[-1]["ack"], 11)
+
+    def test_scheduled_actuation_and_stop_clearing(self):
+        # Modular wraparound math check
+        self.assertEqual(schedule_delay_ms(20, 32758), 30)
+        self.assertEqual(schedule_delay_ms(32758, 20), -30)
+
+        node = self.node()
+        node._start_time = 100.0
+        calls = []
+        node.register_custom_actuator("servo", lambda v1, v2, data: calls.append(v1))
+
+        # 1. Future at_ms (+50 ms from uptime_ms=1000) queues without immediate execution
+        with patch("openswarm_slave.node.time.monotonic", return_value=101.000):
+            node._sock = FakeSocket(json.dumps({"cmd": "ACT", "name": "servo", "angle": 75, "at_ms": 1050}).encode())
+            node._handle_incoming()
+        self.assertEqual(calls, [])
+        self.assertIn("servo", node._pending_actuations)
+
+        # Before due time (101.030 -> uptime 1030 ms), nothing fires
+        node._run_due_actuations(101.030)
+        self.assertEqual(calls, [])
+
+        # At due time (101.050 -> uptime 1050 ms), pending command fires
+        node._run_due_actuations(101.050)
+        self.assertEqual(calls, [75])
+        self.assertEqual(node._pending_actuations, {})
+
+        # 2. Past/due at_ms (delta_ms <= 0) executes immediately
+        with patch("openswarm_slave.node.time.monotonic", return_value=102.000):
+            node._sock = FakeSocket(json.dumps({"cmd": "ACT", "name": "servo", "angle": 90, "at_ms": 1990}).encode())
+            node._handle_incoming()
+        self.assertEqual(calls, [75, 90])
+
+        # 3. STOP clears queued pending actuations before they can fire and notifies CUSTOM with STOP
+        with patch("openswarm_slave.node.time.monotonic", return_value=103.000):
+            node._sock = FakeSocket(json.dumps({"cmd": "ACT", "name": "servo", "angle": 135, "at_ms": 3100}).encode())
+            node._handle_incoming()
+            self.assertIn("servo", node._pending_actuations)
+            node._sock = FakeSocket(json.dumps({"cmd": "STOP"}).encode())
+            node._handle_incoming()
+        self.assertEqual(node._pending_actuations, {})
+        node._run_due_actuations(104.000)
+        self.assertEqual(calls, [75, 90, 0])
+
+    def test_command_lease_expires_despite_ping_and_renews_on_act(self):
+        node = self.node()
+        node._start_time = 200.0
+        history = []
+        node.register_custom_actuator("drive", lambda v1, v2, data: history.append((v1, v2)))
+
+        # 1. Start leased drive (lease_ms=200 -> expires at 201.200)
+        with patch("openswarm_slave.node.time.monotonic", return_value=201.000):
+            node._sock = FakeSocket(
+                json.dumps({"cmd": "ACT", "name": "drive", "left": 180, "right": 180, "lease_ms": 200}).encode()
+            )
+            node._handle_incoming()
+        self.assertEqual(history, [(180, 180)])
+        self.assertIn("drive", node._active_leases)
+
+        # 2. Send PING at 201.100 and 201.180 -> resets transport watchdog, but does NOT extend lease
+        for ping_t in (201.100, 201.180):
+            with patch("openswarm_slave.node.time.monotonic", return_value=ping_t):
+                node._sock = FakeSocket(json.dumps({"cmd": "PING"}).encode())
+                node._handle_incoming()
+                node._run_due_actuations(ping_t)
+        self.assertEqual(history, [(180, 180)])
+
+        # 3. At 201.205, lease expires despite recent PINGs -> actuator stops (0, 0)
+        node._run_due_actuations(201.205)
+        self.assertEqual(history[-1], (0, 0))
+        self.assertEqual(node._lease_expirations, 1)
+
+        # 4. Renewing with a fresh ACT before expiration extends the lease
+        with patch("openswarm_slave.node.time.monotonic", return_value=202.000):
+            node._sock = FakeSocket(
+                json.dumps({"cmd": "ACT", "name": "drive", "left": 100, "right": 100, "lease_ms": 200}).encode()
+            )
+            node._handle_incoming()
+        with patch("openswarm_slave.node.time.monotonic", return_value=202.150):
+            node._sock = FakeSocket(
+                json.dumps({"cmd": "ACT", "name": "drive", "left": 120, "right": 120, "lease_ms": 200}).encode()
+            )
+            node._handle_incoming()
+        # At 202.250 (past original 202.200 deadline, before renewed 202.350 deadline), still running
+        node._run_due_actuations(202.250)
+        self.assertEqual(history[-1], (120, 120))
+        self.assertEqual(node._lease_expirations, 1)
+
+        # 5. Combining at_ms + lease_ms starts lease countdown when the scheduled actuation fires
+        with patch("openswarm_slave.node.time.monotonic", return_value=203.000):
+            # uptime = 3000 ms, schedule at 3050 ms (+50 ms) with 100 ms lease -> fires at 203.050, expires at 203.150
+            node._sock = FakeSocket(
+                json.dumps({"cmd": "ACT", "name": "drive", "left": 200, "right": 200, "at_ms": 3050, "lease_ms": 100}).encode()
+            )
+            node._handle_incoming()
+        node._run_due_actuations(203.050)
+        self.assertEqual(history[-1], (200, 200))
+        node._run_due_actuations(203.120)
+        self.assertEqual(history[-1], (200, 200))
+        node._run_due_actuations(203.155)
+        self.assertEqual(history[-1], (0, 0))
+        self.assertEqual(node._lease_expirations, 2)
+
+    def test_complete_emergency_stop_coverage_and_safety_diagnostics(self):
+        node = self.node()
+        node._start_time = 300.0
+        custom_calls = []
+        node.register_pwm_output("heater", 12)
+        node.register_servo("gripper", 18)
+        node.register_custom_actuator("custom_drv", lambda v1, v2, data: custom_calls.append((v1, v2, data)))
+
+        # Activate PWM_OUT, SERVO, and CUSTOM
+        with patch("openswarm_slave.node.time.monotonic", return_value=301.000):
+            for pkt in (
+                {"cmd": "ACT", "name": "heater", "value": 200, "seq": 5},
+                {"cmd": "ACT", "name": "gripper", "angle": 110, "seq": 6},
+                {"cmd": "ACT", "name": "custom_drv", "v1": 42, "v2": 7, "data": "RUN", "seq": 7, "lease_ms": 100},
+                # Out-of-order seq=6 -> increments seq_drop
+                {"cmd": "ACT", "name": "heater", "value": 255, "seq": 6},
+            ):
+                node._sock = FakeSocket(json.dumps(pkt).encode())
+                node._handle_incoming()
+
+        self.assertEqual(node.hal._sim_pins[12], 200)
+        self.assertTrue(node._actuators["gripper"]["holding"])
+        self.assertEqual(custom_calls, [(42, 7, "RUN")])
+        self.assertEqual(node._dropped_out_of_order, 1)
+
+        # Lease expiration on custom_drv calls (0, 0, "STOP") and increments lease_exp
+        node._run_due_actuations(301.150)
+        self.assertEqual(custom_calls[-1], (0, 0, "STOP"))
+        self.assertEqual(node._lease_expirations, 1)
+
+        # STOP zeroes PWM_OUT, releases SERVO holding, and invokes CUSTOM with (0, 0, "STOP")
+        with patch("openswarm_slave.node.time.monotonic", return_value=301.200):
+            node._sock = FakeSocket(json.dumps({"cmd": "STOP", "seq": 8}).encode())
+            node._handle_incoming()
+        self.assertEqual(node.hal._sim_pins[12], 0)
+        self.assertFalse(node._actuators["gripper"]["holding"])
+        self.assertEqual(custom_calls[-1], (0, 0, "STOP"))
+
+        # Simulate watchdog trip -> increments _watchdog_trips and emits wd_trips, lease_exp, seq_drop in STATE
+        node._watchdog_trips += 1
+        node._sock = FakeSocket(b"{}")
+        node._send_telemetry()
+        state = node._sock.sent[-1]
+        self.assertEqual(state["wd_trips"], 1)
+        self.assertEqual(state["lease_exp"], 1)
+        self.assertEqual(state["seq_drop"], 1)

@@ -91,8 +91,8 @@ jobs:
           RELEASE_TAG: ${{ github.ref_name }}
         run: |
           if [ -z "$TWINE_PASSWORD" ]; then
-            echo "PYPI_API_TOKEN secret not set yet; skipping PyPI upload."
-            exit 0
+            echo "::error::PYPI_API_TOKEN is required to publish this release tag."
+            exit 1
           fi
           pip install build twine
           if [[ "$RELEASE_TAG" == master-v* ]]; then

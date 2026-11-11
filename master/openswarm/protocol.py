@@ -10,6 +10,19 @@ import math
 
 PROTOCOL_VERSION = 1
 MAX_DATAGRAM_BYTES = 4096
+SEQ_MODULUS = 32767
+SEQ_WINDOW = SEQ_MODULUS // 2
+
+
+def sequence_is_newer(incoming, previous):
+    """Strict ordering on 1..32767; zero denotes an empty session.
+
+    Comparisons require less than half a cycle of separation. Control messages
+    never authorize a rewind/reset of this watermark.
+    """
+    if isinstance(incoming, bool) or not isinstance(incoming, int) or not 1 <= incoming <= SEQ_MODULUS:
+        return False
+    return previous <= 0 or 0 < (incoming - previous) % SEQ_MODULUS <= SEQ_WINDOW
 
 
 def integer(value, minimum=0, maximum=2**63 - 1):

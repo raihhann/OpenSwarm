@@ -16,6 +16,13 @@ import json
 import socket
 import threading
 import time
+import sys
+from pathlib import Path
+
+MASTER_PACKAGE = Path(__file__).resolve().parents[3] / "master"
+if str(MASTER_PACKAGE) not in sys.path:
+    sys.path.insert(0, str(MASTER_PACKAGE))
+from openswarm.protocol import sequence_is_newer
 from typing import Dict, Any, List
 
 SWARM_DISCOVERY_PORT = 4211
@@ -31,6 +38,15 @@ class VirtualServoSlave:
         self.running = True
         self._start = time.monotonic()
         self._master_addr = None
+        self._last_cmd_time = self._start
+        self._watchdog_tripped = False
+        self.watchdog_trips = 0
+        self.last_cmd_seq = 0
+        self.dropped_out_of_order = 0
+        self.lease_expirations = 0
+        self.pending_actuations: Dict[str, Dict[str, Any]] = {}
+        self.active_leases: Dict[str, float] = {}
+        self.holding: Dict[str, bool] = {a: False for a in self.actuators}
 
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -79,6 +95,14 @@ class VirtualServoSlave:
             "uptime_ms": int((time.monotonic() - self._start) * 1000),
             "sensors": self.sensors,
         }
+        if self.last_cmd_seq > 0:
+            pkt["ack"] = self.last_cmd_seq
+        if self.watchdog_trips > 0:
+            pkt["wd_trips"] = self.watchdog_trips
+        if self.lease_expirations > 0:
+            pkt["lease_exp"] = self.lease_expirations
+        if self.dropped_out_of_order > 0:
+            pkt["seq_drop"] = self.dropped_out_of_order
         try:
             self.sock.sendto(json.dumps(pkt, separators=(",", ":")).encode("utf-8"), addr)
         except OSError:
@@ -86,6 +110,33 @@ class VirtualServoSlave:
 
     def _rx_loop(self) -> None:
         while self.running:
+            now = time.monotonic()
+            if self._master_addr is not None and (now - self._last_cmd_time) > 0.5:
+                if not self._watchdog_tripped:
+                    self._watchdog_tripped = True
+                    self.watchdog_trips += 1
+                    self.last_cmd_seq = 0
+                    self.pending_actuations.clear()
+                    self.active_leases.clear()
+                    for k in self.holding:
+                        self.holding[k] = False
+            due = [k for k, v in self.pending_actuations.items() if now >= v["due_mono"]]
+            for k in due:
+                item = self.pending_actuations.pop(k, None)
+                if item:
+                    lease_ms = item.get("lease_ms")
+                    if lease_ms is not None:
+                        self.active_leases[k] = item["due_mono"] + (lease_ms / 1000.0)
+                    else:
+                        self.active_leases.pop(k, None)
+                    self.holding[k] = True
+                    ts = time.strftime("%H:%M:%S")
+                    print(f"[{ts}] [{self.node_id:<18} | {self.board:<13}] {k:<15} -> {item['angle']:3d}° (scheduled)")
+            expired = [k for k, due_mono in self.active_leases.items() if now >= due_mono]
+            for k in expired:
+                self.active_leases.pop(k, None)
+                self.holding[k] = False
+                self.lease_expirations += 1
             try:
                 data, addr = self.sock.recvfrom(2048)
                 msg = json.loads(data.decode("utf-8"))
@@ -94,15 +145,60 @@ class VirtualServoSlave:
             except Exception:
                 continue
 
-            self._master_addr = addr
-            cmd = msg.get("cmd")
-            if cmd == "PING":
-                self._send_state(addr)
-            elif cmd == "ACT":
-                act_name = msg.get("name", "servo")
-                angle = int(msg.get("angle", msg.get("value", msg.get("v1", 90))))
-                ts = time.strftime("%H:%M:%S")
-                print(f"[{ts}] [{self.node_id:<18} | {self.board:<13}] {act_name:<15} -> {angle:3d}°")
+            self._handle_packet(msg, addr)
+
+    def _handle_packet(self, msg, addr):
+        """Process a command independently of the UDP receive loop."""
+        if not isinstance(msg, dict):
+            return
+        if self._master_addr != addr or self._watchdog_tripped:
+            self.last_cmd_seq = 0
+        self._master_addr = addr
+        self._last_cmd_time = time.monotonic()
+        self._watchdog_tripped = False
+        cmd = msg.get("cmd")
+        raw_seq = msg.get("seq")
+        seq = raw_seq if (not isinstance(raw_seq, bool) and isinstance(raw_seq, int) and 1 <= raw_seq <= 32767) else None
+        if seq is not None:
+            if sequence_is_newer(seq, self.last_cmd_seq):
+                self.last_cmd_seq = seq
+            elif cmd in ("ACT", "PIN"):
+                self.dropped_out_of_order += 1
+                return
+
+        if cmd == "PING":
+            self._send_state(addr)
+        elif cmd == "STOP":
+            self.pending_actuations.clear()
+            self.active_leases.clear()
+            for k in self.holding:
+                self.holding[k] = False
+        elif cmd == "ACT":
+            act_name = msg.get("name", "servo")
+            angle = int(msg.get("angle", msg.get("value", msg.get("v1", 90))))
+            raw_at = msg.get("at_ms")
+            at_ms = raw_at if (not isinstance(raw_at, bool) and isinstance(raw_at, int) and 0 <= raw_at <= 32767) else None
+            raw_lease = msg.get("lease_ms")
+            lease_ms = raw_lease if (not isinstance(raw_lease, bool) and isinstance(raw_lease, int) and 1 <= raw_lease <= 30000) else None
+            now = time.monotonic()
+            uptime_ms = int((now - self._start) * 1000)
+            delta_ms = (((at_ms - (uptime_ms & 0x7FFF) + 16384) & 0x7FFF) - 16384) if at_ms is not None else 0
+            if at_ms is not None and 1 <= delta_ms <= 1000:
+                self.pending_actuations[act_name] = {
+                    "due_mono": now + (delta_ms / 1000.0),
+                    "angle": angle,
+                    "lease_ms": lease_ms,
+                }
+                return
+            self.pending_actuations.pop(act_name, None)
+            if lease_ms is not None:
+                self.active_leases[act_name] = now + (lease_ms / 1000.0)
+            else:
+                self.active_leases.pop(act_name, None)
+            self.holding[act_name] = True
+            ts = time.strftime("%H:%M:%S")
+            print(f"[{ts}] [{self.node_id:<18} | {self.board:<13}] {act_name:<15} -> {angle:3d}°")
+
 
 
 def main() -> None:

@@ -82,7 +82,14 @@ def run_benchmark_2_hydra_sync_under_jitter(poses=200, lead_ms=30.0,
                         else:
                             for name, actuator, angle in commands:
                                 sim.master.get(name).set_actuator(actuator, angle)
+                        if pose % 4 == 0:
+                            # Real SDK keepalive cadence; the new estimator does
+                            # not use ACT ACKs as a substitute for clock probes.
+                            for name, _, _ in roles:
+                                sim.master.get(name).ping()
                         sim.until(start + (pose + 1) * 50000)
+                        errors.extend(abs(sim.master.get(e["node"].node_id).clock_offset_ms - e["offset_ms"])
+                                      for e in sim.slaves.values())
                         executed = sim.execution[before:]
                         if len(executed) != 4:
                             raise AssertionError("A pose did not execute exactly four joint commands")
@@ -99,7 +106,7 @@ def run_benchmark_2_hydra_sync_under_jitter(poses=200, lead_ms=30.0,
     return {"kind": "seeded discrete-event simulation using real SwarmMaster and Linux SwarmNode methods",
             "poses_per_case": poses, "lead_ms": lead_ms, "jitter_distribution": "Uniform(0, spread) + 3 ms base delay",
             "roles": [{"node": name, "initial_uptime_ms": offset, "actuators": list(names)} for name, offset, names in roles],
-            "calibration": "Three actual PING/STATE exchanges with symmetric 3 ms one-way delay; no assigned clock estimates.",
+            "calibration": "Three PING/STATE exchanges with symmetric 3 ms one-way delay, then 5 Hz PING under the trial's injected delay; no assigned clock estimates. Clock errors include initial and per-pose observations.",
             "scope": "MCU names are roles, not physical processor emulators. Execution records software callbacks, not shaft movement. Poll periods are declared simulation assumptions; no OS/network sleeps or instruction timing.",
             "results": rows}
 
@@ -248,7 +255,7 @@ def run_benchmark_4_safety_interlocks():
 
 
 def source_hashes():
-    files = [ROOT / "master/openswarm" / name for name in ("master.py", "node.py", "protocol.py", "virtual_slave.py")]
+    files = [ROOT / "master/openswarm" / name for name in ("__init__.py", "master.py", "node.py", "protocol.py", "virtual_slave.py")]
     files += [ROOT / "projects/hydra_arm/master/virtual_arm_slaves.py"]
     files += [ROOT / "slaves/linux/openswarm_slave" / name for name in ("node.py", "protocol.py")]
     files += [ROOT / "slaves/arduino/SwarmNode/src" / name for name in ("SwarmNode.h", "SwarmNode.cpp", "SwarmTypes.h", "SwarmProtocol.h")]
@@ -257,10 +264,12 @@ def source_hashes():
 
 
 def run_all_benchmarks(parser_iterations=100000, write_outputs=True, output_dir=None):
+    from openswarm import __version__ as master_version
     start = time.perf_counter()
     result = {"schema_version": 1, "seed": SEED,
         "methodology": "Seeded software-only validation; deterministic inputs/logical outcomes, variable measured host timings. No physical hardware or network I/O.",
         "environment": {"python": sys.version.split()[0], "platform": platform.platform(),
+            "openswarm_master_version": master_version,
             "machine": platform.machine(), "processor": platform.processor(), "logical_cpus": os.cpu_count(),
             "perf_counter_resolution_s": time.get_clock_info("perf_counter").resolution},
         "source_sha256": source_hashes(),

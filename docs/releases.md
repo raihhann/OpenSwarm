@@ -1,5 +1,11 @@
 # Publishing OpenSwarm packages
 
+Pending follow-up: master **0.2.1** contains the scheduling/clock patch. It is built
+locally for hardware regression and has not been published by this work. Use
+`master-v0.2.1` only when releasing that patch. Arduino 0.4.3 and slave 0.2.0 are
+unchanged; do not republish or move their tags. The instructions below also document
+the original 0.2.0 release campaign.
+
 Prepared versions: `openswarm-master==0.2.0`, `openswarm-slave==0.2.0`, and
 Arduino/PlatformIO `SwarmNode@0.4.3`. Preparing files does not publish them.
 Check each registry before releasing: previously uploaded versions cannot be reused.

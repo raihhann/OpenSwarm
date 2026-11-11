@@ -122,8 +122,8 @@ class MasterTests(unittest.TestCase):
         self.assertEqual(node.last_ack_seq, 1)
         self.assertAlmostEqual(node.rtt_ms, 20.0, places=3)
         self.assertAlmostEqual(node.jitter_ms, 0.0, places=3)
-        # master_rx_ms = 10020.0, rtt/2 = 10.0 -> master_mid = 10010.0 -> offset = 5000 - 10010 = -5010.0
-        self.assertAlmostEqual(node.clock_offset_ms, -5010.0, places=3)
+        # Send/receive bracket + 1 ms quantization: midpoint offset is -5009.5.
+        self.assertAlmostEqual(node.clock_offset_ms, -5009.5, places=3)
 
         with patch("openswarm.node.time.monotonic", return_value=11.000):
             node.servo("arm", 90)
@@ -182,6 +182,25 @@ class MasterTests(unittest.TestCase):
         # elbow: (2040 + 40000) & 0x7FFF = 42040 & 0x7FFF = 9272
         self.assertEqual(sent[0][1]["at_ms"], 7040)
         self.assertEqual(sent[1][1]["at_ms"], 9272)
+
+    def test_sync_actuate_preflights_every_clock_before_sending(self):
+        self.hello("base", port=4210)
+        self.hello("elbow", port=4213)
+        self.master.get("base").clock_offset_ms = 5000
+        with patch.object(self.master, "_send_json") as send:
+            with self.assertRaisesRegex(RuntimeError, "fresh PING clock"):
+                self.master.sync_actuate([("base", "servo", 90), ("elbow", "servo", 90)])
+            send.assert_not_called()
+
+    def test_sync_actuate_rejects_expired_estimates(self):
+        self.hello("base", port=4210)
+        node = self.master.get("base")
+        node.clock_offset_ms = 5000
+        node._clock_sample = (10, 4999, 5001)
+        with patch("openswarm.node.time.monotonic", return_value=20), patch.object(self.master, "_send_json") as send:
+            with self.assertRaisesRegex(RuntimeError, "fresh PING clock"):
+                self.master.sync_actuate([("base", "servo", 90)])
+            send.assert_not_called()
 
     def test_node_and_sync_actuate_lease_ms(self):
         sent = []

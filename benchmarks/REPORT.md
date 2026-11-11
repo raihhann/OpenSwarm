@@ -3,10 +3,10 @@
 This report contains **host measurements and deterministic simulations**, not physical Wi-Fi, MCU execution, or robot-motion measurements. No external network access, live sockets, hardware, or third-party Python packages are required.
 
 - Seed: `2027`; parser commands/profile: `100,000`.
-- Suite runtime: **6.462 s**; target: <10 s; met: **True**.
+- Suite runtime: **3.564 s**; target: <10 s; met: **True**.
 - Host: `Windows-11-10.0.26300-SP0`; Python `3.14.7`; machine `AMD64`.
 - C++ compiler: `g++.EXE (Rev4, Built by MSYS2 project) 16.2.0`.
-- Logical-result fingerprint: `9152c6a7b346d2d4ac3fc6ca6810efe51751edad4978313a86b9e5cc81a04b60`.
+- Logical-result fingerprint: `558143c3b557703e0158c7de203afa4697cd192c19cc7aa02b6153416356e5d6`.
 - Source SHA-256 hashes, workload details, raw synchronization skews, compiler flags and measurements are in `results.json`.
 
 ## Interpretation and reproducibility
@@ -51,8 +51,8 @@ mcu\_32bit & 8 & 1344 & 1440 & 2856 & 800 \\
 
 | Profile | Status | Commands | us/cmd | cmd/s | new calls |
 | --- | --- | --- | --- | --- | --- |
-| avr_8bit | measured | 100000 | 1.647338 | 607040 | 0 |
-| mcu_32bit | measured | 100000 | 1.794316 | 557315 | 0 |
+| avr_8bit | measured | 100000 | 1.024445 | 976138 | 0 |
+| mcu_32bit | measured | 100000 | 0.818011 | 1222477 | 0 |
 
 <details><summary>LaTeX-ready table</summary>
 
@@ -66,8 +66,8 @@ mcu\_32bit & 8 & 1344 & 1440 & 2856 & 800 \\
 \hline
 Profile & Status & Commands & us/cmd & cmd/s & new calls \\
 \hline
-avr\_8bit & measured & 100000 & 1.647338 & 607040 & 0 \\
-mcu\_32bit & measured & 100000 & 1.794316 & 557315 & 0 \\
+avr\_8bit & measured & 100000 & 1.024445 & 976138 & 0 \\
+mcu\_32bit & measured & 100000 & 0.818011 & 1222477 & 0 \\
 \hline
 \end{tabular}
 \end{table}
@@ -158,21 +158,21 @@ The benchmark feeds actual SDK packets into the actual Linux command parser and 
 | Polling model | Spread ms | Mode | Mean | p50 | p95 | p99 | Late % |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | idealized_1ms | 5 | baseline | 2.436 | 2.475 | 4.436 | 4.681 | N/A |
-| idealized_1ms | 5 | scheduled | 1.005 | 1.000 | 1.000 | 1.000 | 0.000 |
+| idealized_1ms | 5 | scheduled | 0.385 | 0.000 | 1.000 | 1.000 | 0.000 |
 | idealized_1ms | 15 | baseline | 7.802 | 7.994 | 13.249 | 14.216 | N/A |
-| idealized_1ms | 15 | scheduled | 1.000 | 1.000 | 1.000 | 1.000 | 0.000 |
+| idealized_1ms | 15 | scheduled | 0.145 | 0.000 | 1.000 | 1.000 | 0.000 |
 | idealized_1ms | 25 | baseline | 12.068 | 11.295 | 21.206 | 24.126 | N/A |
-| idealized_1ms | 25 | scheduled | 1.000 | 1.000 | 1.000 | 1.000 | 0.000 |
+| idealized_1ms | 25 | scheduled | 0.280 | 0.000 | 1.000 | 1.000 | 0.000 |
 | idealized_1ms | 40 | baseline | 19.635 | 19.212 | 33.500 | 38.038 | N/A |
-| idealized_1ms | 40 | scheduled | 4.626 | 2.291 | 12.022 | 12.861 | 26.750 |
+| idealized_1ms | 40 | scheduled | 3.756 | 1.932 | 11.132 | 11.809 | 26.750 |
 | heterogeneous_polling | 5 | baseline | 2.436 | 2.475 | 4.436 | 4.681 | N/A |
-| heterogeneous_polling | 5 | scheduled | 10.000 | 10.000 | 10.000 | 10.000 | 0.000 |
+| heterogeneous_polling | 5 | scheduled | 8.000 | 8.000 | 8.000 | 8.000 | 0.000 |
 | heterogeneous_polling | 15 | baseline | 7.802 | 7.994 | 13.249 | 14.216 | N/A |
-| heterogeneous_polling | 15 | scheduled | 10.000 | 10.000 | 10.000 | 10.000 | 0.000 |
+| heterogeneous_polling | 15 | scheduled | 8.000 | 8.000 | 8.000 | 8.000 | 0.000 |
 | heterogeneous_polling | 25 | baseline | 12.068 | 11.295 | 21.206 | 24.126 | N/A |
-| heterogeneous_polling | 25 | scheduled | 10.000 | 10.000 | 10.000 | 10.000 | 0.000 |
+| heterogeneous_polling | 25 | scheduled | 8.000 | 8.000 | 8.000 | 8.000 | 0.000 |
 | heterogeneous_polling | 40 | baseline | 19.635 | 19.212 | 33.500 | 38.038 | N/A |
-| heterogeneous_polling | 40 | scheduled | 9.302 | 10.000 | 12.022 | 12.861 | 26.750 |
+| heterogeneous_polling | 40 | scheduled | 7.532 | 8.000 | 10.039 | 10.762 | 26.750 |
 
 <details><summary>LaTeX-ready table</summary>
 
@@ -187,21 +187,21 @@ The benchmark feeds actual SDK packets into the actual Linux command parser and 
 Polling model & Spread ms & Mode & Mean & p50 & p95 & p99 & Late \% \\
 \hline
 idealized\_1ms & 5 & baseline & 2.436 & 2.475 & 4.436 & 4.681 & N/A \\
-idealized\_1ms & 5 & scheduled & 1.005 & 1.000 & 1.000 & 1.000 & 0.000 \\
+idealized\_1ms & 5 & scheduled & 0.385 & 0.000 & 1.000 & 1.000 & 0.000 \\
 idealized\_1ms & 15 & baseline & 7.802 & 7.994 & 13.249 & 14.216 & N/A \\
-idealized\_1ms & 15 & scheduled & 1.000 & 1.000 & 1.000 & 1.000 & 0.000 \\
+idealized\_1ms & 15 & scheduled & 0.145 & 0.000 & 1.000 & 1.000 & 0.000 \\
 idealized\_1ms & 25 & baseline & 12.068 & 11.295 & 21.206 & 24.126 & N/A \\
-idealized\_1ms & 25 & scheduled & 1.000 & 1.000 & 1.000 & 1.000 & 0.000 \\
+idealized\_1ms & 25 & scheduled & 0.280 & 0.000 & 1.000 & 1.000 & 0.000 \\
 idealized\_1ms & 40 & baseline & 19.635 & 19.212 & 33.500 & 38.038 & N/A \\
-idealized\_1ms & 40 & scheduled & 4.626 & 2.291 & 12.022 & 12.861 & 26.750 \\
+idealized\_1ms & 40 & scheduled & 3.756 & 1.932 & 11.132 & 11.809 & 26.750 \\
 heterogeneous\_polling & 5 & baseline & 2.436 & 2.475 & 4.436 & 4.681 & N/A \\
-heterogeneous\_polling & 5 & scheduled & 10.000 & 10.000 & 10.000 & 10.000 & 0.000 \\
+heterogeneous\_polling & 5 & scheduled & 8.000 & 8.000 & 8.000 & 8.000 & 0.000 \\
 heterogeneous\_polling & 15 & baseline & 7.802 & 7.994 & 13.249 & 14.216 & N/A \\
-heterogeneous\_polling & 15 & scheduled & 10.000 & 10.000 & 10.000 & 10.000 & 0.000 \\
+heterogeneous\_polling & 15 & scheduled & 8.000 & 8.000 & 8.000 & 8.000 & 0.000 \\
 heterogeneous\_polling & 25 & baseline & 12.068 & 11.295 & 21.206 & 24.126 & N/A \\
-heterogeneous\_polling & 25 & scheduled & 10.000 & 10.000 & 10.000 & 10.000 & 0.000 \\
+heterogeneous\_polling & 25 & scheduled & 8.000 & 8.000 & 8.000 & 8.000 & 0.000 \\
 heterogeneous\_polling & 40 & baseline & 19.635 & 19.212 & 33.500 & 38.038 & N/A \\
-heterogeneous\_polling & 40 & scheduled & 9.302 & 10.000 & 12.022 & 12.861 & 26.750 \\
+heterogeneous\_polling & 40 & scheduled & 7.532 & 8.000 & 10.039 & 10.762 & 26.750 \\
 \hline
 \end{tabular}
 \end{table}
@@ -209,7 +209,7 @@ heterogeneous\_polling & 40 & scheduled & 9.302 & 10.000 & 12.022 & 12.861 & 26.
 
 </details>
 
-At spread 40 ms, arrival delays reach **43 ms**, beyond the 30 ms lead. The node executes already-late commands immediately; the table reports the observed failure boundary rather than excluding late samples. Timestamp quantization, clock-estimation bias and polling remain even when every packet arrives before its deadline. One-slot replacement and unknown-clock fallback are not removed or replaced by ideal timing equations.
+At spread 40 ms, arrival delays reach **43 ms**, beyond the 30 ms lead. The node executes already-late commands immediately; the table reports the observed failure boundary rather than excluding late samples. Timestamp quantization, clock-estimation bias and polling remain even when every packet arrives before its deadline. One-slot replacement is unchanged; sync_actuate now rejects unknown/expired clocks instead of silently sending an unscheduled command.
 
 ## 3. Master-mediated scaling
 
@@ -221,11 +221,11 @@ Each node receives 20 ACT/s and produces 20 scheduled STATE/s, plus 5 PING/s and
 
 | N | RX p50 | RX p95 | RX p99 | Offset MAE ms | Delivered pkt/s | CPU % |
 | --- | --- | --- | --- | --- | --- | --- |
-| 1 | 0.053950 | 0.101525 | 0.132230 | 0.000 | 50 | 0.000 |
-| 5 | 0.055300 | 0.130085 | 0.257923 | 0.400 | 250 | 1.562 |
-| 10 | 0.036200 | 0.063470 | 0.119413 | 0.400 | 500 | 1.562 |
-| 20 | 0.049350 | 0.101800 | 0.189325 | 0.450 | 1000 | 5.469 |
-| 50 | 0.041750 | 0.082905 | 0.159410 | 0.760 | 2500 | 10.938 |
+| 1 | 0.026900 | 0.034285 | 0.039266 | 0.500 | 50 | 0.000 |
+| 5 | 0.025400 | 0.044990 | 0.205332 | 0.500 | 250 | 0.781 |
+| 10 | 0.023650 | 0.046815 | 0.075679 | 0.500 | 500 | 1.562 |
+| 20 | 0.020400 | 0.036405 | 0.081621 | 0.500 | 1000 | 1.562 |
+| 50 | 0.019000 | 0.035410 | 0.067712 | 0.500 | 2500 | 5.469 |
 
 <details><summary>LaTeX-ready table</summary>
 
@@ -239,11 +239,11 @@ Each node receives 20 ACT/s and produces 20 scheduled STATE/s, plus 5 PING/s and
 \hline
 N & RX p50 & RX p95 & RX p99 & Offset MAE ms & Delivered pkt/s & CPU \% \\
 \hline
-1 & 0.053950 & 0.101525 & 0.132230 & 0.000 & 50 & 0.000 \\
-5 & 0.055300 & 0.130085 & 0.257923 & 0.400 & 250 & 1.562 \\
-10 & 0.036200 & 0.063470 & 0.119413 & 0.400 & 500 & 1.562 \\
-20 & 0.049350 & 0.101800 & 0.189325 & 0.450 & 1000 & 5.469 \\
-50 & 0.041750 & 0.082905 & 0.159410 & 0.760 & 2500 & 10.938 \\
+1 & 0.026900 & 0.034285 & 0.039266 & 0.500 & 50 & 0.000 \\
+5 & 0.025400 & 0.044990 & 0.205332 & 0.500 & 250 & 0.781 \\
+10 & 0.023650 & 0.046815 & 0.075679 & 0.500 & 500 & 1.562 \\
+20 & 0.020400 & 0.036405 & 0.081621 & 0.500 & 1000 & 1.562 \\
+50 & 0.019000 & 0.035410 & 0.067712 & 0.500 & 2500 & 5.469 \\
 \hline
 \end{tabular}
 \end{table}
@@ -255,11 +255,11 @@ N & RX p50 & RX p95 & RX p99 & Offset MAE ms & Delivered pkt/s & CPU \% \\
 
 | N | RTT p50 | RTT p95 | RTT p99 | Service pkt/s |
 | --- | --- | --- | --- | --- |
-| 1 | 8.000 | 8.000 | 8.000 | 10831 |
-| 5 | 8.000 | 8.000 | 8.000 | 9139 |
-| 10 | 8.000 | 8.000 | 8.000 | 16531 |
-| 20 | 8.000 | 8.000 | 8.000 | 11844 |
-| 50 | 8.000 | 8.000 | 8.000 | 14437 |
+| 1 | 8.000 | 8.000 | 8.000 | 25278 |
+| 5 | 8.000 | 8.000 | 8.000 | 24527 |
+| 10 | 8.000 | 8.000 | 8.000 | 26117 |
+| 20 | 8.000 | 8.000 | 8.000 | 31116 |
+| 50 | 8.000 | 8.000 | 8.000 | 33027 |
 
 <details><summary>LaTeX-ready table</summary>
 
@@ -273,11 +273,11 @@ N & RX p50 & RX p95 & RX p99 & Offset MAE ms & Delivered pkt/s & CPU \% \\
 \hline
 N & RTT p50 & RTT p95 & RTT p99 & Service pkt/s \\
 \hline
-1 & 8.000 & 8.000 & 8.000 & 10831 \\
-5 & 8.000 & 8.000 & 8.000 & 9139 \\
-10 & 8.000 & 8.000 & 8.000 & 16531 \\
-20 & 8.000 & 8.000 & 8.000 & 11844 \\
-50 & 8.000 & 8.000 & 8.000 & 14437 \\
+1 & 8.000 & 8.000 & 8.000 & 25278 \\
+5 & 8.000 & 8.000 & 8.000 & 24527 \\
+10 & 8.000 & 8.000 & 8.000 & 26117 \\
+20 & 8.000 & 8.000 & 8.000 & 31116 \\
+50 & 8.000 & 8.000 & 8.000 & 33027 \\
 \hline
 \end{tabular}
 \end{table}
@@ -285,7 +285,7 @@ N & RTT p50 & RTT p95 & RTT p99 & Service pkt/s \\
 
 </details>
 
-RTT includes the modeled telemetry response wait as well as forward/reverse transport delay. The current ack tracks received sequence state, not proof that a scheduled actuator has executed. Offset estimation is the current midpoint estimator and can be biased by telemetry sampling/queueing. Host processing percentiles must not be cited as network RTT. CPU is measured around master dispatch and receive operations and projected onto the simulated workload period, not an OS CPU-utilization survey.
+RTT includes the modeled telemetry response wait as well as forward/reverse transport delay. The current ack tracks received sequence state, not proof that a scheduled actuator has executed. Clock calibration now uses PING-only samples, selects the lowest-delay sample in a five-second window, includes 1 ms quantization in its conditional send/receive bounds, and exposes age/drift assumptions through coherent snapshots. Ordinary ACT ACKs no longer recalibrate the clock; asymmetric delays and drift still limit accuracy. Host processing percentiles must not be cited as network RTT. CPU is measured around master dispatch and receive operations and projected onto the simulated workload period, not an OS CPU-utilization survey.
 
 ## 4. Sequence rejection, packet loss, and stalled application
 

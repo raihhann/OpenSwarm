@@ -4,12 +4,12 @@
 #include <string.h>
 #include <SwarmNode.h>  // Keep this as the last library include.
 
-#define PROBE_PIN -1  // EDIT: a free GPIO number for your exact board, not a header pin number.
+#define PROBE_PIN 2  // EDIT: a free GPIO number for your exact board, not a header pin number.
 #if PROBE_PIN < 0
 #error "Set PROBE_PIN to a free GPIO verified against your board pinout"
 #endif
 
-SwarmNode node("probe_esp32"); // EDIT: probe_rp2040 on the second board.
+SwarmNode node("probe_rp2040"); // EDIT: probe_rp2040 on the second board.
 volatile int16_t value = 0;
 volatile uint32_t acts = 0, stops = 0, hold_ms = 0, on_ms = 0, exec_ms = 0;
 
@@ -31,7 +31,7 @@ void applyProbe(int16_t v1, int16_t, const char* data) {
 void setup() {
     pinMode(PROBE_PIN, OUTPUT);
     digitalWrite(PROBE_PIN, LOW);
-    if (!node.connectWiFi("YOUR_WIFI_SSID", "YOUR_WIFI_PASSWORD")) return;
+    if (!node.connectWiFi("Kernel", "Carrera@911")) return;
     node.registerCustomActuator("probe", applyProbe);
     node.registerCustomSensor("value", []() -> float { return value; });
     node.registerCustomSensor("acts", []() -> float { return acts; });

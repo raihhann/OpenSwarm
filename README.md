@@ -403,6 +403,8 @@ These are host measurements and declared simulations, not physical Wi-Fi or robo
 The [Stage 1 readiness assessment](docs/stage1_readiness.md) separates supported claims
 from the remaining research and hardware validation work.
 For live-board measurements, use the [hardware procedure and report template](benchmarks/hardware/README.md).
+For the scheduling/clock patch, follow the [bounded hardware rerun](docs/hardware_rerun.md).
+For a command-by-command explanation, read [how the framework works](docs/framework_walkthrough.md).
 
 ## TODO: safety and authentication (deferred)
 

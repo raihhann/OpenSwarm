@@ -1,0 +1,1011 @@
+{
+  "kind": "audit of supplied hardware callback/telemetry evidence",
+  "boards": {
+    "esp32": {
+      "files": 10,
+      "statuses": {
+        "PASS": 59,
+        "FAIL": 1
+      },
+      "cases": {
+        "delayed_ping_and_stale_stop": {
+          "PASS": 10
+        },
+        "sequence_wraparound": {
+          "PASS": 10
+        },
+        "scheduled_preservation_and_stop_cancellation": {
+          "PASS": 9,
+          "FAIL": 1
+        },
+        "lease_150ms_with_5hz_ping": {
+          "PASS": 10
+        },
+        "no_lease_with_5hz_ping": {
+          "PASS": 10
+        },
+        "watchdog_without_ping": {
+          "PASS": 10
+        }
+      },
+      "timing_ms": {
+        "scheduled_preservation_and_stop_cancellation": {
+          "n": 9,
+          "minimum": 0,
+          "mean": 0.6666666666666666,
+          "p50": 1.0,
+          "p95": 1.0,
+          "p99": 1.0,
+          "maximum": 1
+        },
+        "lease_150ms_with_5hz_ping": {
+          "n": 10,
+          "minimum": 150.0,
+          "mean": 150.7,
+          "p50": 151.0,
+          "p95": 151.0,
+          "p99": 151.0,
+          "maximum": 151.0
+        },
+        "watchdog_without_ping": {
+          "n": 10,
+          "minimum": 502.0,
+          "mean": 503.0,
+          "p50": 503.0,
+          "p95": 504.0,
+          "p99": 504.0,
+          "maximum": 504.0
+        }
+      },
+      "raw_consistency_checks": {
+        "esp32-run01.json": [],
+        "esp32-run02.json": [],
+        "esp32-run03.json": [],
+        "esp32-run04.json": [],
+        "esp32-run05.json": [],
+        "esp32-run06.json": [],
+        "esp32-run07.json": [],
+        "esp32-run08.json": [],
+        "esp32-run09.json": [],
+        "esp32-run10.json": []
+      },
+      "provenance": [
+        {
+          "file": "esp32-run01.json",
+          "revision": "63297c21ab75fc21978e40e670a39a3e1b076d4b",
+          "host": "Linux-7.0.0-30-generic-x86_64-with-glibc2.39",
+          "worktree_status": "?? master/myvenv/\n?? projects/hydra_arm/episodes/ep.json\n?? projects/hydra_arm/episodes/episode_1.json\n?? projects/hydra_arm/episodes/episode_2.json\n"
+        },
+        {
+          "file": "esp32-run02.json",
+          "revision": "63297c21ab75fc21978e40e670a39a3e1b076d4b",
+          "host": "Linux-7.0.0-30-generic-x86_64-with-glibc2.39",
+          "worktree_status": "?? hardware-result/\n?? master/myvenv/\n?? projects/hydra_arm/episodes/ep.json\n?? projects/hydra_arm/episodes/episode_1.json\n?? projects/hydra_arm/episodes/episode_2.json\n"
+        },
+        {
+          "file": "esp32-run03.json",
+          "revision": "63297c21ab75fc21978e40e670a39a3e1b076d4b",
+          "host": "Linux-7.0.0-30-generic-x86_64-with-glibc2.39",
+          "worktree_status": "?? hardware-result/\n?? master/myvenv/\n?? projects/hydra_arm/episodes/ep.json\n?? projects/hydra_arm/episodes/episode_1.json\n?? projects/hydra_arm/episodes/episode_2.json\n"
+        },
+        {
+          "file": "esp32-run04.json",
+          "revision": "63297c21ab75fc21978e40e670a39a3e1b076d4b",
+          "host": "Linux-7.0.0-30-generic-x86_64-with-glibc2.39",
+          "worktree_status": "?? hardware-result/\n?? master/myvenv/\n?? projects/hydra_arm/episodes/ep.json\n?? projects/hydra_arm/episodes/episode_1.json\n?? projects/hydra_arm/episodes/episode_2.json\n"
+        },
+        {
+          "file": "esp32-run05.json",
+          "revision": "63297c21ab75fc21978e40e670a39a3e1b076d4b",
+          "host": "Linux-7.0.0-30-generic-x86_64-with-glibc2.39",
+          "worktree_status": "?? hardware-result/\n?? master/myvenv/\n?? projects/hydra_arm/episodes/ep.json\n?? projects/hydra_arm/episodes/episode_1.json\n?? projects/hydra_arm/episodes/episode_2.json\n"
+        },
+        {
+          "file": "esp32-run06.json",
+          "revision": "63297c21ab75fc21978e40e670a39a3e1b076d4b",
+          "host": "Linux-7.0.0-30-generic-x86_64-with-glibc2.39",
+          "worktree_status": "?? hardware-result/\n?? master/myvenv/\n?? projects/hydra_arm/episodes/ep.json\n?? projects/hydra_arm/episodes/episode_1.json\n?? projects/hydra_arm/episodes/episode_2.json\n"
+        },
+        {
+          "file": "esp32-run07.json",
+          "revision": "63297c21ab75fc21978e40e670a39a3e1b076d4b",
+          "host": "Linux-7.0.0-30-generic-x86_64-with-glibc2.39",
+          "worktree_status": "?? hardware-result/\n?? master/myvenv/\n?? projects/hydra_arm/episodes/ep.json\n?? projects/hydra_arm/episodes/episode_1.json\n?? projects/hydra_arm/episodes/episode_2.json\n"
+        },
+        {
+          "file": "esp32-run08.json",
+          "revision": "63297c21ab75fc21978e40e670a39a3e1b076d4b",
+          "host": "Linux-7.0.0-30-generic-x86_64-with-glibc2.39",
+          "worktree_status": "?? hardware-result/\n?? master/myvenv/\n?? projects/hydra_arm/episodes/ep.json\n?? projects/hydra_arm/episodes/episode_1.json\n?? projects/hydra_arm/episodes/episode_2.json\n"
+        },
+        {
+          "file": "esp32-run09.json",
+          "revision": "63297c21ab75fc21978e40e670a39a3e1b076d4b",
+          "host": "Linux-7.0.0-30-generic-x86_64-with-glibc2.39",
+          "worktree_status": "?? hardware-result/\n?? master/myvenv/\n?? projects/hydra_arm/episodes/ep.json\n?? projects/hydra_arm/episodes/episode_1.json\n?? projects/hydra_arm/episodes/episode_2.json\n"
+        },
+        {
+          "file": "esp32-run10.json",
+          "revision": "63297c21ab75fc21978e40e670a39a3e1b076d4b",
+          "host": "Linux-7.0.0-30-generic-x86_64-with-glibc2.39",
+          "worktree_status": "?? hardware-result/\n?? master/myvenv/\n?? projects/hydra_arm/episodes/ep.json\n?? projects/hydra_arm/episodes/episode_1.json\n?? projects/hydra_arm/episodes/episode_2.json\n"
+        }
+      ]
+    },
+    "rp2040": {
+      "files": 10,
+      "statuses": {
+        "PASS": 59,
+        "FAIL": 1
+      },
+      "cases": {
+        "delayed_ping_and_stale_stop": {
+          "PASS": 10
+        },
+        "sequence_wraparound": {
+          "PASS": 10
+        },
+        "scheduled_preservation_and_stop_cancellation": {
+          "PASS": 9,
+          "FAIL": 1
+        },
+        "lease_150ms_with_5hz_ping": {
+          "PASS": 10
+        },
+        "no_lease_with_5hz_ping": {
+          "PASS": 10
+        },
+        "watchdog_without_ping": {
+          "PASS": 10
+        }
+      },
+      "timing_ms": {
+        "scheduled_preservation_and_stop_cancellation": {
+          "n": 9,
+          "minimum": 0,
+          "mean": 2.2222222222222223,
+          "p50": 2.0,
+          "p95": 4.0,
+          "p99": 4.0,
+          "maximum": 4
+        },
+        "lease_150ms_with_5hz_ping": {
+          "n": 10,
+          "minimum": 150.0,
+          "mean": 151.8,
+          "p50": 152.0,
+          "p95": 153.1,
+          "p99": 153.82,
+          "maximum": 154.0
+        },
+        "watchdog_without_ping": {
+          "n": 10,
+          "minimum": 517.0,
+          "mean": 521.6,
+          "p50": 522.5,
+          "p95": 523.55,
+          "p99": 523.91,
+          "maximum": 524.0
+        }
+      },
+      "raw_consistency_checks": {
+        "rp2040-run01.json": [],
+        "rp2040-run02.json": [],
+        "rp2040-run03.json": [],
+        "rp2040-run04.json": [],
+        "rp2040-run05.json": [],
+        "rp2040-run06.json": [],
+        "rp2040-run07.json": [],
+        "rp2040-run08.json": [],
+        "rp2040-run09.json": [],
+        "rp2040-run10.json": []
+      },
+      "provenance": [
+        {
+          "file": "rp2040-run01.json",
+          "revision": "63297c21ab75fc21978e40e670a39a3e1b076d4b",
+          "host": "Linux-7.0.0-30-generic-x86_64-with-glibc2.39",
+          "worktree_status": "?? hardware-result/\n?? master/myvenv/\n?? projects/hydra_arm/episodes/ep.json\n?? projects/hydra_arm/episodes/episode_1.json\n?? projects/hydra_arm/episodes/episode_2.json\n"
+        },
+        {
+          "file": "rp2040-run02.json",
+          "revision": "63297c21ab75fc21978e40e670a39a3e1b076d4b",
+          "host": "Linux-7.0.0-30-generic-x86_64-with-glibc2.39",
+          "worktree_status": "?? hardware-result/\n?? master/myvenv/\n?? projects/hydra_arm/episodes/ep.json\n?? projects/hydra_arm/episodes/episode_1.json\n?? projects/hydra_arm/episodes/episode_2.json\n"
+        },
+        {
+          "file": "rp2040-run03.json",
+          "revision": "63297c21ab75fc21978e40e670a39a3e1b076d4b",
+          "host": "Linux-7.0.0-30-generic-x86_64-with-glibc2.39",
+          "worktree_status": "?? hardware-result/\n?? master/myvenv/\n?? projects/hydra_arm/episodes/ep.json\n?? projects/hydra_arm/episodes/episode_1.json\n?? projects/hydra_arm/episodes/episode_2.json\n"
+        },
+        {
+          "file": "rp2040-run04.json",
+          "revision": "63297c21ab75fc21978e40e670a39a3e1b076d4b",
+          "host": "Linux-7.0.0-30-generic-x86_64-with-glibc2.39",
+          "worktree_status": "?? hardware-result/\n?? master/myvenv/\n?? projects/hydra_arm/episodes/ep.json\n?? projects/hydra_arm/episodes/episode_1.json\n?? projects/hydra_arm/episodes/episode_2.json\n"
+        },
+        {
+          "file": "rp2040-run05.json",
+          "revision": "63297c21ab75fc21978e40e670a39a3e1b076d4b",
+          "host": "Linux-7.0.0-30-generic-x86_64-with-glibc2.39",
+          "worktree_status": "?? hardware-result/\n?? master/myvenv/\n?? projects/hydra_arm/episodes/ep.json\n?? projects/hydra_arm/episodes/episode_1.json\n?? projects/hydra_arm/episodes/episode_2.json\n"
+        },
+        {
+          "file": "rp2040-run06.json",
+          "revision": "63297c21ab75fc21978e40e670a39a3e1b076d4b",
+          "host": "Linux-7.0.0-30-generic-x86_64-with-glibc2.39",
+          "worktree_status": "?? hardware-result/\n?? master/myvenv/\n?? projects/hydra_arm/episodes/ep.json\n?? projects/hydra_arm/episodes/episode_1.json\n?? projects/hydra_arm/episodes/episode_2.json\n"
+        },
+        {
+          "file": "rp2040-run07.json",
+          "revision": "63297c21ab75fc21978e40e670a39a3e1b076d4b",
+          "host": "Linux-7.0.0-30-generic-x86_64-with-glibc2.39",
+          "worktree_status": "?? hardware-result/\n?? master/myvenv/\n?? projects/hydra_arm/episodes/ep.json\n?? projects/hydra_arm/episodes/episode_1.json\n?? projects/hydra_arm/episodes/episode_2.json\n"
+        },
+        {
+          "file": "rp2040-run08.json",
+          "revision": "63297c21ab75fc21978e40e670a39a3e1b076d4b",
+          "host": "Linux-7.0.0-30-generic-x86_64-with-glibc2.39",
+          "worktree_status": "?? hardware-result/\n?? master/myvenv/\n?? projects/hydra_arm/episodes/ep.json\n?? projects/hydra_arm/episodes/episode_1.json\n?? projects/hydra_arm/episodes/episode_2.json\n"
+        },
+        {
+          "file": "rp2040-run09.json",
+          "revision": "63297c21ab75fc21978e40e670a39a3e1b076d4b",
+          "host": "Linux-7.0.0-30-generic-x86_64-with-glibc2.39",
+          "worktree_status": "?? hardware-result/\n?? master/myvenv/\n?? projects/hydra_arm/episodes/ep.json\n?? projects/hydra_arm/episodes/episode_1.json\n?? projects/hydra_arm/episodes/episode_2.json\n"
+        },
+        {
+          "file": "rp2040-run10.json",
+          "revision": "63297c21ab75fc21978e40e670a39a3e1b076d4b",
+          "host": "Linux-7.0.0-30-generic-x86_64-with-glibc2.39",
+          "worktree_status": "?? hardware-result/\n?? master/myvenv/\n?? projects/hydra_arm/episodes/ep.json\n?? projects/hydra_arm/episodes/episode_1.json\n?? projects/hydra_arm/episodes/episode_2.json\n"
+        }
+      ]
+    },
+    "rpi": {
+      "files": 10,
+      "statuses": {
+        "PASS": 59,
+        "FAIL": 1
+      },
+      "cases": {
+        "delayed_ping_and_stale_stop": {
+          "PASS": 10
+        },
+        "sequence_wraparound": {
+          "PASS": 10
+        },
+        "scheduled_preservation_and_stop_cancellation": {
+          "PASS": 9,
+          "FAIL": 1
+        },
+        "lease_150ms_with_5hz_ping": {
+          "PASS": 10
+        },
+        "no_lease_with_5hz_ping": {
+          "PASS": 10
+        },
+        "watchdog_without_ping": {
+          "PASS": 10
+        }
+      },
+      "timing_ms": {
+        "scheduled_preservation_and_stop_cancellation": {
+          "n": 9,
+          "minimum": 0,
+          "mean": 5.888888888888889,
+          "p50": 6.0,
+          "p95": 10.0,
+          "p99": 10.0,
+          "maximum": 10
+        },
+        "lease_150ms_with_5hz_ping": {
+          "n": 10,
+          "minimum": 152.369,
+          "mean": 153.8289,
+          "p50": 154.073,
+          "p95": 154.54410000000001,
+          "p99": 154.59522,
+          "maximum": 154.608
+        },
+        "watchdog_without_ping": {
+          "n": 10,
+          "minimum": 502.021,
+          "mean": 504.5136,
+          "p50": 502.629,
+          "p95": 509.91859999999997,
+          "p99": 509.93732,
+          "maximum": 509.942
+        }
+      },
+      "raw_consistency_checks": {
+        "rpi-run01.json": [],
+        "rpi-run02.json": [],
+        "rpi-run03.json": [],
+        "rpi-run04.json": [],
+        "rpi-run05.json": [],
+        "rpi-run06.json": [],
+        "rpi-run07.json": [],
+        "rpi-run08.json": [],
+        "rpi-run09.json": [],
+        "rpi-run10.json": []
+      },
+      "provenance": [
+        {
+          "file": "rpi-run01.json",
+          "revision": "63297c21ab75fc21978e40e670a39a3e1b076d4b",
+          "host": "Linux-7.0.0-30-generic-x86_64-with-glibc2.39",
+          "worktree_status": "?? hardware-result/\n?? master/myvenv/\n?? projects/hydra_arm/episodes/ep.json\n?? projects/hydra_arm/episodes/episode_1.json\n?? projects/hydra_arm/episodes/episode_2.json\n"
+        },
+        {
+          "file": "rpi-run02.json",
+          "revision": "63297c21ab75fc21978e40e670a39a3e1b076d4b",
+          "host": "Linux-7.0.0-30-generic-x86_64-with-glibc2.39",
+          "worktree_status": "?? hardware-result/\n?? master/myvenv/\n?? projects/hydra_arm/episodes/ep.json\n?? projects/hydra_arm/episodes/episode_1.json\n?? projects/hydra_arm/episodes/episode_2.json\n"
+        },
+        {
+          "file": "rpi-run03.json",
+          "revision": "63297c21ab75fc21978e40e670a39a3e1b076d4b",
+          "host": "Linux-7.0.0-30-generic-x86_64-with-glibc2.39",
+          "worktree_status": "?? hardware-result/\n?? master/myvenv/\n?? projects/hydra_arm/episodes/ep.json\n?? projects/hydra_arm/episodes/episode_1.json\n?? projects/hydra_arm/episodes/episode_2.json\n"
+        },
+        {
+          "file": "rpi-run04.json",
+          "revision": "63297c21ab75fc21978e40e670a39a3e1b076d4b",
+          "host": "Linux-7.0.0-30-generic-x86_64-with-glibc2.39",
+          "worktree_status": "?? hardware-result/\n?? master/myvenv/\n?? projects/hydra_arm/episodes/ep.json\n?? projects/hydra_arm/episodes/episode_1.json\n?? projects/hydra_arm/episodes/episode_2.json\n"
+        },
+        {
+          "file": "rpi-run05.json",
+          "revision": "63297c21ab75fc21978e40e670a39a3e1b076d4b",
+          "host": "Linux-7.0.0-30-generic-x86_64-with-glibc2.39",
+          "worktree_status": "?? hardware-result/\n?? master/myvenv/\n?? projects/hydra_arm/episodes/ep.json\n?? projects/hydra_arm/episodes/episode_1.json\n?? projects/hydra_arm/episodes/episode_2.json\n"
+        },
+        {
+          "file": "rpi-run06.json",
+          "revision": "63297c21ab75fc21978e40e670a39a3e1b076d4b",
+          "host": "Linux-7.0.0-30-generic-x86_64-with-glibc2.39",
+          "worktree_status": "?? hardware-result/\n?? master/myvenv/\n?? projects/hydra_arm/episodes/ep.json\n?? projects/hydra_arm/episodes/episode_1.json\n?? projects/hydra_arm/episodes/episode_2.json\n"
+        },
+        {
+          "file": "rpi-run07.json",
+          "revision": "63297c21ab75fc21978e40e670a39a3e1b076d4b",
+          "host": "Linux-7.0.0-30-generic-x86_64-with-glibc2.39",
+          "worktree_status": "?? hardware-result/\n?? master/myvenv/\n?? projects/hydra_arm/episodes/ep.json\n?? projects/hydra_arm/episodes/episode_1.json\n?? projects/hydra_arm/episodes/episode_2.json\n"
+        },
+        {
+          "file": "rpi-run08.json",
+          "revision": "63297c21ab75fc21978e40e670a39a3e1b076d4b",
+          "host": "Linux-7.0.0-30-generic-x86_64-with-glibc2.39",
+          "worktree_status": "?? hardware-result/\n?? master/myvenv/\n?? projects/hydra_arm/episodes/ep.json\n?? projects/hydra_arm/episodes/episode_1.json\n?? projects/hydra_arm/episodes/episode_2.json\n"
+        },
+        {
+          "file": "rpi-run09.json",
+          "revision": "63297c21ab75fc21978e40e670a39a3e1b076d4b",
+          "host": "Linux-7.0.0-30-generic-x86_64-with-glibc2.39",
+          "worktree_status": "?? hardware-result/\n?? master/myvenv/\n?? projects/hydra_arm/episodes/ep.json\n?? projects/hydra_arm/episodes/episode_1.json\n?? projects/hydra_arm/episodes/episode_2.json\n"
+        },
+        {
+          "file": "rpi-run10.json",
+          "revision": "63297c21ab75fc21978e40e670a39a3e1b076d4b",
+          "host": "Linux-7.0.0-30-generic-x86_64-with-glibc2.39",
+          "worktree_status": "?? hardware-result/\n?? master/myvenv/\n?? projects/hydra_arm/episodes/ep.json\n?? projects/hydra_arm/episodes/episode_1.json\n?? projects/hydra_arm/episodes/episode_2.json\n"
+        }
+      ]
+    }
+  },
+  "failures": [
+    {
+      "file": "esp32-run07.json",
+      "case": "scheduled_preservation_and_stop_cancellation",
+      "error": "Expected STATE not observed; retain packet log, do not infer success",
+      "tx_timeline_ms": [
+        {
+          "ms": 0.0,
+          "packet": {
+            "cmd": "ACT",
+            "name": "probe",
+            "seq": 10,
+            "value": 120,
+            "at_ms": 17524
+          }
+        },
+        {
+          "ms": 0.23142300000245086,
+          "packet": {
+            "cmd": "PING"
+          }
+        },
+        {
+          "ms": 13.703034999991814,
+          "packet": {
+            "cmd": "PING",
+            "seq": 9
+          }
+        },
+        {
+          "ms": 13.89302300003692,
+          "packet": {
+            "cmd": "PING"
+          }
+        },
+        {
+          "ms": 21.188671999993858,
+          "packet": {
+            "cmd": "ACT",
+            "name": "probe",
+            "seq": 8,
+            "value": 99
+          }
+        },
+        {
+          "ms": 231.89193799998975,
+          "packet": {
+            "cmd": "ACT",
+            "name": "probe",
+            "seq": 11,
+            "value": 130,
+            "at_ms": 17751
+          }
+        },
+        {
+          "ms": 232.0682910000187,
+          "packet": {
+            "cmd": "PING"
+          }
+        },
+        {
+          "ms": 1243.4450090000269,
+          "packet": {
+            "cmd": "STOP"
+          }
+        },
+        {
+          "ms": 1344.2995860000337,
+          "packet": {
+            "cmd": "STOP"
+          }
+        },
+        {
+          "ms": 1344.5694470000262,
+          "packet": {
+            "cmd": "PING"
+          }
+        }
+      ],
+      "rx_ack_values": [
+        10,
+        null
+      ],
+      "watchdog_values": [
+        12,
+        13
+      ]
+    },
+    {
+      "file": "rp2040-run04.json",
+      "case": "scheduled_preservation_and_stop_cancellation",
+      "error": "Expected STATE not observed; retain packet log, do not infer success",
+      "tx_timeline_ms": [
+        {
+          "ms": 0.0,
+          "packet": {
+            "cmd": "ACT",
+            "name": "probe",
+            "seq": 10,
+            "value": 120,
+            "at_ms": 2040
+          }
+        },
+        {
+          "ms": 0.21886399997583794,
+          "packet": {
+            "cmd": "PING"
+          }
+        },
+        {
+          "ms": 54.42925400001286,
+          "packet": {
+            "cmd": "PING",
+            "seq": 9
+          }
+        },
+        {
+          "ms": 54.63003500000241,
+          "packet": {
+            "cmd": "PING"
+          }
+        },
+        {
+          "ms": 62.27179199999,
+          "packet": {
+            "cmd": "ACT",
+            "name": "probe",
+            "seq": 8,
+            "value": 99
+          }
+        },
+        {
+          "ms": 216.97105300000885,
+          "packet": {
+            "cmd": "ACT",
+            "name": "probe",
+            "seq": 11,
+            "value": 130,
+            "at_ms": 2255
+          }
+        },
+        {
+          "ms": 217.19098099998746,
+          "packet": {
+            "cmd": "PING"
+          }
+        },
+        {
+          "ms": 315.11160200000177,
+          "packet": {
+            "cmd": "STOP",
+            "seq": 7
+          }
+        },
+        {
+          "ms": 315.31836900001053,
+          "packet": {
+            "cmd": "PING"
+          }
+        },
+        {
+          "ms": 1356.1490380000123,
+          "packet": {
+            "cmd": "STOP"
+          }
+        },
+        {
+          "ms": 1456.8147690000046,
+          "packet": {
+            "cmd": "STOP"
+          }
+        },
+        {
+          "ms": 1457.158306999986,
+          "packet": {
+            "cmd": "PING"
+          }
+        }
+      ],
+      "rx_ack_values": [
+        null,
+        10,
+        11
+      ],
+      "watchdog_values": [
+        6,
+        7
+      ]
+    },
+    {
+      "file": "rpi-run03.json",
+      "case": "scheduled_preservation_and_stop_cancellation",
+      "error": "Expected STATE not observed; retain packet log, do not infer success",
+      "tx_timeline_ms": [
+        {
+          "ms": 0.0,
+          "packet": {
+            "cmd": "ACT",
+            "name": "probe",
+            "seq": 10,
+            "value": 120,
+            "at_ms": 28024
+          }
+        },
+        {
+          "ms": 0.2942139999504434,
+          "packet": {
+            "cmd": "PING"
+          }
+        },
+        {
+          "ms": 3.1885359999250795,
+          "packet": {
+            "cmd": "PING",
+            "seq": 9
+          }
+        },
+        {
+          "ms": 3.345622000097137,
+          "packet": {
+            "cmd": "PING"
+          }
+        },
+        {
+          "ms": 6.1637480000626965,
+          "packet": {
+            "cmd": "ACT",
+            "name": "probe",
+            "seq": 8,
+            "value": 99
+          }
+        },
+        {
+          "ms": 249.06966300000022,
+          "packet": {
+            "cmd": "ACT",
+            "name": "probe",
+            "seq": 11,
+            "value": 130,
+            "at_ms": 28270
+          }
+        },
+        {
+          "ms": 249.25514200003818,
+          "packet": {
+            "cmd": "PING"
+          }
+        },
+        {
+          "ms": 1279.0981299999657,
+          "packet": {
+            "cmd": "STOP"
+          }
+        },
+        {
+          "ms": 1380.1795530000618,
+          "packet": {
+            "cmd": "STOP"
+          }
+        },
+        {
+          "ms": 1380.4392489998918,
+          "packet": {
+            "cmd": "PING"
+          }
+        }
+      ],
+      "rx_ack_values": [
+        10,
+        null
+      ],
+      "watchdog_values": [
+        4,
+        5
+      ]
+    }
+  ],
+  "sync": {
+    "sync-lead30-seed2027.json": {
+      "status": "completed",
+      "error": null,
+      "modes": {
+        "scheduled": {
+          "estimated_skew_ms": {
+            "n": 200,
+            "minimum": 0.08200000016950071,
+            "mean": 8.193735000016169,
+            "p50": 4.617500000167638,
+            "p95": 35.189999999967355,
+            "p99": 44.50335999989648,
+            "maximum": 46.90800000005402
+          },
+          "nodes": {
+            "probe_esp32": {
+              "act_first": 1.0,
+              "act_last": 200.0,
+              "nonunit_counter_steps": 0,
+              "incorrect_values": 0,
+              "offset_span_ms": 28.458999999798834,
+              "rtt_ms": {
+                "n": 200,
+                "minimum": 4.301,
+                "mean": 20.20814,
+                "p50": 12.7045,
+                "p95": 48.940149999999996,
+                "p99": 52.84848999999996,
+                "maximum": 58.954
+              },
+              "mapped_delay_ms": {
+                "n": 200,
+                "minimum": 29.560456999810413,
+                "mean": 30.577340869989712,
+                "p50": 30.647430999786593,
+                "p95": 31.423189199948684,
+                "p99": 31.598764999997787,
+                "maximum": 34.230452000163496
+              },
+              "negative_mapped_delays": 0
+            },
+            "probe_rp2040": {
+              "act_first": 1.0,
+              "act_last": 200.0,
+              "nonunit_counter_steps": 0,
+              "incorrect_values": 0,
+              "offset_span_ms": 97.25300000002608,
+              "rtt_ms": {
+                "n": 200,
+                "minimum": 10.765,
+                "mean": 47.697045,
+                "p50": 46.48350000000001,
+                "p95": 97.63519999999998,
+                "p99": 114.40760999999995,
+                "maximum": 179.469
+              },
+              "mapped_delay_ms": {
+                "n": 200,
+                "minimum": 29.547769999830052,
+                "mean": 36.65031586999423,
+                "p50": 32.811703000217676,
+                "p95": 66.1904585499316,
+                "p99": 75.36861886019119,
+                "maximum": 78.13187200017273
+              },
+              "negative_mapped_delays": 0
+            },
+            "probe_rpi": {
+              "act_first": 91,
+              "act_last": 290,
+              "nonunit_counter_steps": 0,
+              "incorrect_values": 0,
+              "offset_span_ms": 27.932000000029802,
+              "rtt_ms": {
+                "n": 200,
+                "minimum": 2.176,
+                "mean": 20.31868,
+                "p50": 7.0845,
+                "p95": 58.29624999999999,
+                "p99": 60.55835999999999,
+                "maximum": 61.445
+              },
+              "mapped_delay_ms": {
+                "n": 200,
+                "minimum": 29.686907999916002,
+                "mean": 34.347405870002696,
+                "p50": 34.28891650005244,
+                "p95": 39.595178850018414,
+                "p99": 40.4276686699898,
+                "maximum": 40.48330399999395
+              },
+              "negative_mapped_delays": 0
+            }
+          },
+          "unique_pose_indices": 200,
+          "dispatch_span_s": 20.293016109999826,
+          "observed_interval_rate_hz": 9.806329375648522
+        },
+        "immediate": {
+          "estimated_skew_ms": {
+            "n": 200,
+            "minimum": 1.345000000204891,
+            "mean": 25.56754500000272,
+            "p50": 18.383499999996275,
+            "p95": 82.11140000008744,
+            "p99": 91.6068300000368,
+            "maximum": 103.32099999999627
+          },
+          "nodes": {
+            "probe_esp32": {
+              "act_first": 201.0,
+              "act_last": 400.0,
+              "nonunit_counter_steps": 0,
+              "incorrect_values": 0,
+              "offset_span_ms": 29.41300000017509,
+              "rtt_ms": {
+                "n": 200,
+                "minimum": 4.01,
+                "mean": 20.415135,
+                "p50": 10.773499999999999,
+                "p95": 54.01065,
+                "p99": 57.28144999999998,
+                "maximum": 59.873
+              },
+              "mapped_delay_ms": {
+                "n": 200,
+                "minimum": -21.54095899988897,
+                "mean": -1.4585635849938263,
+                "p50": 2.888293500058353,
+                "p95": 7.038335049932354,
+                "p99": 8.498321549997197,
+                "maximum": 9.995200000004843
+              },
+              "negative_mapped_delays": 76
+            },
+            "probe_rp2040": {
+              "act_first": 201.0,
+              "act_last": 400.0,
+              "nonunit_counter_steps": 0,
+              "incorrect_values": 0,
+              "offset_span_ms": 64.40599999995902,
+              "rtt_ms": {
+                "n": 200,
+                "minimum": 10.876,
+                "mean": 47.71975,
+                "p50": 42.7665,
+                "p95": 95.09799999999998,
+                "p99": 116.7818699999999,
+                "maximum": 151.958
+              },
+              "mapped_delay_ms": {
+                "n": 200,
+                "minimum": -27.922238999977708,
+                "mean": 13.692161415005103,
+                "p50": 8.721679999958724,
+                "p95": 65.93939094999803,
+                "p99": 80.08115539024816,
+                "maximum": 87.34657099982724
+              },
+              "negative_mapped_delays": 51
+            },
+            "probe_rpi": {
+              "act_first": 291,
+              "act_last": 490,
+              "nonunit_counter_steps": 0,
+              "incorrect_values": 0,
+              "offset_span_ms": 26.512000000104308,
+              "rtt_ms": {
+                "n": 200,
+                "minimum": 2.193,
+                "mean": 20.83982,
+                "p50": 14.545,
+                "p95": 56.987649999999995,
+                "p99": 59.06509999999999,
+                "maximum": 61.127
+              },
+              "mapped_delay_ms": {
+                "n": 200,
+                "minimum": -23.742506000213325,
+                "mean": -4.575353585002013,
+                "p50": -0.22654100006911904,
+                "p95": 4.843145400157663,
+                "p99": 5.326957220137117,
+                "maximum": 5.9842890000436455
+              },
+              "negative_mapped_delays": 103
+            }
+          },
+          "unique_pose_indices": 200,
+          "dispatch_span_s": 20.175553891000163,
+          "observed_interval_rate_hz": 9.863421895384453
+        }
+      },
+      "jsonl_identical_to_records": true,
+      "lead_ms": 30.0,
+      "seed": 2027,
+      "order": [
+        "scheduled",
+        "immediate"
+      ],
+      "injected_jitter": false,
+      "stored_summary_mismatches": [],
+      "estimated_mean_reduction_pct": 67.95259380587657
+    }
+  },
+  "inputs": {
+    "esp32-run01.json": {
+      "bytes": 95486,
+      "sha256": "aea4463f8470dddbe42fadc496646272596e8f522fe189ca810a611b9d8019ab"
+    },
+    "esp32-run02.json": {
+      "bytes": 100626,
+      "sha256": "9135ff3844e09d8b38aa0e600666e3478ff318a18f9b796151d580486eebfea5"
+    },
+    "esp32-run03.json": {
+      "bytes": 100531,
+      "sha256": "93cbd71f3daca3465765c3cf6533a9276c7c46611dd88e23787ac5361cc00c3f"
+    },
+    "esp32-run04.json": {
+      "bytes": 101397,
+      "sha256": "38b259cbf0ade13e95d538f31959f93729dc26765091902153795ddc6461fba6"
+    },
+    "esp32-run05.json": {
+      "bytes": 101429,
+      "sha256": "4fe3d415716d34af9b97690bab77462a2da5a76a070839092b03fb744025da25"
+    },
+    "esp32-run06.json": {
+      "bytes": 101024,
+      "sha256": "eb6bdff7fd20dac1b2da69c1a02ed1f5337096475684856630524d61eba4f8dc"
+    },
+    "esp32-run07.json": {
+      "bytes": 107988,
+      "sha256": "6d81d52294e16d4daa2f5b89533bc8b45a190977a4a8452e933065d53faa4985"
+    },
+    "esp32-run08.json": {
+      "bytes": 100841,
+      "sha256": "4c29fd88ae5f64945d181b0ff420ce048aca99e9815d0f76e4653d0b0007222b"
+    },
+    "esp32-run09.json": {
+      "bytes": 100936,
+      "sha256": "b5f1add32dec890c69a4789e4350f3164fad3d2367b007dbb4b5a95bf8cbd9af"
+    },
+    "esp32-run10.json": {
+      "bytes": 101074,
+      "sha256": "c5192062c47b8c3976b2fcbcb802a30419d86ad99c87c8288501a68b8f818165"
+    },
+    "rp2040-run01.json": {
+      "bytes": 99879,
+      "sha256": "3de9f4c2a3babfd46eb8027c2178efeedfc5bdfca85e75bc317e474c6a0b85f1"
+    },
+    "rp2040-run02.json": {
+      "bytes": 104234,
+      "sha256": "f26e49e4cc77713a0bcf564bcb2b26915272b0f0386c08892d292f270287b9aa"
+    },
+    "rp2040-run03.json": {
+      "bytes": 105437,
+      "sha256": "83be18c7c4f151de93905591e0e6089636498a07a714a7f653728b4c45068460"
+    },
+    "rp2040-run04.json": {
+      "bytes": 112115,
+      "sha256": "44360ce31b36028fa1de4b119729c0375b69c091f955c0c53ad0a4352c8dbc89"
+    },
+    "rp2040-run05.json": {
+      "bytes": 105278,
+      "sha256": "d3e8f534b6cbdd29531edaa41e7a2a109e3868b38cce47bc541499e82eacf7ee"
+    },
+    "rp2040-run06.json": {
+      "bytes": 104922,
+      "sha256": "a466200703156d262249c095fff39986382a2d08dc90d3f0c9da58a3fbaa1c36"
+    },
+    "rp2040-run07.json": {
+      "bytes": 103064,
+      "sha256": "b2acdb31b863baf8a3d6606b066c6d00e5abecf0018da22e8c7de90f3b312335"
+    },
+    "rp2040-run08.json": {
+      "bytes": 104231,
+      "sha256": "ac765b6513977cd70469f87248606e23af86154920475bc7eb79bd1ad23135d7"
+    },
+    "rp2040-run09.json": {
+      "bytes": 104696,
+      "sha256": "620ad23cc79cbf9a9a0abd92bba89649b9c3c8c137499afe633fc1652b814004"
+    },
+    "rp2040-run10.json": {
+      "bytes": 105389,
+      "sha256": "f216c37dd1ca896a28682c35d79faaf72fc62570111163d852f7b52ed6825743"
+    },
+    "rpi-run01.json": {
+      "bytes": 96123,
+      "sha256": "f31d9a4ce1fd84cf96a4b04c30c795ebf9bb4839c52f91d0f9c0fc1d0202fb22"
+    },
+    "rpi-run02.json": {
+      "bytes": 101232,
+      "sha256": "036acb8f422cf8b049b3ae57ce270453aa3b245b28f4f01f8a655381d08184b0"
+    },
+    "rpi-run03.json": {
+      "bytes": 108928,
+      "sha256": "1ccd8b6248daf91554c51ab5d465c39e659a05bd7a294d8084b10be6f0b89ec8"
+    },
+    "rpi-run04.json": {
+      "bytes": 101762,
+      "sha256": "c912837c7ccf28e84420af0852bf8e18995927afa7dc579ef229ed43d2257109"
+    },
+    "rpi-run05.json": {
+      "bytes": 102269,
+      "sha256": "72826fb706b932ad715bea790a369e5c9b75b80a5315086a2bcedf458711304c"
+    },
+    "rpi-run06.json": {
+      "bytes": 101285,
+      "sha256": "a8f63277e37e2f11e5821c42f1e3e92a0d0abec8aafdce39d8e6c6e92c8fa3c6"
+    },
+    "rpi-run07.json": {
+      "bytes": 103053,
+      "sha256": "89864fb9335244665755867f15c53720b8a1de01e6a747db525bc226dc4dad81"
+    },
+    "rpi-run08.json": {
+      "bytes": 103060,
+      "sha256": "f47c41d7ca86952c180883e6cc60576669a1ed7de260d6e2b0c5d01ae237bae4"
+    },
+    "rpi-run09.json": {
+      "bytes": 103720,
+      "sha256": "ee95cdde88d60ca6e68056ff12e4c6572227f73fbae029241565afd7be3387ea"
+    },
+    "rpi-run10.json": {
+      "bytes": 103210,
+      "sha256": "ead12ad73fbda9b8b0aecd63e84a94469d68e8ec57918abd54d4cfeb93675cfc"
+    },
+    "sync-lead30-seed2027.json": {
+      "bytes": 532575,
+      "sha256": "20da05590bbfee51700ff507c521a9334dfb37f27f09e5349d2e25bdd0d961ca"
+    },
+    "sync-lead30-seed2027.jsonl": {
+      "bytes": 312390,
+      "sha256": "e7344291fd7d8f3d7461f3f3c2f8ef3f101962f25757e7775192184f16cfe31b"
+    }
+  }
+}

@@ -210,6 +210,7 @@ class SwarmMaster:
         lead_clamped_ms = max(0.0, min(1000.0, float(lead_ms)))
         t_exec = time.monotonic() + (lead_clamped_ms / 1000.0)
         dispatched = 0
+        prepared = []
 
         for item in commands:
             if isinstance(item, dict):
@@ -235,7 +236,11 @@ class SwarmMaster:
                 continue
 
             slave_target_ms = node.slave_time_ms(t_exec)
-            at_ms = (slave_target_ms & 0x7FFF) if slave_target_ms is not None else None
+            if slave_target_ms is None:
+                raise RuntimeError("sync_actuate requires a fresh PING clock estimate for " + node.node_id)
+            at_ms = slave_target_ms & 0x7FFF
+            prepared.append((node, name, v1, v2, data, at_ms, item_lease_ms))
+        for node, name, v1, v2, data, at_ms, item_lease_ms in prepared:
             node.set_actuator(name, v1=v1, v2=v2, data=data, at_ms=at_ms, lease_ms=item_lease_ms)
             dispatched += 1
 
@@ -426,7 +431,7 @@ class SwarmMaster:
                 node = self._nodes[node_id]
                 if node.ip != addr[0] or node.port != addr[1]:
                     return
-                node._update_state(
+                accepted = node._update_state(
                     uptime_ms,
                     sensors_dict,
                     ack=ack,
@@ -434,6 +439,8 @@ class SwarmMaster:
                     lease_exp=lease_exp,
                     seq_drop=seq_drop,
                 )
+                if accepted is False:
+                    return
                 errors = msg.get("sensor_errors", {})
                 if isinstance(errors, dict) and all(isinstance(k, str) and isinstance(v, str) for k, v in errors.items()):
                     node.sensor_errors = dict(errors)

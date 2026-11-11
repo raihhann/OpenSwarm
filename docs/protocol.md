@@ -59,6 +59,18 @@ jitter (`jitter_ms`), and Master-to-Slave clock offset (`clock_offset_ms`). `ack
 is a receive watermark, not confirmation of scheduled execution or physical motion;
 it also covers controls and may advance before an actuator deadline is reached.
 
+Master patch 0.2.1 separates command-ACK RTT diagnostics from clock calibration.
+Only sequenced PING replies calibrate the clock; the lowest-delay sample among
+up to 32 samples from the last five seconds supplies the midpoint estimate.
+For slave timestamp `u`, host send `s` and receive `r` (milliseconds), the
+conditional offset bracket is `[u-r, u+1-s]`, accounting for 1 ms timestamp
+quantization. `snapshot()` exposes the bracket, age and a declared 200 ppm drift
+allowance. This allowance is an assumption, not a measured oscillator bound.
+Old reordered STATE packets are ignored; a fresh PING reply can establish a
+lower-uptime reboot epoch. Sequence allocation/send order is serialized across
+control and heartbeat threads. These are compatible master-side changes; no wire
+fields or slave firmware changes are required.
+
 Optional `"at_ms"` (`0..32767`) on `ACT` commands specifies a 15-bit modular target
 Slave `uptime_ms` (`target_slave_ms & 0x7FFF`). Slaves compute the signed modular
 delay `delta_ms = ((at_ms - (uptime_ms & 0x7FFF) + 16384) & 0x7FFF) - 16384`. When
@@ -70,6 +82,9 @@ timeout. `SwarmMaster.sync_actuate()` uses `clock_offset_ms` and `at_ms` to alig
 multi-node actuations toward a common estimated deadline. Actual skew depends on
 clock-estimation error, timestamp quantization, arrival before that deadline, and
 each Slave's polling/blocking time; no exact physical synchronization is guaranteed.
+The master preflights every target clock before sending the batch and raises if
+an estimate is unknown or older than five seconds. It no longer silently changes
+a requested synchronized operation into immediate dispatch.
 
 Optional `"lease_ms"` (`1..30000`) on `ACT` commands sets an application-level
 command lease on that specific actuator independent of transport `PING` heartbeats.

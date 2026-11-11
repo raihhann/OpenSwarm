@@ -1,5 +1,10 @@
 # Hardware validation with your available equipment
 
+**Updated runners:** the scheduling/clock patch requires master SDK **0.2.1**,
+currently prepared as a local wheel. Follow [the bounded rerun instructions](../../docs/hardware_rerun.md)
+for installation and the nine-board-run/six-sync-run campaign. Arduino 0.4.3 and
+Linux slave 0.2.0 remain unchanged. Original raw results must be retained separately.
+
 Equipment: ESP32, an Arduino RP2040 board, Raspberry Pi, Linux laptop, and Portenta
 H7; no oscilloscope or logic analyzer. Run the laptop as master and the Pi as a
 slave. Check the RP2040 model: Nano RP2040 Connect and Pico W have supported Wi-Fi
@@ -32,7 +37,7 @@ From the repository root on the laptop:
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-python -m pip install 'openswarm-master[demo]==0.2.0' 'openswarm-slave==0.2.0'
+python -m pip install ./openswarm_master-0.2.1-py3-none-any.whl 'openswarm-slave==0.2.0' 'aiohttp>=3.8'
 mkdir -p hardware-results
 cp benchmarks/hardware/REPORT_TEMPLATE.md hardware-results/REPORT.md
 python -m unittest discover -s tests -t . -v > hardware-results/software-tests.log 2>&1
@@ -42,8 +47,10 @@ git diff > hardware-results/source-changes.patch
 python benchmarks/run_benchmarks.py --output-dir hardware-results/software-baseline
 ```
 
-These registry installations require the [prepared releases](../../docs/releases.md)
-to have been published first. The repository is still used for experiment scripts,
+Copy the prepared master wheel into the current directory first; after its release
+it can instead be installed with `pip install openswarm-master==0.2.1`.
+The slave registry installation requires its [release](../../docs/releases.md).
+The repository is still used for experiment scripts,
 tests and the software-only benchmark; it need not be installed as editable software.
 The live hardware scripts import the installed packages. Record their `__version__`
 and `__file__` as shown in the release guide to verify the actual installation.
@@ -100,7 +107,7 @@ Leave this process running. Stop the usual Pi slave application so UDP port 4210
 is free. Allow LAN UDP commands to 4210 and replies to the laptop's source port.
 No internet connection is needed for the measurements after dependencies are installed.
 
-## 4. Run the six functional/timing tests on each board
+## 4. Run the seven functional/timing tests on each board
 
 From the laptop repository root, substitute each board's actual IP:
 
@@ -110,25 +117,26 @@ python benchmarks/hardware/validate_node.py --ip RP2040_IP --output hardware-res
 python benchmarks/hardware/validate_node.py --ip RPI_IP --output hardware-results/rpi-run01.json
 ```
 
-Each command takes about ten seconds on a responsive LAN. It sends small JSON
+Each command takes roughly fifteen seconds on a responsive LAN. It sends small JSON
 commands to the harmless `probe` actuator and saves timestamped TX/RX packets,
 observed STATE data, case outcomes and local source-revision information. A nonzero
-exit means at least one FAIL; keep that file. A fresh source endpoint is used for
-each case, then kept unchanged within the case. The runner stops the probe on exit.
+exit means at least one FAIL; keep that file. One source endpoint is used for the
+whole run; a watchdog epoch reset is explicitly observed between cases. Scheduling
+waits maintain transport keepalives, and ACK resets are classified. The runner stops the probe on exit.
 
 | Case | What is tested | Expected observation |
 | --- | --- | --- |
 | Delayed PING + stale STOP | ACT 10/100, ACT 11/110, PING 9, ACT 10/100; STOP 8; ACT 10 again | ack stays 11, stale ACT never increments acts, STOP zeros value; seq_drop increases twice |
 | Wraparound | 32766, PING 32767, ACT 1, old PING/ACT, ACT 2 | old pre-wrap ACT rejected, ack progresses to 2 |
-| Scheduled queue | ACT for about 200 ms ahead, old PING/ACT; then another scheduled ACT and stale STOP | first callback occurs at/after target with original value; STOP cancels the next pending callback |
+| Scheduled queue | ACT for about 500 ms ahead, old PING/ACT; then another scheduled ACT and stale STOP | first callback occurs at/after target with original value; STOP cancels the next pending callback; delivery retries are recorded |
 | Lease + heartbeats | One ACT with lease 150 ms, no further ACT, continuing 5 Hz PING | value goes to zero; lease_exp increases once; hold_ms is measured on the board |
+| Longer lease + heartbeats | One ACT with lease 450 ms, continuing 5 Hz PING before expiry | output stops around 450 ms despite intervening PINGs |
 | No lease + heartbeats | One ACT without lease, continuing 5 Hz PING | value remains active for the observation (>2 s); this is a censored control trial |
 | Transport loss | One ACT, then no commands/heartbeats | watchdog stops it after >500 ms; wd_trips increases once |
 
-Repeat the three commands **ten times per board**, changing `run01` to `run02`...
-`run10`. Do not overwrite previous files. Start with three runs if time is short,
-then complete ten before summarizing a distribution. Also repeat after a power
-cycle and label those runs. A timeout/failure is data, not a reason to discard a run.
+The initial campaign used ten runs per board. For the patch regression, use the
+bounded **three runs per board** in hardware_rerun.md, with distinct filenames in
+a new directory. A timeout/failure is data, not a reason to discard a run.
 
 The runner's PASS is functional. It reports lease/watchdog/schedule excess lateness
 without imposing an invented universal deadline budget. For this unloaded fixture,
@@ -147,11 +155,14 @@ before starting this SDK test. On the laptop, replace the three IP placeholders:
 python benchmarks/hardware/sync_trial.py --node probe_esp32=ESP32_IP --node probe_rp2040=RP2040_IP --node probe_rpi=RPI_IP --poses 200 --lead-ms 30 --seed 2027 --output hardware-results/sync-lead30-seed2027.json
 ```
 
-Each run warms up the real PING/STATE estimator, sends 200 commands per mode at a
+Each run warms up the real PING-only estimator, sends 200 commands per mode at a
 nominal 10 Hz, changes the mode order using the seed, and reports mean/p50/p95/p99
 **estimated clock-mapped callback skew**. It also saves per-pose JSONL progressively;
 a failed run retains completed poses and writes a failure result. Keep both files.
 Never use a partial run as a complete 200-pose result.
+The v2 trial freezes pretrial measurement calibration, uses coherent snapshots,
+records conditional timing intervals and flags causal-interval violations. It does
+not clamp negative point estimates into apparently successful measurements.
 
 Repeat with seeds 2028, 2029, 2030, 2031 (unique output filenames). Repeat at lead
 times 10 and 60 ms. Record actual achieved duration/rate and failures. First use

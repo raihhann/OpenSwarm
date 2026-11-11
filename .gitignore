@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 .venv/
 venv/
+myvenv/
 *.egg-info/
 dist/
 build/
@@ -22,4 +23,14 @@ Thumbs.db
 
 # Local 3D CAD & STL files
 3Dmodels/
+
+# Keep manuscript files out of framework commits.
+/papers/
+/RSS2027-Paper/
+/OpenSwarm/
+
+# New local hardware runs; curated campaigns are versioned separately.
+/benchmarks/hardware/results/local/
+/hardware-result*/
+/hardware-results*/
 

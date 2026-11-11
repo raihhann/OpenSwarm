@@ -79,6 +79,22 @@ provides the foundation; decentralized swarm coordination is not yet implemented
 
 ---
 
+## Repository Layout and Development
+
+The framework lives in `master/` and `slaves/`; applications live in `projects/`.
+Automated tests remain in `tests/`, and reproducible benchmark tools remain in
+`benchmarks/`. These are part of maintaining the framework, not disposable files.
+
+Saved hardware campaigns are organized under
+[`benchmarks/hardware/results/`](benchmarks/hardware/results/README.md), with
+historical files preserved. New local run outputs go into its ignored `local/`
+subfolder. Python virtual environments are local installations and are not tracked.
+
+Use `main` for tested framework changes, `dev` for integration work, and
+short-lived `feature/<topic>` branches for individual changes. `SwarmNode` is the
+generated Arduino-library distribution branch. See the
+[development workflow](docs/development.md) for testing and merge commands.
+
 ## Local 3D Demo (No Hardware)
 
 Install the master package with its optional demo dependency, then run

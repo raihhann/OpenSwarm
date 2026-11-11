@@ -28,7 +28,7 @@ The Pi instead **runs** `linux_probe.py`; do not upload an Arduino sketch to it.
 
 ## 1. Record the tested software and equipment
 
-Copy [REPORT_TEMPLATE.md](REPORT_TEMPLATE.md) to `hardware-results/REPORT.md` at
+Copy [REPORT_TEMPLATE.md](REPORT_TEMPLATE.md) to `benchmarks/hardware/results/local/run-01/REPORT.md` at
 the repository root. Fill in exact board model, OS/core/library versions, Wi-Fi
 router/band/distance, power supply, GPIO choices and room conditions.
 
@@ -38,13 +38,13 @@ From the repository root on the laptop:
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install ./openswarm_master-0.2.1-py3-none-any.whl 'openswarm-slave==0.2.0' 'aiohttp>=3.8'
-mkdir -p hardware-results
-cp benchmarks/hardware/REPORT_TEMPLATE.md hardware-results/REPORT.md
-python -m unittest discover -s tests -t . -v > hardware-results/software-tests.log 2>&1
-git rev-parse HEAD > hardware-results/revision.txt
-git status --short > hardware-results/worktree.txt
-git diff > hardware-results/source-changes.patch
-python benchmarks/run_benchmarks.py --output-dir hardware-results/software-baseline
+mkdir -p benchmarks/hardware/results/local/run-01
+cp benchmarks/hardware/REPORT_TEMPLATE.md benchmarks/hardware/results/local/run-01/REPORT.md
+python -m unittest discover -s tests -t . -v > benchmarks/hardware/results/local/run-01/software-tests.log 2>&1
+git rev-parse HEAD > benchmarks/hardware/results/local/run-01/revision.txt
+git status --short > benchmarks/hardware/results/local/run-01/worktree.txt
+git diff > benchmarks/hardware/results/local/run-01/source-changes.patch
+python benchmarks/run_benchmarks.py --output-dir benchmarks/hardware/results/local/run-01/software-baseline
 ```
 
 Copy the prepared master wheel into the current directory first; after its release
@@ -112,9 +112,9 @@ No internet connection is needed for the measurements after dependencies are ins
 From the laptop repository root, substitute each board's actual IP:
 
 ```bash
-python benchmarks/hardware/validate_node.py --ip ESP32_IP --output hardware-results/esp32-run01.json
-python benchmarks/hardware/validate_node.py --ip RP2040_IP --output hardware-results/rp2040-run01.json
-python benchmarks/hardware/validate_node.py --ip RPI_IP --output hardware-results/rpi-run01.json
+python benchmarks/hardware/validate_node.py --ip ESP32_IP --output benchmarks/hardware/results/local/run-01/esp32-run01.json
+python benchmarks/hardware/validate_node.py --ip RP2040_IP --output benchmarks/hardware/results/local/run-01/rp2040-run01.json
+python benchmarks/hardware/validate_node.py --ip RPI_IP --output benchmarks/hardware/results/local/run-01/rpi-run01.json
 ```
 
 Each command takes roughly fifteen seconds on a responsive LAN. It sends small JSON
@@ -152,7 +152,7 @@ Keep all three probes powered and the Pi script running. Close `validate_node.py
 before starting this SDK test. On the laptop, replace the three IP placeholders:
 
 ```bash
-python benchmarks/hardware/sync_trial.py --node probe_esp32=ESP32_IP --node probe_rp2040=RP2040_IP --node probe_rpi=RPI_IP --poses 200 --lead-ms 30 --seed 2027 --output hardware-results/sync-lead30-seed2027.json
+python benchmarks/hardware/sync_trial.py --node probe_esp32=ESP32_IP --node probe_rp2040=RP2040_IP --node probe_rpi=RPI_IP --poses 200 --lead-ms 30 --seed 2027 --output benchmarks/hardware/results/local/run-01/sync-lead30-seed2027.json
 ```
 
 Each run warms up the real PING-only estimator, sends 200 commands per mode at a
@@ -202,7 +202,7 @@ Complete [REPORT_TEMPLATE.md](REPORT_TEMPLATE.md). Return it with all per-board 
 files, sync JSON + JSONL files, compiler logs/maps, sanitized sketches, Pi backend
 details, software-baseline results and the exact tested source snapshot/revision.
 Include failures, resets, Wi-Fi interruptions and deviations. Optional photos/video
-help explain the setup but do not replace timing data. Zip `hardware-results/` and
+help explain the setup but do not replace timing data. Zip `benchmarks/hardware/results/local/run-01/` and
 attach it here; include large source/build files separately if necessary.
 
 The review will check provenance, complete trial counts, stale-packet counters,

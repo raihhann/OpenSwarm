@@ -4,7 +4,7 @@ After the first v2 campaign, a runner flag-lifecycle bug was identified in the
 RP2040 failures. For the next step, use the smaller [targeted runner-fix rerun](hardware_rerun_runner_fix.md)
 instead of repeating the whole campaign below. This preserves earlier results.
 
-The old 32 raw files and hardware-result/REVIEW.* remain historical evidence.
+The old 32 raw files and benchmarks/hardware/results/campaign-01/REVIEW.* remain historical evidence.
 Do not overwrite them. This patch fixes reproduced runner/estimator weaknesses;
 the precise causes of all three physical failures are not proven from old logs.
 In particular RP2040 run04's unexplained ACK disappearance requires confirmation.
@@ -72,7 +72,7 @@ resource and independent-timing evidence against the intended submission claims.
 
 1. Use the same three probes. Record exact board/core/OS/backend/package versions,
    GPIOs, AP/load conditions and flashed build logs in the report template.
-2. On the laptop, make `hardware-result-rerun` and run the validator **three times
+2. On the laptop, make `benchmarks/hardware/results/local/rerun` and run the validator **three times
    per board** with distinct names. Each run now contains seven cases, adding a
    450 ms lease with 5 Hz PING so heartbeats occur repeatedly before expiry.
 3. Run the full 200-pose-per-mode synchronization trial for **seeds 2027, 2028,
@@ -86,11 +86,11 @@ The prior IPs were ESP32 192.168.0.118, RP2040 192.168.0.170 and Pi
 192.168.0.234. Check they still match before using these Linux laptop commands:
 
 ```bash
-mkdir -p hardware-result-rerun
+mkdir -p benchmarks/hardware/results/local/rerun
 for run in 01 02 03; do
-  python benchmarks/hardware/validate_node.py --ip 192.168.0.118 --output hardware-result-rerun/esp32-run${run}.json
-  python benchmarks/hardware/validate_node.py --ip 192.168.0.170 --output hardware-result-rerun/rp2040-run${run}.json
-  python benchmarks/hardware/validate_node.py --ip 192.168.0.234 --output hardware-result-rerun/rpi-run${run}.json
+  python benchmarks/hardware/validate_node.py --ip 192.168.0.118 --output benchmarks/hardware/results/local/rerun/esp32-run${run}.json
+  python benchmarks/hardware/validate_node.py --ip 192.168.0.170 --output benchmarks/hardware/results/local/rerun/rp2040-run${run}.json
+  python benchmarks/hardware/validate_node.py --ip 192.168.0.234 --output benchmarks/hardware/results/local/rerun/rpi-run${run}.json
 done
 ```
 
@@ -104,7 +104,7 @@ for lead in 30 60; do
       --node probe_rp2040=192.168.0.170 \
       --node probe_rpi=192.168.0.234 \
       --poses 200 --lead-ms "$lead" --seed "$seed" \
-      --output "hardware-result-rerun/sync-lead${lead}-seed${seed}.json"
+      --output "benchmarks/hardware/results/local/rerun/sync-lead${lead}-seed${seed}.json"
   done
 done
 ```

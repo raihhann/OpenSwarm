@@ -1,0 +1,13 @@
+{
+  "status": "FAIL",
+  "error": "Missing execution telemetry; no missing pose may be silently discarded",
+  "targets": [
+    "probe_esp32=192.168.0.118",
+    "probe_rp2040=192.168.0.170",
+    "probe_rpi=192.168.0.234"
+  ],
+  "seed": 2027,
+  "poses_per_mode": 200,
+  "lead_ms": 30.0,
+  "partial_records": "hardware-result/sync-lead30-seed2027_01.jsonl"
+}
